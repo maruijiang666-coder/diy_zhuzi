@@ -1,7 +1,9 @@
 export default defineAppConfig({
   pages: [
+    'pages/splash/index',
     'pages/diy/index',
     'pages/cart/index',
+    'pages/designs/index',
     'pages/order/list/index',
     'pages/order/detail/index',
     'pages/order/confirm/index',
@@ -9,15 +11,16 @@ export default defineAppConfig({
   ],
   window: {
     backgroundTextStyle: 'light',
-    navigationBarBackgroundColor: '#fff',
-    navigationBarTitleText: 'DIY水晶手串',
-    navigationBarTextStyle: 'black'
+    navigationBarBackgroundColor: '#FFFFFF',
+    navigationBarTitleText: '遣山水晶',
+    navigationBarTextStyle: 'black',
+    backgroundColor: '#FAFAFA'
   },
   tabBar: {
-    color: '#666',
-    selectedColor: '#6366f1',
-    backgroundColor: '#fff',
-    borderStyle: 'black',
+    color: '#999999',
+    selectedColor: '#8B7FD8',
+    backgroundColor: '#FFFFFF',
+    borderStyle: 'white',
     list: [
       {
         pagePath: 'pages/diy/index',

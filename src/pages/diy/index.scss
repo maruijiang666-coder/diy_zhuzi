@@ -1,3 +1,136 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
 .diy-page {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(180deg, #F8F6FF 0%, #FAFAFA 100%);
+  overflow: hidden;
+
+  // 设计画布区域 - 扩大尺寸作为核心功能
+  &__canvas {
+    flex-shrink: 0;
+    background: $bg-primary;
+    margin: $spacing-md $spacing-md 0;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-card;
+    overflow: hidden;
+    // 扩大画布，占据屏幕高度的45%
+    height: 45vh;
+    max-height: 600rpx;
+    min-height: 400rpx;
+  }
+
+  // 属性面板区域 - 紧凑的一行
+  &__properties {
+    flex-shrink: 0;
+    background: $bg-primary;
+    margin: $spacing-sm $spacing-md 0;
+    border-radius: $radius-sm;
+    box-shadow: $shadow-sm;
+  }
+
+  // 操作按钮区域 - 三个按钮
+  &__actions {
+    flex-shrink: 0;
+    display: flex;
+    gap: $spacing-sm;
+    padding: $spacing-sm $spacing-md;
+  }
+
+  &__action-btn {
+    flex: 1;
+    height: 72rpx;
+    line-height: 72rpx;
+    border-radius: $radius-round;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    transition: all $transition-base;
+
+    &--clear {
+      background: $bg-tertiary;
+      color: $text-secondary;
+      border: 2rpx solid $border-light;
+
+      &:active {
+        transform: scale(0.98);
+        background: darken($bg-tertiary, 3%);
+      }
+
+      &[disabled] {
+        opacity: 0.5;
+        color: $text-disabled;
+      }
+    }
+
+    &--save {
+      background: linear-gradient(135deg, #A89FE8 0%, #D4C5F9 100%);
+      color: $bg-primary;
+      box-shadow: $shadow-sm;
+
+      &:active {
+        transform: scale(0.98);
+        box-shadow: none;
+      }
+
+      &[disabled] {
+        opacity: 0.6;
+        background: $text-disabled;
+        box-shadow: none;
+      }
+    }
+
+    &--cart {
+      @include gradient-bg;
+      color: $bg-primary;
+      box-shadow: $shadow-md;
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      &:active {
+        transform: scale(0.98);
+        box-shadow: $shadow-sm;
+      }
+
+      &:active::before {
+        left: 100%;
+      }
+
+      &[disabled] {
+        opacity: 0.6;
+        background: $text-disabled;
+        box-shadow: none;
+      }
+    }
+  }
+
+  // 珠子选择器区域 - 占据剩余空间，可滚动
+  &__selector {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: $bg-primary;
+    margin: $spacing-sm $spacing-md $spacing-md;
+    border-radius: $radius-md;
+    box-shadow: $shadow-card;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0; // 重要：允许flex子元素正确收缩
+  }
 }

@@ -1,3 +1,202 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
 .profile-page {
-  padding: 20px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #F8F6FF 0%, #FAFAFA 100%);
+  padding-bottom: 120rpx;
+
+  // 顶部装饰背景
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 400rpx;
+    @include gradient-bg;
+    border-radius: 0 0 50% 50% / 0 0 80rpx 80rpx;
+    z-index: 0;
+  }
+
+  // 测试模式横幅
+  .test-mode-banner {
+    position: relative;
+    z-index: 2;
+    margin: $spacing-md $spacing-lg 0;
+    padding: $spacing-sm $spacing-md;
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFE8B2 100%);
+    border-radius: $radius-md;
+    border-left: 4rpx solid $warning-color;
+    @include flex-center;
+
+    .test-mode-text {
+      font-size: $font-size-sm;
+      color: #D97706;
+      font-weight: $font-weight-medium;
+    }
+  }
+
+  // 登录区域
+  .login-section {
+    position: relative;
+    z-index: 1;
+    padding: 120rpx $spacing-xl $spacing-xl;
+    @include flex-center;
+    flex-direction: column;
+    gap: $spacing-xl;
+
+    .login-button {
+      @include button-primary;
+      width: 400rpx;
+      height: 88rpx;
+      line-height: 88rpx;
+      border-radius: $radius-round;
+      font-size: $font-size-lg;
+      font-weight: $font-weight-bold;
+      margin-top: $spacing-lg;
+    }
+  }
+
+  // 用户信息区域
+  .user-info-section {
+    position: relative;
+    z-index: 1;
+    @include flex-center;
+    flex-direction: column;
+    padding: 80rpx $spacing-xl $spacing-xl;
+    gap: $spacing-lg;
+
+    .user-avatar {
+      width: 160rpx;
+      height: 160rpx;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 6rpx solid rgba(255, 255, 255, 0.9);
+      box-shadow: $shadow-lg;
+      background: $bg-primary;
+
+      .avatar-image {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .user-details {
+      @include flex-center;
+      flex-direction: column;
+      gap: $spacing-xs;
+
+      .user-nickname {
+        font-size: $font-size-xl;
+        font-weight: $font-weight-bold;
+        color: $bg-primary;
+        text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+      }
+
+      .user-phone {
+        font-size: $font-size-sm;
+        color: rgba(255, 255, 255, 0.9);
+      }
+    }
+  }
+
+  // 功能菜单区域
+  .menu-section {
+    position: relative;
+    z-index: 1;
+    margin: $spacing-lg $spacing-lg 0;
+    @include card;
+    overflow: hidden;
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: $spacing-lg $spacing-xl;
+      transition: background $transition-fast;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: $spacing-xl;
+        right: $spacing-xl;
+        height: 1rpx;
+        background: $border-light;
+      }
+
+      &:last-child::after {
+        display: none;
+      }
+
+      &:active {
+        background: $bg-tertiary;
+      }
+
+      .menu-item-left {
+        display: flex;
+        align-items: center;
+        gap: $spacing-md;
+
+        .menu-icon {
+          font-size: 40rpx;
+        }
+
+        .menu-text {
+          font-size: $font-size-base;
+          color: $text-primary;
+          font-weight: $font-weight-medium;
+        }
+      }
+
+      .menu-arrow {
+        font-size: 48rpx;
+        color: $text-tertiary;
+        font-weight: 300;
+      }
+    }
+  }
+
+  // 退出登录区域
+  .logout-section {
+    position: relative;
+    z-index: 1;
+    padding: $spacing-xl $spacing-lg;
+
+    .logout-button {
+      @include card;
+      width: 100%;
+      height: 88rpx;
+      line-height: 88rpx;
+      border-radius: $radius-round;
+      font-size: $font-size-base;
+      color: $error-color;
+      font-weight: $font-weight-medium;
+      transition: all $transition-base;
+
+      &:active {
+        transform: scale(0.98);
+        background: linear-gradient(135deg, #FFE5E5 0%, #FFD0D0 100%);
+      }
+    }
+  }
+
+  // 错误提示
+  .error-message {
+    position: relative;
+    z-index: 1;
+    margin: $spacing-md $spacing-lg;
+    padding: $spacing-md $spacing-lg;
+    background: linear-gradient(135deg, #FFE5E5 0%, #FFD0D0 100%);
+    border-radius: $radius-md;
+    border-left: 4rpx solid $error-color;
+
+    text {
+      font-size: $font-size-sm;
+      color: $error-color;
+      font-weight: $font-weight-medium;
+    }
+  }
 }

@@ -1,0 +1,103 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+.splash-page {
+  @include flex-center;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(180deg, #F8F6FF 0%, #FFFFFF 100%);
+  position: relative;
+  overflow: hidden;
+
+  // 背景装饰
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle,
+      rgba(139, 127, 216, 0.1) 0%,
+      transparent 70%
+    );
+    animation: rotate 20s linear infinite;
+  }
+
+  .splash-content {
+    @include flex-center;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+    @include fade-in;
+  }
+
+  .splash-logo {
+    width: 280rpx;
+    height: 280rpx;
+    margin-bottom: $spacing-xl;
+    @include float-animation;
+    filter: drop-shadow(0 8rpx 24rpx rgba(139, 127, 216, 0.3));
+  }
+
+  .splash-title {
+    font-size: 56rpx;
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-md;
+    letter-spacing: 4rpx;
+  }
+
+  .splash-subtitle {
+    font-size: $font-size-base;
+    color: $text-secondary;
+    letter-spacing: 2rpx;
+  }
+
+  .splash-footer {
+    position: absolute;
+    bottom: 120rpx;
+    @include flex-center;
+  }
+
+  .loading-dots {
+    display: flex;
+    gap: 12rpx;
+
+    .dot {
+      width: 12rpx;
+      height: 12rpx;
+      border-radius: 50%;
+      background: $primary-color;
+      animation: dotPulse 1.4s infinite ease-in-out;
+
+      &:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+
+      &:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+    }
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dotPulse {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

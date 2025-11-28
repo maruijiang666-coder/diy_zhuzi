@@ -1,3 +1,247 @@
 .order-detail-page {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f5f5;
+
+  .page-content {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .section {
+    background-color: #fff;
+    margin-bottom: 20rpx;
+    padding: 30rpx;
+
+    .section-title {
+      font-size: 32rpx;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 30rpx;
+      padding-bottom: 20rpx;
+      border-bottom: 1px solid #eee;
+    }
+  }
+
+  // 订单状态区域
+  .status-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60rpx 30rpx;
+
+    .status-badge {
+      padding: 20rpx 60rpx;
+      border-radius: 40rpx;
+
+      .status-text {
+        font-size: 36rpx;
+        color: #fff;
+        font-weight: bold;
+      }
+    }
+  }
+
+  // 订单信息区域
+  .info-section {
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20rpx;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .info-label {
+        font-size: 28rpx;
+        color: #666;
+      }
+
+      .info-value {
+        font-size: 28rpx;
+        color: #333;
+        max-width: 400rpx;
+        text-align: right;
+        word-break: break-all;
+      }
+    }
+  }
+
+  // 收货地址区域
+  .address-section {
+    .address-content {
+      .address-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20rpx;
+
+        .address-name {
+          font-size: 32rpx;
+          color: #333;
+          font-weight: bold;
+        }
+
+        .address-phone {
+          font-size: 28rpx;
+          color: #666;
+        }
+      }
+
+      .address-detail {
+        font-size: 28rpx;
+        color: #666;
+        line-height: 1.6;
+      }
+    }
+  }
+
+  // 物流信息区域
+  .logistics-section {
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .info-label {
+        font-size: 28rpx;
+        color: #666;
+      }
+
+      .info-value {
+        font-size: 28rpx;
+        color: #333;
+      }
+    }
+  }
+
+  // 手串设计区域
+  .items-section {
+    .design-item {
+      padding: 20rpx 0;
+      border-bottom: 1px solid #eee;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .design-header {
+        margin-bottom: 20rpx;
+
+        .design-title {
+          font-size: 30rpx;
+          color: #333;
+          font-weight: bold;
+        }
+      }
+
+      // 珠子预览
+      .design-beads {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10rpx;
+        margin-bottom: 20rpx;
+
+        .bead-image {
+          width: 80rpx;
+          height: 80rpx;
+          border-radius: 50%;
+          border: 2rpx solid #eee;
+        }
+      }
+
+      // 设计属性
+      .design-properties {
+        .property-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16rpx;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          .property-label {
+            font-size: 28rpx;
+            color: #666;
+          }
+
+          .property-value {
+            font-size: 28rpx;
+            color: #333;
+
+            &.price {
+              color: #ff6b6b;
+              font-weight: bold;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 价格汇总区域
+  .price-section {
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      &.total {
+        padding-top: 20rpx;
+        border-top: 1px solid #eee;
+      }
+
+      .price-label {
+        font-size: 32rpx;
+        color: #333;
+        font-weight: bold;
+      }
+
+      .price-value {
+        font-size: 40rpx;
+        color: #ff6b6b;
+        font-weight: bold;
+      }
+    }
+  }
+
+  // 错误提示
+  .error-banner {
+    background-color: #fff3cd;
+    padding: 20rpx 30rpx;
+    margin: 20rpx 30rpx;
+    border-radius: 8rpx;
+
+    .error-text {
+      font-size: 28rpx;
+      color: #856404;
+    }
+  }
+
+  // 底部操作按钮
+  .page-footer {
+    display: flex;
+    gap: 20rpx;
+    padding: 20rpx 30rpx;
+    background-color: #fff;
+    border-top: 1px solid #eee;
+    box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+
+    .action-btn {
+      flex: 1;
+      height: 80rpx;
+      line-height: 80rpx;
+      font-size: 32rpx;
+      border-radius: 40rpx;
+
+      &.primary {
+        // 主按钮样式由type='primary'控制
+      }
+    }
+  }
 }

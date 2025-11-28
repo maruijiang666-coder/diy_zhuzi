@@ -1,0 +1,80 @@
+// 水晶DIY - 设计系统变量
+
+// ========== 品牌色彩 ==========
+// 主色调：优雅的紫色渐变（水晶般的神秘感）
+$primary-color: #8B7FD8;
+$primary-light: #A89FE8;
+$primary-dark: #6B5FC8;
+$primary-gradient: linear-gradient(135deg, #8B7FD8 0%, #B8A9E8 100%);
+
+// 辅助色：柔和的粉紫色（水晶的温柔）
+$secondary-color: #D4C5F9;
+$secondary-light: #E8DEFF;
+
+// 强调色：玫瑰金（高级感）
+$accent-color: #C9A0DC;
+$accent-gold: #D4AF37;
+
+// ========== 中性色 ==========
+$text-primary: #2C2C2C;
+$text-secondary: #666666;
+$text-tertiary: #999999;
+$text-disabled: #CCCCCC;
+
+$bg-primary: #FFFFFF;
+$bg-secondary: #FAFAFA;
+$bg-tertiary: #F5F5F7;
+
+$border-color: #E8E8E8;
+$border-light: #F0F0F0;
+
+// ========== 功能色 ==========
+$success-color: #52C41A;
+$warning-color: #FAAD14;
+$error-color: #FF4D4F;
+$info-color: #1890FF;
+
+// ========== 阴影 ==========
+$shadow-sm: 0 2rpx 8rpx rgba(139, 127, 216, 0.08);
+$shadow-md: 0 4rpx 16rpx rgba(139, 127, 216, 0.12);
+$shadow-lg: 0 8rpx 24rpx rgba(139, 127, 216, 0.16);
+$shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+
+// ========== 圆角 ==========
+$radius-sm: 8rpx;
+$radius-md: 16rpx;
+$radius-lg: 24rpx;
+$radius-xl: 32rpx;
+$radius-round: 999rpx;
+
+// ========== 间距 ==========
+$spacing-xs: 8rpx;
+$spacing-sm: 12rpx;
+$spacing-md: 16rpx;
+$spacing-lg: 24rpx;
+$spacing-xl: 32rpx;
+$spacing-xxl: 48rpx;
+
+// ========== 字体 ==========
+$font-size-xs: 22rpx;
+$font-size-sm: 24rpx;
+$font-size-base: 28rpx;
+$font-size-lg: 32rpx;
+$font-size-xl: 36rpx;
+$font-size-xxl: 48rpx;
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ========== 动画 ==========
+$transition-fast: 0.2s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// ========== Z-index ==========
+$z-index-base: 1;
+$z-index-dropdown: 10;
+$z-index-modal: 100;
+$z-index-toast: 1000;

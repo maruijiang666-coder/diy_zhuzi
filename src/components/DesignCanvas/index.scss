@@ -1,0 +1,160 @@
+.design-canvas {
+  width: 100%;
+  height: 100%;
+  padding: 16rpx;
+  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__beads {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+    justify-content: center;
+    align-items: center;
+    padding: 24rpx;
+    background: #ffffff;
+    border-radius: 12rpx;
+    
+    // 圆形布局 - 显示为手串的线
+    &--circle {
+      position: relative;
+      margin: 0 auto;
+      border-radius: 50%;
+      background: transparent;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      // 手串的线（圆形边框）
+      &::before {
+        content: '';
+        position: absolute;
+        top: 50rpx; // padding
+        left: 50rpx; // padding
+        // 线的直径 = 半径 * 2 = 180 * 2 = 360rpx
+        width: 360rpx;
+        height: 360rpx;
+        border-radius: 50%;
+        border: 2rpx solid rgba(139, 69, 19, 0.5); // 棕色半透明的线
+        pointer-events: none;
+        z-index: 0;
+      }
+    }
+  }
+
+  &__bead {
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3rpx solid transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+    z-index: 1; // 确保珠子在线的上方
+
+    &--selected {
+      border-color: #1890ff;
+      box-shadow: 0 0 0 4rpx rgba(24, 144, 255, 0.2),
+        0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+      transform: scale(1.1);
+      z-index: 2;
+    }
+
+    &--dragging {
+      opacity: 0.6;
+      transform: scale(0.95);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  &__bead-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+
+  &__bead-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e0e0e0;
+    border-radius: 50%;
+  }
+
+  &__bead-placeholder-text {
+    font-size: 32rpx;
+    color: #999;
+    font-weight: bold;
+  }
+
+  &__bead-selected-indicator {
+    position: absolute;
+    top: -6rpx;
+    right: -6rpx;
+    width: 24rpx;
+    height: 24rpx;
+    background: #1890ff;
+    border-radius: 50%;
+    border: 3rpx solid #ffffff;
+    box-shadow: 0 2rpx 8rpx rgba(24, 144, 255, 0.4);
+  }
+
+  &__info {
+    margin-top: 12rpx;
+    text-align: center;
+  }
+
+  &__info-text {
+    font-size: 24rpx;
+    color: #666;
+  }
+
+  // 空状态样式
+  &__empty-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12rpx;
+  }
+
+  &__empty-icon {
+    font-size: 80rpx;
+    opacity: 0.6;
+    margin-bottom: 8rpx;
+  }
+
+  &__empty-text {
+    font-size: 28rpx;
+    color: #333;
+    font-weight: 500;
+  }
+
+  &__empty-desc {
+    font-size: 24rpx;
+    color: #999;
+  }
+}

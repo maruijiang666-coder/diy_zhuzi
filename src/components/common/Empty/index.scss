@@ -1,0 +1,53 @@
+@import '../../../styles/variables.scss';
+@import '../../../styles/mixins.scss';
+
+.empty-container {
+  @include flex-center;
+  flex-direction: column;
+  padding: 120rpx $spacing-xl;
+  min-height: 500rpx;
+  @include fade-in;
+
+  .empty-icon {
+    width: 240rpx;
+    height: 240rpx;
+    margin-bottom: $spacing-xl;
+    opacity: 0.8;
+    @include float-animation;
+  }
+
+  .empty-icon-default {
+    width: 240rpx;
+    height: 240rpx;
+    @include flex-center;
+    margin-bottom: $spacing-xl;
+    background: linear-gradient(135deg, #F8F6FF 0%, #E8DEFF 100%);
+    border-radius: $radius-lg;
+    @include float-animation;
+
+    .empty-icon-text {
+      font-size: 120rpx;
+      opacity: 0.6;
+    }
+  }
+
+  .empty-text {
+    font-size: $font-size-xl;
+    color: $text-primary;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-sm;
+  }
+
+  .empty-description {
+    font-size: $font-size-base;
+    color: $text-secondary;
+    text-align: center;
+    line-height: 1.6;
+    margin-bottom: $spacing-lg;
+    max-width: 500rpx;
+  }
+
+  .empty-action {
+    margin-top: $spacing-lg;
+  }
+}

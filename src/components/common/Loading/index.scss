@@ -1,0 +1,55 @@
+@import '../../../styles/variables.scss';
+@import '../../../styles/mixins.scss';
+
+.loading-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  @include flex-center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
+  -webkit-backdrop-filter: blur(10rpx);
+  z-index: $z-index-modal;
+
+  .loading-content {
+    @include flex-center;
+    flex-direction: column;
+    gap: $spacing-lg;
+    padding: $spacing-xxl;
+    background: $bg-primary;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-lg;
+    @include fade-in;
+
+    .loading-text {
+      font-size: $font-size-base;
+      color: $text-secondary;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+.loading-inline {
+  @include flex-center;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-xxl $spacing-xl;
+  min-height: 300rpx;
+
+  .loading-text {
+    font-size: $font-size-base;
+    color: $text-secondary;
+    font-weight: $font-weight-medium;
+  }
+}
+
+// 自定义loading动画颜色
+:global {
+  .nut-loading {
+    .nut-icon {
+      color: $primary-color !important;
+    }
+  }
+}

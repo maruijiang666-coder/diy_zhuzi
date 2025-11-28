@@ -1,0 +1,109 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+.designs-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #F8F6FF 0%, #FAFAFA 100%);
+  padding: $spacing-lg;
+
+  .designs-list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-lg;
+  }
+
+  .design-item {
+    @include card;
+    padding: $spacing-lg;
+    transition: all $transition-base;
+    @include fade-in;
+
+    &:active {
+      transform: scale(0.99);
+      box-shadow: $shadow-sm;
+    }
+
+    .design-item-content {
+      display: flex;
+      gap: $spacing-lg;
+      margin-bottom: $spacing-md;
+    }
+
+    .design-preview {
+      flex-shrink: 0;
+      width: 180rpx;
+      height: 180rpx;
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border: 2rpx solid rgba($primary-color, 0.1);
+        border-radius: $radius-md;
+        z-index: 0;
+        pointer-events: none;
+      }
+    }
+
+    .design-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-xs;
+      justify-content: center;
+
+      .design-name {
+        font-size: $font-size-lg;
+        color: $text-primary;
+        font-weight: $font-weight-semibold;
+        @include ellipsis;
+      }
+
+      .design-details {
+        display: flex;
+        align-items: center;
+        gap: $spacing-md;
+
+        .detail-item {
+          font-size: $font-size-sm;
+          color: $text-secondary;
+
+          &.price {
+            font-size: $font-size-base;
+            font-weight: $font-weight-bold;
+          }
+        }
+      }
+
+      .design-time {
+        font-size: $font-size-xs;
+        color: $text-tertiary;
+      }
+    }
+
+    .design-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: $spacing-sm;
+      border-top: 1rpx solid $border-light;
+
+      .delete-btn {
+        min-width: 120rpx;
+        height: 56rpx;
+        line-height: 56rpx;
+        border-radius: $radius-round;
+        font-size: $font-size-xs;
+        background: linear-gradient(135deg, #FFE5E5 0%, #FFD0D0 100%);
+        color: $error-color;
+        font-weight: $font-weight-medium;
+        transition: all $transition-base;
+
+        &:active {
+          transform: scale(0.95);
+          background: linear-gradient(135deg, #FFD0D0 0%, #FFB8B8 100%);
+        }
+      }
+    }
+  }
+}

@@ -1,7 +1,16 @@
+import { Bracelet, BraceletProperties } from './bracelet'
+
 export interface Category {
   id: string
   name: string
   icon?: string
+}
+
+export interface CartItem {
+  id: string
+  bracelet: Bracelet
+  properties: BraceletProperties
+  addedAt: number
 }
 
 export enum ErrorType {

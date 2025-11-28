@@ -1,4 +1,4 @@
-import { Bracelet } from './bracelet'
+import { CartItem } from './common'
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -28,16 +28,4 @@ export interface Order {
   paidAt?: number
   shippedAt?: number
   trackingNumber?: string
-}
-
-export interface CartItem {
-  id: string
-  bracelet: Bracelet
-  properties: {
-    totalPrice: number
-    totalWeight: number
-    totalLength: number
-    beadCount: number
-  }
-  addedAt: number
 }

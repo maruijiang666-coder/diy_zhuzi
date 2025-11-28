@@ -1,0 +1,26 @@
+@import '../../styles/variables.scss';
+
+.bracelet-preview {
+  position: relative;
+  background: linear-gradient(135deg, #F8F6FF 0%, #FFFFFF 100%);
+  border-radius: $radius-md;
+  overflow: visible;
+
+  // 圆环线条
+  .preview-circle-line {
+    position: absolute;
+    border-radius: 50%;
+    border: 2rpx solid rgba(139, 69, 19, 0.4);
+    transform: translate(-50%, -50%);
+    z-index: 0;
+  }
+
+  // 珠子
+  .preview-bead {
+    position: absolute;
+    border-radius: 50%;
+    border: 2rpx solid rgba(139, 127, 216, 0.2);
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+    z-index: 1;
+  }
+}

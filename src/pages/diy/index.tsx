@@ -1,10 +1,386 @@
-import { View, Text } from '@tarojs/components'
+import { View, Button } from '@tarojs/components'
+import { useState, useEffect } from 'react'
+import Taro, { useRouter } from '@tarojs/taro'
+import { useDiyStore } from '../../stores/useDiyStore'
+import { useCartStore } from '../../stores/useCartStore'
+import { useDesignStore } from '../../stores/useDesignStore'
+import BeadSelector from '../../components/BeadSelector'
+import DesignCanvas from '../../components/DesignCanvas'
+import PropertyPanel from '../../components/PropertyPanel'
+import NameInputModal from '../../components/NameInputModal'
+import { validateBracelet } from '../../utils/validator'
+import { MAX_BEADS } from '../../constants/limits'
+import type { Bead } from '../../types/bead'
+import { testMockData } from '../../utils/testMockData'
 import './index.scss'
 
 export default function DiyPage() {
+  const router = useRouter()
+  
+  const {
+    bracelet,
+    selectedBeadIndex,
+    addBead,
+    selectBead,
+    removeBead,
+    moveBead,
+    clearBracelet,
+    getProperties,
+    canAddBead,
+  } = useDiyStore()
+
+  const { addToCart, items } = useCartStore()
+  const { saveDesign } = useDesignStore()
+
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [isSavingDesign, setIsSavingDesign] = useState(false)
+  const [showNameModal, setShowNameModal] = useState(false)
+
+  // 页面加载时检查是否需要加载购物车项
+  useEffect(() => {
+    const { cartItemId } = router.params
+    
+    if (cartItemId) {
+      loadCartItemToDesign(cartItemId)
+    }
+    
+    // 测试Mock数据
+    console.log('DIY页面已加载，开始测试Mock数据...')
+    testMockData().then((success) => {
+      if (success) {
+        console.log('Mock数据测试成功！')
+      } else {
+        console.error('Mock数据测试失败！')
+      }
+    })
+  }, [router.params.cartItemId])
+
+  // 从购物车加载设计到DIY页面
+  const loadCartItemToDesign = async (cartItemId: string) => {
+    try {
+      // 显示加载提示
+      Taro.showLoading({
+        title: '加载设计中...',
+        mask: true,
+      })
+      // 查找购物车项
+      const cartItem = items.find((item) => item.id === cartItemId)
+      
+      if (!cartItem) {
+        Taro.showToast({
+          title: '未找到该设计',
+          icon: 'none',
+          duration: 2000,
+        })
+        return
+      }
+
+      // 清空当前设计
+      clearBracelet()
+
+      // 加载购物车项的珠子到设计画布
+      cartItem.bracelet.beads.forEach((bead) => {
+        addBead(bead)
+      })
+
+      // 隐藏加载提示
+      Taro.hideLoading()
+
+      Taro.showToast({
+        title: '设计已加载',
+        icon: 'success',
+        duration: 2000,
+      })
+    } catch (error: any) {
+      // 隐藏加载提示
+      Taro.hideLoading()
+      
+      Taro.showToast({
+        title: error.message || '加载设计失败',
+        icon: 'none',
+        duration: 2000,
+      })
+    }
+  }
+
+  // 获取手串属性
+  const properties = getProperties()
+
+  // 处理珠子选中
+  const handleBeadSelect = (index: number) => {
+    selectBead(index)
+  }
+
+  // 处理珠子删除
+  const handleBeadDelete = (index: number) => {
+    removeBead(index)
+  }
+
+  // 处理珠子移动
+  const handleBeadMove = (fromIndex: number, toIndex: number) => {
+    moveBead(fromIndex, toIndex)
+  }
+
+  // 处理珠子点击添加
+  const handleBeadClick = (bead: Bead) => {
+    // 检查是否可以继续添加珠子
+    if (!canAddBead()) {
+      Taro.showToast({
+        title: `最多只能添加${MAX_BEADS}个珠子`,
+        icon: 'none',
+        duration: 2000,
+      })
+      return
+    }
+
+    // 添加珠子到手串
+    addBead(bead)
+
+    // 显示添加成功提示
+    Taro.showToast({
+      title: '添加成功',
+      icon: 'success',
+      duration: 1000,
+    })
+  }
+
+  // 处理加入购物车
+  const handleAddToCart = async () => {
+    // 验证手串是否有效
+    const validation = validateBracelet(bracelet)
+    if (!validation.valid) {
+      Taro.showToast({
+        title: validation.message || '请至少添加一个珠子',
+        icon: 'none',
+        duration: 2000,
+      })
+      return
+    }
+
+    // 防止重复提交
+    if (isAddingToCart) {
+      return
+    }
+
+    setIsAddingToCart(true)
+
+    try {
+      // 显示加载提示
+      Taro.showLoading({
+        title: '加入购物车中...',
+        mask: true,
+      })
+
+      // 调用购物车服务添加到购物车
+      await addToCart(bracelet)
+
+      // 隐藏加载提示
+      Taro.hideLoading()
+
+      // 显示成功提示并询问用户下一步操作
+      Taro.showModal({
+        title: '加入购物车成功',
+        content: '是否继续设计或前往购物车？',
+        confirmText: '前往购物车',
+        cancelText: '继续设计',
+        success: (res) => {
+          if (res.confirm) {
+            // 前往购物车页面
+            Taro.switchTab({
+              url: '/pages/cart/index',
+            })
+          } else {
+            // 继续设计，清空当前设计
+            clearBracelet()
+          }
+        },
+      })
+    } catch (error: any) {
+      // 隐藏加载提示
+      Taro.hideLoading()
+
+      // 显示错误提示
+      const errorMessage = error.message || '加入购物车失败，请重试'
+      Taro.showModal({
+        title: '加入购物车失败',
+        content: errorMessage,
+        showCancel: true,
+        confirmText: '重试',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            // 用户选择重试
+            handleAddToCart()
+          }
+        },
+      })
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
+
+  // 处理保存设计
+  const handleSaveDesign = () => {
+    // 验证手串是否有效
+    const validation = validateBracelet(bracelet)
+    if (!validation.valid) {
+      Taro.showToast({
+        title: validation.message || '请至少添加一个珠子',
+        icon: 'none',
+        duration: 2000,
+      })
+      return
+    }
+
+    // 防止重复提交
+    if (isSavingDesign) {
+      return
+    }
+
+    // 显示命名对话框
+    setShowNameModal(true)
+  }
+
+  // 确认保存设计
+  const handleConfirmSave = async (designName: string) => {
+    setShowNameModal(false)
+    setIsSavingDesign(true)
+
+    try {
+      // 显示加载提示
+      Taro.showLoading({
+        title: '保存中...',
+        mask: true,
+      })
+
+      // 生成画布截图（暂时使用空字符串，后续实现Canvas截图）
+      const thumbnail = '' // TODO: 实现Canvas截图
+
+      // 保存设计
+      const savedDesign = await saveDesign(bracelet, designName, thumbnail)
+
+      // 隐藏加载提示
+      Taro.hideLoading()
+
+      // 显示成功提示
+      Taro.showToast({
+        title: '保存成功',
+        icon: 'success',
+        duration: 2000,
+      })
+
+      console.log('设计已保存:', savedDesign)
+    } catch (error: any) {
+      // 隐藏加载提示
+      Taro.hideLoading()
+
+      // 显示错误提示
+      Taro.showToast({
+        title: error.message || '保存失败',
+        icon: 'none',
+        duration: 2000,
+      })
+    } finally {
+      setIsSavingDesign(false)
+    }
+  }
+
+  // 取消保存
+  const handleCancelSave = () => {
+    setShowNameModal(false)
+  }
+
+  // 处理清空设计
+  const handleClearDesign = () => {
+    // 如果手串为空，不需要清空
+    if (bracelet.beads.length === 0) {
+      Taro.showToast({
+        title: '当前设计已为空',
+        icon: 'none',
+        duration: 2000,
+      })
+      return
+    }
+
+    // 弹出确认对话框
+    Taro.showModal({
+      title: '确认清空',
+      content: '确定要清空当前设计吗？此操作不可恢复。',
+      confirmText: '确定',
+      cancelText: '取消',
+      confirmColor: '#ff4d4f',
+      success: (res) => {
+        if (res.confirm) {
+          // 用户确认清空
+          clearBracelet()
+          Taro.showToast({
+            title: '已清空设计',
+            icon: 'success',
+            duration: 1500,
+          })
+        }
+      },
+    })
+  }
+
   return (
-    <View className="diy-page">
-      <Text>DIY设计页面</Text>
+    <View className='diy-page'>
+      {/* 设计画布 - 上方 */}
+      <View className='diy-page__canvas'>
+        <DesignCanvas
+          bracelet={bracelet}
+          selectedBeadIndex={selectedBeadIndex}
+          onBeadSelect={handleBeadSelect}
+          onBeadDelete={handleBeadDelete}
+          onBeadMove={handleBeadMove}
+        />
+      </View>
+
+      {/* 属性面板 - 中间 */}
+      <View className='diy-page__properties'>
+        <PropertyPanel properties={properties} />
+      </View>
+
+      {/* 操作按钮 */}
+      <View className='diy-page__actions'>
+        <Button
+          className='diy-page__action-btn diy-page__action-btn--clear'
+          onClick={handleClearDesign}
+          disabled={bracelet.beads.length === 0}
+        >
+          清空设计
+        </Button>
+        <Button
+          className='diy-page__action-btn diy-page__action-btn--save'
+          onClick={handleSaveDesign}
+          disabled={bracelet.beads.length === 0 || isSavingDesign}
+          loading={isSavingDesign}
+        >
+          保存设计
+        </Button>
+        <Button
+          className='diy-page__action-btn diy-page__action-btn--cart'
+          type='primary'
+          onClick={handleAddToCart}
+          disabled={bracelet.beads.length === 0 || isAddingToCart}
+          loading={isAddingToCart}
+        >
+          加入购物车
+        </Button>
+      </View>
+
+      {/* 珠子选择器 - 下方 */}
+      <View className='diy-page__selector'>
+        <BeadSelector onBeadClick={handleBeadClick} />
+      </View>
+
+      {/* 命名对话框 */}
+      <NameInputModal
+        visible={showNameModal}
+        defaultName={`设计 ${new Date().toLocaleDateString()}`}
+        onConfirm={handleConfirmSave}
+        onCancel={handleCancelSave}
+      />
     </View>
   )
 }
