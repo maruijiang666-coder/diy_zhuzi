@@ -120,7 +120,7 @@ function createAppError(type: ErrorType, message: string, code?: number): AppErr
   return {
     type,
     message,
-    code: code?.toString(),
+    code: code ? code.toString() : undefined,
   }
 }
 

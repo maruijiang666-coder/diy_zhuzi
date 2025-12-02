@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock数据导出测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Mock数据导出测试</h1>
+        
+        <div class="test-section">
+            <h3>📊 数据统计</h3>
+            <button onclick="testStats()">获取数据统计</button>
+            <div id="stats-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📤 数据导出测试</h3>
+            <button onclick="testExportBeads()">导出珠子数据</button>
+            <button onclick="testExportCategories()">导出分类数据</button>
+            <button onclick="testExportCart()">导出购物车数据</button>
+            <button onclick="testExportDesigns()">导出设计数据</button>
+            <button onclick="testExportAll()">导出所有数据</button>
+            <div id="export-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔍 数据预览</h3>
+            <button onclick="previewBeads()">预览珠子数据</button>
+            <button onclick="previewCategories()">预览分类数据</button>
+            <button onclick="previewCart()">预览购物车数据</button>
+            <button onclick="previewDesigns()">预览设计数据</button>
+            <div id="preview-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📋 测试结果</h3>
+            <div id="test-log"></div>
+        </div>
+    </div>
+
+    <!-- 导入Taro和项目依赖 -->
+    <script src="./dist/taro.js"></script>
+    <script type="module">
+        // 模拟数据导出功能
+        class MockDataExporter {
+            constructor() {
+                this.mockBeads = [
+                    {
+                        id: 1,
+                        name: '紫水晶珠子',
+                        category: 'amethyst',
+                        price: 25,
+                        size: 8,
+                        color: '#9966CC',
+                        image: '/assets/images/amethyst.png',
+                        description: '高品质紫水晶珠子'
+                    },
+                    {
+                        id: 2,
+                        name: '粉水晶珠子',
+                        category: 'rose_quartz',
+                        price: 20,
+                        size: 10,
+                        color: '#FFB6C1',
+                        image: '/assets/images/rose_quartz.png',
+                        description: '温柔粉水晶珠子'
+                    }
+                ];
+                
+                this.mockCategories = [
+                    { id: 'amethyst', name: '紫水晶', description: '紫水晶系列' },
+                    { id: 'rose_quartz', name: '粉水晶', description: '粉水晶系列' }
+                ];
+                
+                this.mockCartItems = [
+                    {
+                        beadId: 1,
+                        quantity: 2,
+                        bead: this.mockBeads[0]
+                    }
+                ];
+                
+                this.mockDesigns = [
+                    {
+                        id: 'design-1',
+                        name: '测试设计',
+                        beads: this.mockCartItems,
+                        totalPrice: 50,
+                        totalWeight: 10,
+                        totalLength: 16
+                    }
+                ];
+            }
+            
+            async getBeads() {
+                return { beads: this.mockBeads };
+            }
+            
+            async getCategories() {
+                return this.mockCategories;
+            }
+            
+            async getCartItems() {
+                return this.mockCartItems;
+            }
+            
+            async getDesigns() {
+                return this.mockDesigns;
+            }
+            
+            async getOrders() {
+                return [];
+            }
+        }
+        
+        // 创建全局导出器实例
+        window.mockExporter = new MockDataExporter();
+        
+        // 测试函数
+        window.testStats = async function() {
+            try {
+                const stats = {
+                    beads: (await window.mockExporter.getBeads()).beads.length,
+                    categories: (await window.mockExporter.getCategories()).length,
+                    cartItems: (await window.mockExporter.getCartItems()).length,
+                    designs: (await window.mockExporter.getDesigns()).length,
+                    orders: (await window.mockExporter.getOrders()).length
+                };
+                
+                document.getElementById('stats-result').innerHTML = `
+                    <div class="success">✅ 数据统计成功</div>
+                    <pre>${JSON.stringify(stats, null, 2)}</pre>
+                `;
+                
+                logTest('数据统计测试', true);
+            } catch (error) {
+                document.getElementById('stats-result').innerHTML = `
+                    <div class="error">❌ 数据统计失败: ${error.message}</div>
+                `;
+                logTest('数据统计测试', false, error.message);
+            }
+        };
+        
+        window.testExportBeads = async function() {
+            await testExport('beads', '珠子');
+        };
+        
+        window.testExportCategories = async function() {
+            await testExport('categories', '分类');
+        };
+        
+        window.testExportCart = async function() {
+            await testExport('cart', '购物车');
+        };
+        
+        window.testExportDesigns = async function() {
+            await testExport('designs', '设计');
+        };
+        
+        window.testExportAll = async function() {
+            try {
+                const allData = {
+                    beads: (await window.mockExporter.getBeads()).beads,
+                    categories: await window.mockExporter.getCategories(),
+                    cartItems: await window.mockExporter.getCartItems(),
+                    designs: await window.mockExporter.getDesigns(),
+                    orders: await window.mockExporter.getOrders(),
+                    exportTime: new Date().toISOString()
+                };
+                
+                // 模拟文件下载
+                downloadJSON(allData, 'mock-data-all.json');
+                
+                document.getElementById('export-result').innerHTML = `
+                    <div class="success">✅ 所有数据导出成功</div>
+                    <div class="info">📊 数据包含:</div>
+                    <ul>
+                        <li>珠子: ${allData.beads.length} 个</li>
+                        <li>分类: ${allData.categories.length} 个</li>
+                        <li>购物车项: ${allData.cartItems.length} 个</li>
+                        <li>设计: ${allData.designs.length} 个</li>
+                        <li>订单: ${allData.orders.length} 个</li>
+                    </ul>
+                `;
+                
+                logTest('全部数据导出测试', true);
+            } catch (error) {
+                document.getElementById('export-result').innerHTML = `
+                    <div class="error">❌ 数据导出失败: ${error.message}</div>
+                `;
+                logTest('全部数据导出测试', false, error.message);
+            }
+        };
+        
+        async function testExport(type, typeName) {
+            try {
+                let data;
+                switch (type) {
+                    case 'beads':
+                        data = (await window.mockExporter.getBeads()).beads;
+                        break;
+                    case 'categories':
+                        data = await window.mockExporter.getCategories();
+                        break;
+                    case 'cart':
+                        data = await window.mockExporter.getCartItems();
+                        break;
+                    case 'designs':
+                        data = await window.mockExporter.getDesigns();
+                        break;
+                }
+                
+                // 模拟文件下载
+                downloadJSON(data, `mock-${type}.json`);
+                
+                document.getElementById('export-result').innerHTML = `
+                    <div class="success">✅ ${typeName}数据导出成功</div>
+                    <div class="info">📄 共 ${data.length} 条数据</div>
+                `;
+                
+                logTest(`${typeName}数据导出测试`, true);
+            } catch (error) {
+                document.getElementById('export-result').innerHTML = `
+                    <div class="error">❌ ${typeName}数据导出失败: ${error.message}</div>
+                `;
+                logTest(`${typeName}数据导出测试`, false, error.message);
+            }
+        }
+        
+        // 数据预览函数
+        window.previewBeads = async function() {
+            const data = (await window.mockExporter.getBeads()).beads;
+            showPreview('珠子数据', data);
+        };
+        
+        window.previewCategories = async function() {
+            const data = await window.mockExporter.getCategories();
+            showPreview('分类数据', data);
+        };
+        
+        window.previewCart = async function() {
+            const data = await window.mockExporter.getCartItems();
+            showPreview('购物车数据', data);
+        };
+        
+        window.previewDesigns = async function() {
+            const data = await window.mockExporter.getDesigns();
+            showPreview('设计数据', data);
+        };
+        
+        function showPreview(title, data) {
+            document.getElementById('preview-result').innerHTML = `
+                <div class="success">✅ ${title}预览</div>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        }
+        
+        // 模拟文件下载
+        function downloadJSON(data, filename) {
+            const jsonString = JSON.stringify(data, null, 2);
+            console.log(`📤 模拟下载: ${filename}`);
+            console.log(`📄 数据内容:`, data);
+            
+            // 在实际环境中，这里会创建Blob和下载链接
+            // const blob = new Blob([jsonString], { type: 'application/json' });
+            // const url = URL.createObjectURL(blob);
+            // const link = document.createElement('a');
+            // link.href = url;
+            // link.download = filename;
+            // link.click();
+        }
+        
+        // 测试日志
+        function logTest(testName, success, error = null) {
+            const log = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const status = success ? '<span class="success">✅ 通过</span>' : `<span class="error">❌ 失败: ${error}</span>`;
+            log.innerHTML += `<div>[${timestamp}] ${testName}: ${status}</div>`;
+        }
+        
+        console.log('🧪 Mock数据导出测试页面已加载');
+        console.log('💡 可用函数:');
+        console.log('  - testStats()');
+        console.log('  - testExportBeads()');
+        console.log('  - testExportCategories()');
+        console.log('  - testExportCart()');
+        console.log('  - testExportDesigns()');
+        console.log('  - testExportAll()');
+        console.log('  - previewBeads()');
+        console.log('  - previewCategories()');
+        console.log('  - previewCart()');
+        console.log('  - previewDesigns()');
+    </script>
+</body>
+</html>

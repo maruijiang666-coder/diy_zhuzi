@@ -25,6 +25,12 @@ export const beadApi = {
   // 获取珠子列表
   getBeads: (params?: GetBeadsParams): Promise<GetBeadsResponse> => {
     return httpClient.get<GetBeadsResponse>(API_ENDPOINTS.BEADS, params)
+    //这是API端点常量，值为 '/beads' ，最终会变成完整的URL如：https://api.example.com/beads?page=1&pageSize=20&category=xxx&keyword=xxx
+    //### params· 可选参数，用于筛选珠子列表
+    //### params.page· 页码，默认值为1
+    //### params.pageSize· 每页数量，默认值为20
+    //### params.category· 分类筛选（可选）
+    //### params.keyword· 搜索关键词（可选）
   },
 
   // 获取珠子分类

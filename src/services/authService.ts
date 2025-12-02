@@ -122,10 +122,10 @@ class AuthService {
       
       // 网络错误或API错误，使用测试用户
       const isNetworkError = 
-        error.message?.includes('网络') ||
-        error.message?.includes('Network') ||
-        error.message?.includes('timeout') ||
-        error.message?.includes('Failed to fetch') ||
+        (error.message && error.message.includes('网络')) ||
+      (error.message && error.message.includes('Network')) ||
+      (error.message && error.message.includes('timeout')) ||
+      (error.message && error.message.includes('Failed to fetch')) ||
         error.code === 'NETWORK_ERROR'
 
       if (isNetworkError) {

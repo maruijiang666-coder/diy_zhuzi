@@ -27,6 +27,7 @@ class BeadService {
   ): Promise<{ beads: Bead[]; total: number; page: number; pageSize: number }> {
     // 使用Mock数据
     if (USE_MOCK) {
+      // BeadSelector组件使用的时候，会传递数据过来，把传递的数据类别，关键词，页数，每页数量交给mockBeadServiece
       return await mockBeadService.getBeads(category, keyword, page, pageSize)
     }
 

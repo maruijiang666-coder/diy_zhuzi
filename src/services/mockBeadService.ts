@@ -168,7 +168,7 @@ class MockBeadService {
       const lowerKeyword = keyword.toLowerCase().trim()
       filteredBeads = filteredBeads.filter((bead) =>
         bead.name.toLowerCase().includes(lowerKeyword) ||
-        bead.description?.toLowerCase().includes(lowerKeyword)
+        (bead.description && bead.description.toLowerCase().includes(lowerKeyword))
       )
     }
 

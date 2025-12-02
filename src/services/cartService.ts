@@ -126,8 +126,9 @@ class CartService {
     }
 
     return items.reduce((total, item) => {
-      return total + (item.properties?.totalPrice || 0)
-    }, 0)
+      const totalPrice = item.properties && item.properties.totalPrice ? item.properties.totalPrice : 0;
+      return total + totalPrice;
+    }, 0);
   }
 
   /**

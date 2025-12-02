@@ -48,10 +48,10 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
         console.log('BeadSelector: 开始加载珠子数据...', { currentCategory, searchKeyword })
         
         const result = await beadService.getBeads(
-          currentCategory,
-          searchKeyword,
-          1,
-          20
+          currentCategory,   // 分类筛选参数
+          searchKeyword,     // 搜索关键词
+          1,   //第一页
+          20   //每页20个
         )
 
         console.log('BeadSelector: 珠子数据加载成功:', result)
@@ -98,8 +98,8 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
       const result = await beadService.getBeads(
         currentCategory,
         searchKeyword,
-        page + 1,
-        20
+        page + 1,    // 页码递增
+        20  
       )
 
       setBeads((prev) => [...prev, ...result.beads])
