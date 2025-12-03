@@ -3,8 +3,9 @@ import { CartItem } from '../types/common'
 import { Bracelet } from '../types/bracelet'
 import { mockCartService } from './mockCartService'
 
-// 是否使用Mock数据（开发测试阶段始终使用Mock数据）
-const USE_MOCK = true
+// 是否使用Mock数据（开发测试阶段可切换，true=使用Mock数据，false=使用真实API）
+// 注意：使用真实 API 前，需要在微信开发者工具中关闭域名校验
+const USE_MOCK = false
 
 /**
  * 购物车服务
@@ -48,6 +49,7 @@ class CartService {
     if (USE_MOCK) {
       return await mockCartService.getCartItems()
     }
+    // 真实数据走线
     return await cartApi.getCartItems()
   }
 

@@ -5,8 +5,8 @@ export const API_ENDPOINTS = {
   BEAD_DETAIL: (id: string) => `/beads/${id}/`,
 
   // 购物车相关
-  CART_ITEMS: '/cart/items',
-  CART_ITEM_DETAIL: (id: string) => `/cart/items/${id}`,
+  CART_ITEMS: '/cart/items/',
+  CART_ITEM_DETAIL: (id: string) => `/cart/items/${id}/`,
 
   // 订单相关
   ORDERS: '/orders',

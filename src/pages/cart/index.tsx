@@ -23,12 +23,12 @@ export default function CartPage() {
   const { clearBracelet } = useDiyStore()
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
 
-  // 页面加载时获取购物车数据
+  // 页面加载时获取购物车数据，页面初次加载时使用。
   useEffect(() => {
     loadCartItems()
   }, [loadCartItems])
 
-  // 页面显示时刷新购物车数据
+  // 页面显示时刷新购物车数据，从其他页面返回时刷新。
   Taro.useDidShow(() => {
     loadCartItems()
   })

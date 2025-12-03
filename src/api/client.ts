@@ -78,6 +78,13 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
 
   const url = buildUrl(config.url, config.params)
 
+  // 调试日志
+  console.log('=== API 请求详情 ===')
+  console.log('URL:', url)
+  console.log('Method:', config.method || 'GET')
+  console.log('Headers:', headers)
+  console.log('API_KEY:', API_KEY)
+
   return {
     url,
     method: config.method || 'GET',
@@ -90,6 +97,11 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
 // 响应拦截器：统一错误处理、Token过期处理
 async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResult): Promise<T> {
   const { statusCode, data } = response
+
+  // 调试日志
+  console.log('=== API 响应详情 ===')
+  console.log('Status:', statusCode)
+  console.log('Data:', data)
 
   // HTTP状态码检查
   if (statusCode >= 200 && statusCode < 300) {

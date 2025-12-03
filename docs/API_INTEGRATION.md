@@ -53,6 +53,38 @@ const USE_MOCK = false
 }
 ```
 
+#### 获取购物车列表
+- **URL**: `GET /cart/items/`
+- **参数**:
+  - `page`: 页码（可选，默认 1）
+
+- **响应格式**:
+```json
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 2,
+      "user": 1,
+      "bracelet": {
+        "id": 2,
+        "bracelet_beads": [
+          {
+            "id": 2,
+            "bead": { /* 珠子详情 */ },
+            "position": 0
+          }
+        ]
+      },
+      "properties": { /* 手串属性 */ },
+      "added_at": "2025-12-03T13:43:51"
+    }
+  ]
+}
+```
+
 ### 数据转换
 
 API 返回的数据会自动转换为前端使用的格式：
@@ -67,9 +99,10 @@ API 返回的数据会自动转换为前端使用的格式：
 
 1. **src/constants/config.ts**: 更新 API_BASE_URL 和添加 API_KEY
 2. **src/api/client.ts**: 添加 X-API-Key 请求头，优化响应处理
-3. **src/api/endpoints.ts**: 适配 Django REST framework 分页格式
+3. **src/api/endpoints.ts**: 适配 Django REST framework 分页格式（珠子、购物车）
 4. **src/constants/api.ts**: 添加 URL 尾部斜杠
-5. **src/services/beadService.ts**: 保留 Mock 控制开关
+5. **src/services/beadService.ts**: 保留 Mock 控制开关（当前使用真实 API）
+6. **src/services/cartService.ts**: 保留 Mock 控制开关（当前使用真实 API）
 
 ### 注意事项
 

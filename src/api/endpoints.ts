@@ -62,8 +62,8 @@ export const beadApi = {
       apiParams.search = params.keyword // 后端可能使用 search 参数
     }
 
-    // 调用 API
-    const response = await httpClient.get<DjangoPageResponse<ApiBeadData>>(
+    // 调用 API（珠子列表不需要认证）
+    const response = await httpClient.getWithoutAuth<DjangoPageResponse<ApiBeadData>>(
       API_ENDPOINTS.BEADS,
       apiParams
     )
@@ -91,12 +91,12 @@ export const beadApi = {
 
   // 获取珠子分类
   getCategories: (): Promise<Category[]> => {
-    return httpClient.get<Category[]>(API_ENDPOINTS.BEAD_CATEGORIES)
+    return httpClient.getWithoutAuth<Category[]>(API_ENDPOINTS.BEAD_CATEGORIES)
   },
 
   // 获取珠子详情
   getBeadById: async (id: string): Promise<Bead> => {
-    const item = await httpClient.get<ApiBeadData>(API_ENDPOINTS.BEAD_DETAIL(id))
+    const item = await httpClient.getWithoutAuth<ApiBeadData>(API_ENDPOINTS.BEAD_DETAIL(id))
     
     return {
       id: String(item.id),
@@ -131,6 +131,37 @@ export interface UpdateCartItemRequest {
   }
 }
 
+// API 返回的购物车数据格式
+interface ApiCartItemData {
+  id: number
+  user: number
+  bracelet: {
+    id: number
+    user: number
+    bracelet_beads: Array<{
+      id: number
+      bead: ApiBeadData
+      position: number
+    }>
+    created_at: string
+    updated_at: string
+  }
+  properties: {
+    id: number
+    name: string
+    price: string
+    stock: number
+    weight: string
+    category: string
+    diameter: string
+    image_url: string
+    created_at: string
+    updated_at: string
+    description: string
+  }
+  added_at: string
+}
+
 export const cartApi = {
   // 添加到购物车
   addToCart: (data: AddToCartRequest): Promise<AddToCartResponse> => {
@@ -138,8 +169,50 @@ export const cartApi = {
   },
 
   // 获取购物车列表
-  getCartItems: (): Promise<CartItem[]> => {
-    return httpClient.get<CartItem[]>(API_ENDPOINTS.CART_ITEMS)
+  getCartItems: async (page: number = 1): Promise<CartItem[]> => {
+    const response = await httpClient.get<DjangoPageResponse<ApiCartItemData>>(
+      API_ENDPOINTS.CART_ITEMS,
+      { page }
+    )
+
+    // 转换数据格式
+    const cartItems: CartItem[] = response.results.map((item) => {
+      // 转换珠子数据
+      const beads = item.bracelet.bracelet_beads
+        .sort((a, b) => a.position - b.position)
+        .map((beadItem) => ({
+          id: String(beadItem.bead.id),
+          name: beadItem.bead.name,
+          category: beadItem.bead.category,
+          imageUrl: beadItem.bead.image_url,
+          price: parseFloat(beadItem.bead.price),
+          weight: parseFloat(beadItem.bead.weight),
+          diameter: parseFloat(beadItem.bead.diameter),
+          stock: beadItem.bead.stock,
+          description: beadItem.bead.description,
+        }))
+
+      // 计算手串属性
+      const totalPrice = beads.reduce((sum, bead) => sum + bead.price, 0)
+      const totalWeight = beads.reduce((sum, bead) => sum + bead.weight, 0)
+      const totalLength = beads.reduce((sum, bead) => sum + bead.diameter, 0)
+
+      return {
+        id: String(item.id),
+        bracelet: {
+          beads,
+        },
+        properties: {
+          totalPrice,
+          totalWeight,
+          totalLength,
+          beadCount: beads.length,
+        },
+        addedAt: new Date(item.added_at).getTime(),
+      }
+    })
+
+    return cartItems
   },
 
   // 更新购物车项

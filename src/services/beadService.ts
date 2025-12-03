@@ -8,7 +8,6 @@ import { mockBeadService } from './mockBeadService'
 // 操作：详情 -> 本地设置 -> 勾选"不校验合法域名"
 // 是否使用Mock数据（开发测试阶段可切换，true=使用Mock数据，false=使用真实API）
 // 注意：使用真实 API 前，需要在微信开发者工具中关闭域名校验
-// 操作：详情 -> 本地设置 -> 勾选"不校验合法域名"
 const USE_MOCK = false
 
 /**
