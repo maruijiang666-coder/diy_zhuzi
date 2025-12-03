@@ -170,7 +170,7 @@ export const cartApi = {
 
   // 获取购物车列表
   getCartItems: async (page: number = 1): Promise<CartItem[]> => {
-    const response = await httpClient.get<DjangoPageResponse<ApiCartItemData>>(
+    const response = await httpClient.getWithoutAuth<DjangoPageResponse<ApiCartItemData>>(
       API_ENDPOINTS.CART_ITEMS,
       { page }
     )
