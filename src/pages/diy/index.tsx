@@ -223,6 +223,7 @@ export default function DiyPage() {
   const handleSaveDesign = () => {
     // 验证手串是否有效
     const validation = validateBracelet(bracelet)
+    
     if (!validation.valid) {
       Taro.showToast({
         title: validation.message || '请至少添加一个珠子',

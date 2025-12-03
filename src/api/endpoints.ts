@@ -21,16 +21,72 @@ export interface GetBeadsResponse {
   pageSize: number
 }
 
+// Django REST framework 分页响应格式
+interface DjangoPageResponse<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
+// API 返回的珠子数据格式（与后端字段对应）
+interface ApiBeadData {
+  id: number
+  name: string
+  category: string
+  image_url: string
+  price: string
+  weight: string
+  diameter: string
+  stock: number
+  description: string
+  created_at: string
+  updated_at: string
+}
+
 export const beadApi = {
   // 获取珠子列表
-  getBeads: (params?: GetBeadsParams): Promise<GetBeadsResponse> => {
-    return httpClient.get<GetBeadsResponse>(API_ENDPOINTS.BEADS, params)
-    //这是API端点常量，值为 '/beads' ，最终会变成完整的URL如：https://api.example.com/beads?page=1&pageSize=20&category=xxx&keyword=xxx
-    //### params· 可选参数，用于筛选珠子列表
-    //### params.page· 页码，默认值为1
-    //### params.pageSize· 每页数量，默认值为20
-    //### params.category· 分类筛选（可选）
-    //### params.keyword· 搜索关键词（可选）
+  getBeads: async (params?: GetBeadsParams): Promise<GetBeadsResponse> => {
+    // 转换参数格式以匹配后端 API
+    const apiParams: Record<string, any> = {}
+    
+    if (params && params.page) {
+      apiParams.page = params.page
+    }
+    
+    if (params && params.category) {
+      apiParams.category = params.category
+    }
+    
+    if (params && params.keyword) {
+      apiParams.search = params.keyword // 后端可能使用 search 参数
+    }
+
+    // 调用 API
+    const response = await httpClient.get<DjangoPageResponse<ApiBeadData>>(
+      API_ENDPOINTS.BEADS,
+      apiParams
+    )
+
+    // 转换数据格式
+    const beads: Bead[] = response.results.map((item) => ({
+      id: String(item.id),
+      name: item.name,
+      category: item.category,
+      imageUrl: item.image_url,
+      price: parseFloat(item.price),
+      weight: parseFloat(item.weight),
+      diameter: parseFloat(item.diameter),
+      stock: item.stock,
+      description: item.description,
+    }))
+
+    return {
+      beads,
+      total: response.count,
+      page: (params && params.page) || 1,
+      pageSize: (params && params.pageSize) || 20,
+    }
   },
 
   // 获取珠子分类
@@ -39,8 +95,20 @@ export const beadApi = {
   },
 
   // 获取珠子详情
-  getBeadById: (id: string): Promise<Bead> => {
-    return httpClient.get<Bead>(API_ENDPOINTS.BEAD_DETAIL(id))
+  getBeadById: async (id: string): Promise<Bead> => {
+    const item = await httpClient.get<ApiBeadData>(API_ENDPOINTS.BEAD_DETAIL(id))
+    
+    return {
+      id: String(item.id),
+      name: item.name,
+      category: item.category,
+      imageUrl: item.image_url,
+      price: parseFloat(item.price),
+      weight: parseFloat(item.weight),
+      diameter: parseFloat(item.diameter),
+      stock: item.stock,
+      description: item.description,
+    }
   },
 }
 

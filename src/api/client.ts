@@ -1,5 +1,5 @@
 import Taro from '@tarojs/taro'
-import { API_BASE_URL } from '../constants/config'
+import { API_BASE_URL, API_KEY } from '../constants/config'
 import { ApiResponse, ApiErrorCode } from '../types/api'
 import { ErrorType, AppError } from '../types/common'
 
@@ -64,6 +64,7 @@ function buildUrl(url: string, params?: Record<string, any>): string {
 function requestInterceptor(config: RequestConfig): Taro.request.Option {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-API-Key': API_KEY, // 添加 API Key
     ...config.headers,
   }
 
@@ -92,23 +93,36 @@ async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResu
 
   // HTTP状态码检查
   if (statusCode >= 200 && statusCode < 300) {
-    const apiResponse = data as ApiResponse<T>
+    // 检查是否是标准的 ApiResponse 格式
+    if (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+      const apiResponse = data as ApiResponse<T>
 
-    // API业务状态码检查
-    if (apiResponse.code === ApiErrorCode.SUCCESS) {
-      return apiResponse.data
+      // API业务状态码检查
+      if (apiResponse.code === ApiErrorCode.SUCCESS) {
+        return apiResponse.data
+      }
+
+      // Token过期处理
+      if (apiResponse.code === ApiErrorCode.UNAUTHORIZED) {
+        clearToken()
+        // 跳转到登录页面
+        Taro.reLaunch({ url: '/pages/profile/index' })
+        throw createAppError(ErrorType.NETWORK_ERROR, 'Token已过期，请重新登录', apiResponse.code)
+      }
+
+      // 其他业务错误
+      throw createAppError(ErrorType.NETWORK_ERROR, apiResponse.message, apiResponse.code)
     }
 
-    // Token过期处理
-    if (apiResponse.code === ApiErrorCode.UNAUTHORIZED) {
-      clearToken()
-      // 跳转到登录页面
-      Taro.reLaunch({ url: '/pages/profile/index' })
-      throw createAppError(ErrorType.NETWORK_ERROR, 'Token已过期，请重新登录', apiResponse.code)
-    }
+    // 直接返回数据（适配 Django REST framework 等直接返回数据的 API）
+    return data as T
+  }
 
-    // 其他业务错误
-    throw createAppError(ErrorType.NETWORK_ERROR, apiResponse.message, apiResponse.code)
+  // 401 未授权
+  if (statusCode === 401) {
+    clearToken()
+    Taro.reLaunch({ url: '/pages/profile/index' })
+    throw createAppError(ErrorType.NETWORK_ERROR, 'Token已过期，请重新登录', statusCode)
   }
 
   // HTTP错误

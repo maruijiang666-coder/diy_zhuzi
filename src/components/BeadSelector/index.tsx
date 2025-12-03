@@ -225,6 +225,7 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
         ) : (
           <>
             {console.log('BeadSelector: 显示珠子列表，数量:', beads.length)}
+            {/* diy 页面珠子的列表 */}
             <ScrollView
               className='bead-selector__list'
               scrollY

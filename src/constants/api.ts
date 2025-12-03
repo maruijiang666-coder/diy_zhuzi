@@ -1,8 +1,8 @@
 export const API_ENDPOINTS = {
   // 珠子相关
-  BEADS: '/beads',
-  BEAD_CATEGORIES: '/beads/categories',
-  BEAD_DETAIL: (id: string) => `/beads/${id}`,
+  BEADS: '/beads/',
+  BEAD_CATEGORIES: '/beads/categories/',
+  BEAD_DETAIL: (id: string) => `/beads/${id}/`,
 
   // 购物车相关
   CART_ITEMS: '/cart/items',

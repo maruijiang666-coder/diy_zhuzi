@@ -94,12 +94,14 @@ class AuthService {
     try {
       // 1. 获取微信登录code
       const loginResult = await Taro.login()
+      console.log('code:', loginResult.code)
       
       if (!loginResult.code) {
         throw new Error('获取微信登录code失败')
       }
 
       // 2. 调用后端接口换取token
+      // 这是一个code
       const request: WechatLoginRequest = {
         code: loginResult.code,
       }
