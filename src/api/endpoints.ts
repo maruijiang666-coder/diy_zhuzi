@@ -277,8 +277,9 @@ export const cartApi = {
 // ============ 订单相关接口 ============
 
 export interface CreateOrderRequest {
-  cartItemIds: string[]
-  shippingAddress: Address
+  user?: string // 用户标识（使用API用户标识）
+  cart_item_ids: string[] // 后端使用下划线命名
+  shipping_address: Address // 后端使用下划线命名
 }
 
 export interface CreateOrderResponse {
@@ -347,9 +348,9 @@ const statusMap: Record<string, OrderStatus> = {
 }
 
 export const orderApi = {
-  // 创建订单
+  // 创建订单（使用真实接口）
   createOrder: (data: CreateOrderRequest): Promise<CreateOrderResponse> => {
-    return httpClient.post<CreateOrderResponse>(API_ENDPOINTS.ORDERS, data)
+    return httpClient.postWithoutAuth<CreateOrderResponse>(API_ENDPOINTS.ORDERS, data)
   },
 
   // 获取订单列表

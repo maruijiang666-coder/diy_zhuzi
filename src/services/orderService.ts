@@ -26,9 +26,13 @@ class OrderService {
     this.validateAddress(shippingAddress)
 
     const request: CreateOrderRequest = {
-      cartItemIds,
-      shippingAddress,
+      user: 'API用户(遣山水晶)', // 使用API用户标识
+      cart_item_ids: cartItemIds,
+      shipping_address: shippingAddress,
     }
+
+    console.log('=== 创建订单 - 请求数据 ===')
+    console.log('请求数据:', JSON.stringify(request, null, 2))
 
     return await orderApi.createOrder(request)
   }
