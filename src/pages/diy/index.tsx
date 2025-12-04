@@ -199,24 +199,19 @@ export default function DiyPage() {
       // 隐藏加载提示
       Taro.hideLoading()
 
-      // 显示成功提示并询问用户下一步操作
-      Taro.showModal({
+      // 显示成功提示
+      Taro.showToast({
         title: '加入购物车成功',
-        content: '是否继续设计或前往购物车？',
-        confirmText: '前往购物车',
-        cancelText: '继续设计',
-        success: (res) => {
-          if (res.confirm) {
-            // 前往购物车页面
-            Taro.switchTab({
-              url: '/pages/cart/index',
-            })
-          } else {
-            // 继续设计，清空当前设计
-            clearBracelet()
-          }
-        },
+        icon: 'success',
+        duration: 1500,
       })
+
+      // 延迟跳转到购物车页面
+      setTimeout(() => {
+        Taro.switchTab({
+          url: '/pages/cart/index',
+        })
+      }, 1500)
     } catch (error: any) {
       // 隐藏加载提示
       Taro.hideLoading()

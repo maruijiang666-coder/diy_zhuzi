@@ -74,11 +74,20 @@ class CartService {
    * @returns 购物车项数组
    */
   async getCartItems(): Promise<CartItem[]> {
+    console.log('=== cartService.getCartItems 开始 ===')
+    console.log('USE_MOCK:', USE_MOCK)
+    
     if (USE_MOCK) {
       return await mockCartService.getCartItems()
     }
+    
     // 真实数据走线
-    return await cartApi.getCartItems()
+    console.log('调用真实 API: GET /cart/items/')
+    const result = await cartApi.getCartItems()
+    console.log('API 返回数据:', result)
+    console.log('购物车项数量:', result.length)
+    
+    return result
   }
 
   /**

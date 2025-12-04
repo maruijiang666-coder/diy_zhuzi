@@ -49,6 +49,16 @@ const BraceletPreview: React.FC<BraceletPreviewProps> = ({ bracelet, size = 180 
     const radius = size * 0.33 // 圆环半径约为容器的1/3
     const center = size / 2
 
+    // 安全检查：如果没有珠子数据，返回默认值
+    if (!bracelet || !bracelet.beads || bracelet.beads.length === 0) {
+      return {
+        circleRadius: radius,
+        centerOffset: center,
+        scaleFactor: 1,
+        beadSizes: [],
+      }
+    }
+
     // 计算所有珠子的原始尺寸
     const sizes = bracelet.beads.map((bead) => getBeadSize(bead))
     const totalBeadCircumference = sizes.reduce((sum, s) => sum + s, 0)
@@ -72,6 +82,11 @@ const BraceletPreview: React.FC<BraceletPreviewProps> = ({ bracelet, size = 180 
 
   // 渲染珠子
   const renderedBeads = useMemo(() => {
+    // 安全检查：如果没有珠子数据，返回空数组
+    if (!bracelet || !bracelet.beads || bracelet.beads.length === 0) {
+      return []
+    }
+
     const getScaledBeadSize = (bead: Bead) => getBeadSize(bead) * scaleFactor
 
     return bracelet.beads.map((bead, index) => {

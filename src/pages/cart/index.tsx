@@ -25,13 +25,23 @@ export default function CartPage() {
 
   // 页面加载时获取购物车数据，页面初次加载时使用。
   useEffect(() => {
+    console.log('=== 购物车页面 - useEffect 加载数据 ===')
     loadCartItems()
   }, [loadCartItems])
 
   // 页面显示时刷新购物车数据，从其他页面返回时刷新。
   Taro.useDidShow(() => {
+    console.log('=== 购物车页面 - useDidShow 刷新数据 ===')
     loadCartItems()
   })
+
+  // 监听数据变化
+  useEffect(() => {
+    console.log('=== 购物车数据更新 ===')
+    console.log('items:', items)
+    console.log('loading:', loading)
+    console.log('error:', error)
+  }, [items, loading, error])
 
   // 处理删除购物车项
   const handleDelete = async (itemId: string) => {

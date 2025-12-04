@@ -199,6 +199,27 @@ export const cartApi = {
 
     // 转换数据格式
     const cartItems: CartItem[] = response.results.map((item) => {
+      console.log('=== 转换购物车项 ===')
+      console.log('原始数据:', JSON.stringify(item, null, 2))
+      
+      // 安全检查：确保 bracelet_beads 存在
+      if (!item.bracelet || !item.bracelet.bracelet_beads) {
+        console.warn('购物车项缺少 bracelet_beads 数据:', item)
+        return {
+          id: String(item.id),
+          bracelet: {
+            beads: [],
+          },
+          properties: {
+            totalPrice: 0,
+            totalWeight: 0,
+            totalLength: 0,
+            beadCount: 0,
+          },
+          addedAt: new Date(item.added_at).getTime(),
+        }
+      }
+      
       // 转换珠子数据
       const beads = item.bracelet.bracelet_beads
         .sort((a, b) => a.position - b.position)
