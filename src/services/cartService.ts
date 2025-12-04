@@ -32,33 +32,31 @@ class CartService {
       return await mockCartService.addToCart(bracelet)
     }
 
-    // 提取珠子ID数组
-    const beadIds = bracelet.beads.map((bead) => bead.id)
-
     // 生成手串名称（如果没有提供）
     const braceletName = bracelet.name || `手串设计 ${Date.now()}`
 
-    // 构建请求数据
-    const request: AddToCartRequest = {
-      bracelet: {
-        name: braceletName,
-        user: 'api_key_default_user', // 临时使用固定用户，后期实现登录后改为真实用户
-        beads: beadIds,
-      },
-      properties: {
-        description: properties || {
-          beadCount: bracelet.beads.length,
-          totalPrice: 0,
-          totalWeight: 0,
-          totalLength: 0,
-        },
-      },
+    // 提取珠子 ID 数组（字符串格式）
+    const beadsData = bracelet.beads.map((bead) => bead.id)
+
+    // 步骤 1：先保存手串到服务器 (POST /bracelets/)
+    console.log('=== 步骤 1: 保存手串到服务器 ===')
+    const braceletRequest = {
+      name: braceletName,
+      beads: beadsData,
     }
+    console.log('请求数据:', JSON.stringify(braceletRequest, null, 2))
+    
+    const savedBracelet = await cartApi.saveBracelet(braceletRequest)
+    console.log('保存成功，手串 ID:', savedBracelet.id)
 
-    console.log('=== 发送到购物车 API 的数据 ===')
-    console.log('完整请求数据:', JSON.stringify(request, null, 2))
+    // 步骤 2：将手串添加到购物车 (POST /cart/items/)
+    console.log('=== 步骤 2: 添加到购物车 ===')
+    const cartRequest = {
+      bracelet_id: savedBracelet.id,
+    }
+    console.log('请求数据:', JSON.stringify(cartRequest, null, 2))
 
-    const response = await cartApi.addToCart(request)
+    const response = await cartApi.addToCart(cartRequest)
     return response
   }
 
@@ -95,12 +93,15 @@ class CartService {
       return await mockCartService.updateCartItem(itemId, bracelet)
     }
 
-    // 提取珠子ID数组
-    const beadIds = bracelet.beads.map((bead) => bead.id)
+    // 构建珠子数据：需要包含 bead_id 和 position
+    const beadsData = bracelet.beads.map((bead, index) => ({
+      bead_id: parseInt(bead.id),
+      position: index,
+    }))
 
     const request: UpdateCartItemRequest = {
       bracelet: {
-        beads: beadIds,
+        beads: beadsData,
       },
     }
 

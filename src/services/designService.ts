@@ -1,7 +1,7 @@
 import { SavedDesign } from '../types/design'
 import { Bracelet } from '../types/bracelet'
 import { mockDesignService } from './mockDesignService'
-import { designApi, SaveDesignRequest } from '../api/endpoints'
+import { designApi, SaveDesignRequest, UpdateDesignRequest } from '../api/endpoints'
 import { Bead } from '../types/bead'
 
 // 是否使用Mock数据
@@ -24,18 +24,27 @@ class DesignService {
       throw new Error('设计不能为空，请至少添加一个珠子')
     }
 
+    // 验证名称
+    const designName = name || `设计 ${new Date().toLocaleDateString()}`
+    if (designName.trim().length < 2) {
+      throw new Error('设计名称至少需要2个字符')
+    }
+
     if (USE_MOCK) {
       return await mockDesignService.saveDesign(bracelet, name, thumbnail)
     }
 
+    // 提取珠子 ID 数组（字符串格式）
+    const beadsData = bracelet.beads.map((bead) => bead.id)
+
     // 真实API调用
     const requestData: SaveDesignRequest = {
-      name: name || `设计 ${new Date().toLocaleDateString()}`,
-      beads: bracelet.beads.map((bead, index) => ({
-        bead_id: parseInt(bead.id),
-        position: index,
-      })),
+      name: designName,
+      beads: beadsData,
     }
+
+    console.log('=== 保存设计 - 发送数据 ===')
+    console.log('请求数据:', JSON.stringify(requestData, null, 2))
 
     const response = await designApi.saveDesign(requestData)
 
@@ -95,17 +104,14 @@ class DesignService {
     }
 
     // 真实API调用
-    const requestData: SaveDesignRequest = {}
+    const requestData: UpdateDesignRequest = {}
 
     if (name) {
       requestData.name = name
     }
 
     if (bracelet) {
-      requestData.beads = bracelet.beads.map((bead, index) => ({
-        bead_id: parseInt(bead.id),
-        position: index,
-      }))
+      requestData.beads = bracelet.beads.map((bead) => bead.id)
     }
 
     const response = await designApi.updateDesign(designId, requestData)

@@ -90,6 +90,7 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
   console.log('URL:', url)
   console.log('Method:', config.method || 'GET')
   console.log('Headers:', headers)
+  console.log('Data:', config.data ? JSON.stringify(config.data, null, 2) : 'null')
   console.log('API_KEY:', API_KEY)
   console.log('CSRF_TOKEN:', CSRF_TOKEN)
 
@@ -145,8 +146,26 @@ async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResu
     throw createAppError(ErrorType.NETWORK_ERROR, 'Token已过期，请重新登录', statusCode)
   }
 
-  // HTTP错误
-  throw createAppError(ErrorType.NETWORK_ERROR, `请求失败: ${statusCode}`, statusCode)
+  // HTTP错误 - 尝试从响应中提取错误信息
+  let errorMessage = `请求失败: ${statusCode}`
+  
+  if (data && typeof data === 'object') {
+    // 尝试提取常见的错误字段
+    const errorFields = ['error', 'message', 'detail', 'msg', 'error_description']
+    for (const field of errorFields) {
+      if (data[field]) {
+        errorMessage = `${errorMessage} - ${data[field]}`
+        break
+      }
+    }
+    
+    // 如果是字段验证错误，可能是对象格式
+    if (data['non_field_errors']) {
+      errorMessage = `${errorMessage} - ${data['non_field_errors'].join(', ')}`
+    }
+  }
+  
+  throw createAppError(ErrorType.NETWORK_ERROR, errorMessage, statusCode)
 }
 
 // 创建应用错误对象

@@ -114,20 +114,15 @@ export const beadApi = {
 
 // ============ 购物车相关接口 ============
 
+// 保存手串请求（POST /bracelets/）
+export interface SaveBraceletRequest {
+  name: string // 手串名称
+  beads: string[] // 珠子 ID 字符串数组
+}
+
+// 添加到购物车请求（POST /cart/items/）
 export interface AddToCartRequest {
-  bracelet: {
-    name: string // 手串名称
-    user?: string // 用户标识（临时使用 "API用户"，后期改为真实用户）
-    beads?: string[] // 珠子ID数组（可选）
-  }
-  properties: {
-    description: {
-      beadCount: number
-      totalPrice: number
-      totalWeight: number
-      totalLength: number
-    }
-  }
+  bracelet_id: number // 手串ID
 }
 
 export interface AddToCartResponse {
@@ -137,7 +132,10 @@ export interface AddToCartResponse {
 
 export interface UpdateCartItemRequest {
   bracelet: {
-    beads: string[]
+    beads: Array<{
+      bead_id: number
+      position: number
+    }>
   }
 }
 
@@ -173,7 +171,12 @@ interface ApiCartItemData {
 }
 
 export const cartApi = {
-  // 添加到购物车（不需要认证，只需要 API Key）
+  // 保存手串到服务器（POST /bracelets/）
+  saveBracelet: (data: SaveBraceletRequest): Promise<SaveDesignResponse> => {
+    return httpClient.postWithoutAuth<SaveDesignResponse>(API_ENDPOINTS.BRACELETS, data)
+  },
+
+  // 添加到购物车（POST /cart/items/）
   addToCart: (data: AddToCartRequest): Promise<AddToCartResponse> => {
     return httpClient.postWithoutAuth<AddToCartResponse>(API_ENDPOINTS.CART_ITEMS, data)
   },
@@ -550,13 +553,16 @@ interface ApiBraceletData {
   updated_at: string
 }
 
+// 创建设计请求（POST /bracelets/）
 export interface SaveDesignRequest {
+  name: string // 必填
+  beads: string[] // 珠子 ID 字符串数组
+}
+
+// 更新设计请求（PUT /bracelets/:id/）
+export interface UpdateDesignRequest {
   name?: string
-  user?: number
-  beads?: Array<{
-    bead_id: number
-    position: number
-  }>
+  beads?: string[] // 珠子 ID 字符串数组
 }
 
 export interface SaveDesignResponse {
@@ -593,7 +599,7 @@ export const designApi = {
   },
 
   // 更新设计
-  updateDesign: async (id: string, data: SaveDesignRequest): Promise<SaveDesignResponse> => {
+  updateDesign: async (id: string, data: UpdateDesignRequest): Promise<SaveDesignResponse> => {
     return httpClient.put<SaveDesignResponse>(API_ENDPOINTS.BRACELET_DETAIL(id), data)
   },
 
