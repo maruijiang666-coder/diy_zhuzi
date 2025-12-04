@@ -3,8 +3,12 @@ import { Bead } from '../types/bead'
 import { Category } from '../types/common'
 import { mockBeadService } from './mockBeadService'
 
-// 是否使用Mock数据（开发测试阶段始终使用Mock数据，避免真实API调用）
-const USE_MOCK = true
+// 是否使用Mock数据（开发测试阶段可切换，true=使用Mock数据，false=使用真实API）
+// 注意：使用真实 API 前，需要在微信开发者工具中关闭域名校验
+// 操作：详情 -> 本地设置 -> 勾选"不校验合法域名"
+// 是否使用Mock数据（开发测试阶段可切换，true=使用Mock数据，false=使用真实API）
+// 注意：使用真实 API 前，需要在微信开发者工具中关闭域名校验
+const USE_MOCK = false
 
 /**
  * 珠子数据服务
@@ -27,6 +31,7 @@ class BeadService {
   ): Promise<{ beads: Bead[]; total: number; page: number; pageSize: number }> {
     // 使用Mock数据
     if (USE_MOCK) {
+      // BeadSelector组件使用的时候，会传递数据过来，把传递的数据类别，关键词，页数，每页数量交给mockBeadServiece
       return await mockBeadService.getBeads(category, keyword, page, pageSize)
     }
 

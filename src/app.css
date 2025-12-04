@@ -11,7 +11,13 @@ page {
   line-height: 1.6;
 }
 
-* {
+/* 微信小程序不支持*通配符，使用具体选择器替代 */
+view, text, image, input, button, scroll-view, swiper, swiper-item, 
+cover-view, cover-image, icon, progress, rich-text, checkbox, 
+checkbox-group, form, label, picker, picker-view, picker-view-column, 
+radio, radio-group, slider, switch, textarea, navigator, functional-page-navigator, 
+video, camera, live-player, live-pusher, map, canvas, open-data, 
+official-account, ad, ad-custom, page-meta {
   box-sizing: border-box;
   margin: 0;
   padding: 0;

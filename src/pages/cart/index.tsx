@@ -20,18 +20,28 @@ export default function CartPage() {
     getItemCount,
   } = useCartStore()
 
-  const { clearBracelet } = useDiyStore()
+  const { clearBracelet, addBead } = useDiyStore()
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
 
-  // 页面加载时获取购物车数据
+  // 页面加载时获取购物车数据，页面初次加载时使用。
   useEffect(() => {
+    console.log('=== 购物车页面 - useEffect 加载数据 ===')
     loadCartItems()
   }, [loadCartItems])
 
-  // 页面显示时刷新购物车数据
+  // 页面显示时刷新购物车数据，从其他页面返回时刷新。
   Taro.useDidShow(() => {
+    console.log('=== 购物车页面 - useDidShow 刷新数据 ===')
     loadCartItems()
   })
+
+  // 监听数据变化
+  useEffect(() => {
+    console.log('=== 购物车数据更新 ===')
+    console.log('items:', items)
+    console.log('loading:', loading)
+    console.log('error:', error)
+  }, [items, loading, error])
 
   // 处理删除购物车项
   const handleDelete = async (itemId: string) => {
@@ -71,9 +81,14 @@ export default function CartPage() {
       // 清空当前设计
       clearBracelet()
       
-      // 跳转到DIY页面，携带购物车项ID
-      await Taro.navigateTo({
-        url: `/pages/diy/index?cartItemId=${item.id}`,
+      // 加载购物车项的珠子到设计画布
+      item.bracelet.beads.forEach((bead) => {
+        addBead(bead)
+      })
+      
+      // 跳转到DIY页面（tabBar页面使用switchTab）
+      await Taro.switchTab({
+        url: '/pages/diy/index',
       })
     } catch (err: any) {
       Taro.showToast({
@@ -168,13 +183,17 @@ export default function CartPage() {
   if (!loading && items.length === 0) {
     return (
       <View className='cart-page'>
-        <Empty
-          description='购物车是空的'
-          actionText='去设计手串'
-          onAction={() => {
-            Taro.switchTab({ url: '/pages/diy/index' })
-          }}
-        />
+        <Empty description='购物车是空的'>
+          <Button
+            type='primary'
+            size='default'
+            onClick={() => {
+              Taro.switchTab({ url: '/pages/diy/index' })
+            }}
+          >
+            去设计手串
+          </Button>
+        </Empty>
       </View>
     )
   }

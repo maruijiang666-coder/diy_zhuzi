@@ -39,12 +39,6 @@ export default function DesignsPage() {
       await Taro.switchTab({
         url: '/pages/diy/index',
       })
-
-      Taro.showToast({
-        title: '设计已加载',
-        icon: 'success',
-        duration: 2000,
-      })
     } catch (error: any) {
       Taro.showToast({
         title: '加载设计失败',

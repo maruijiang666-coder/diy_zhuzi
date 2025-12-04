@@ -1,10 +1,15 @@
 const ENV = process.env.TARO_ENV || 'weapp'
 
+// API 基础地址配置
 export const API_BASE_URL = {
-  development: 'https://dev-api.example.com/v1',
-  test: 'https://test-api.example.com/v1',
-  production: 'https://api.example.com/v1',
-}[process.env.NODE_ENV || 'development'] || 'https://api.example.com/v1'
+  development: 'https://crystal.quant-speed.com/api/diy',
+  test: 'https://crystal.quant-speed.com/api/diy',
+  production: 'https://crystal.quant-speed.com/api/diy',
+}[process.env.NODE_ENV || 'development'] || 'https://crystal.quant-speed.com/api/diy'
+
+
+// API Key 配置
+export const API_KEY = '123quant-speed'
 
 // CDN配置
 export const CDN_BASE_URL = {

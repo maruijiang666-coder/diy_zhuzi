@@ -24,7 +24,9 @@ const BeadItem: React.FC<BeadItemProps> = ({ bead, onClick, lazyLoad = false }) 
   }, [])
 
   const handleClick = useCallback(() => {
-    onClick?.(bead)
+    if (onClick) {
+      onClick(bead)
+    }
   }, [onClick, bead])
 
   // 使用useMemo缓存优化后的图片URL

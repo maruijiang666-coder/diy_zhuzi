@@ -25,7 +25,7 @@ export default function DiyPage() {
     removeBead,
     moveBead,
     clearBracelet,
-    getProperties,
+    properties,
     canAddBead,
   } = useDiyStore()
 
@@ -35,6 +35,7 @@ export default function DiyPage() {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isSavingDesign, setIsSavingDesign] = useState(false)
   const [showNameModal, setShowNameModal] = useState(false)
+  const [previousBeadCount, setPreviousBeadCount] = useState(0)
 
   // 页面加载时检查是否需要加载购物车项
   useEffect(() => {
@@ -54,6 +55,20 @@ export default function DiyPage() {
       }
     })
   }, [router.params.cartItemId])
+
+  // 页面显示时检测是否有新加载的设计
+  Taro.useDidShow(() => {
+    // 如果珠子数量增加了，说明从其他页面加载了设计
+    if (bracelet.beads.length > 0 && bracelet.beads.length !== previousBeadCount) {
+      Taro.showToast({
+        title: '设计已加载',
+        icon: 'success',
+        duration: 2000,
+      })
+    }
+    // 更新珠子数量记录
+    setPreviousBeadCount(bracelet.beads.length)
+  })
 
   // 从购物车加载设计到DIY页面
   const loadCartItemToDesign = async (cartItemId: string) => {
@@ -103,8 +118,8 @@ export default function DiyPage() {
     }
   }
 
-  // 获取手串属性
-  const properties = getProperties()
+  // 手串属性已经实时保存在 store 中，直接使用
+  // const properties = getProperties() // 不再需要调用函数
 
   // 处理珠子选中
   const handleBeadSelect = (index: number) => {
@@ -171,30 +186,47 @@ export default function DiyPage() {
         mask: true,
       })
 
-      // 调用购物车服务添加到购物车
-      await addToCart(bracelet)
+      // 生成手串名称：用户名 + 当前时间（格式：202512031914）
+      const now = new Date()
+      const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
+      const braceletName = `用户${timeStr}` // 例如：用户202512031914
+      
+      // 准备手串数据（添加名称）
+      const braceletWithName = {
+        ...bracelet,
+        name: braceletName,
+      }
+      
+      // 准备属性数据
+      const propertiesData = {
+        beadCount: properties.beadCount,
+        totalPrice: properties.totalPrice,
+        totalWeight: properties.totalWeight,
+        totalLength: properties.totalLength,
+      }
+      
+      console.log("添加到购物车 - 手串名称:", braceletName)
+      console.log("添加到购物车 - 属性数据:", JSON.stringify(propertiesData))
+      
+      // 调用购物车服务添加到购物车（传递手串和属性）
+      await addToCart(braceletWithName, propertiesData)
 
       // 隐藏加载提示
       Taro.hideLoading()
 
-      // 显示成功提示并询问用户下一步操作
-      Taro.showModal({
+      // 显示成功提示
+      Taro.showToast({
         title: '加入购物车成功',
-        content: '是否继续设计或前往购物车？',
-        confirmText: '前往购物车',
-        cancelText: '继续设计',
-        success: (res) => {
-          if (res.confirm) {
-            // 前往购物车页面
-            Taro.switchTab({
-              url: '/pages/cart/index',
-            })
-          } else {
-            // 继续设计，清空当前设计
-            clearBracelet()
-          }
-        },
+        icon: 'success',
+        duration: 1500,
       })
+
+      // 延迟跳转到购物车页面
+      setTimeout(() => {
+        Taro.switchTab({
+          url: '/pages/cart/index',
+        })
+      }, 1500)
     } catch (error: any) {
       // 隐藏加载提示
       Taro.hideLoading()
@@ -223,6 +255,7 @@ export default function DiyPage() {
   const handleSaveDesign = () => {
     // 验证手串是否有效
     const validation = validateBracelet(bracelet)
+    
     if (!validation.valid) {
       Taro.showToast({
         title: validation.message || '请至少添加一个珠子',
@@ -242,6 +275,7 @@ export default function DiyPage() {
   }
 
   // 确认保存设计
+  // 子组件传递来的水晶设计的名称
   const handleConfirmSave = async (designName: string) => {
     setShowNameModal(false)
     setIsSavingDesign(true)
@@ -375,6 +409,7 @@ export default function DiyPage() {
       </View>
 
       {/* 命名对话框 */}
+      {/* 保存设计这个框 */}
       <NameInputModal
         visible={showNameModal}
         defaultName={`设计 ${new Date().toLocaleDateString()}`}

@@ -1,10 +1,11 @@
 import { cartApi, AddToCartRequest, UpdateCartItemRequest } from '../api/endpoints'
 import { CartItem } from '../types/common'
-import { Bracelet } from '../types/bracelet'
+import { Bracelet, BraceletProperties } from '../types/bracelet'
 import { mockCartService } from './mockCartService'
 
-// 是否使用Mock数据（开发测试阶段始终使用Mock数据）
-const USE_MOCK = true
+// 是否使用Mock数据（开发测试阶段可切换，true=使用Mock数据，false=使用真实API）
+// 注意：购物车 API 需要用户登录认证（需要有效的用户 token）
+const USE_MOCK = false
 
 /**
  * 购物车服务
@@ -14,9 +15,13 @@ class CartService {
   /**
    * 添加手串设计到购物车
    * @param bracelet 手串设计
+   * @param properties 手串属性（包含价格、重量等）
    * @returns 购物车项ID和完整的购物车项
    */
-  async addToCart(bracelet: Bracelet): Promise<{ itemId: string; cartItem: CartItem }> {
+  async addToCart(
+    bracelet: Bracelet,
+    properties?: BraceletProperties
+  ): Promise<{ itemId: string; cartItem: CartItem }> {
     // 验证手串不为空
     if (!bracelet || !bracelet.beads || bracelet.beads.length === 0) {
       throw new Error('手串设计不能为空，请至少添加一个珠子')
@@ -27,16 +32,40 @@ class CartService {
       return await mockCartService.addToCart(bracelet)
     }
 
-    // 提取珠子ID数组
-    const beadIds = bracelet.beads.map((bead) => bead.id)
+    // 生成手串名称（如果没有提供）
+    const braceletName = bracelet.name || `手串设计 ${Date.now()}`
 
-    const request: AddToCartRequest = {
+    // 提取珠子 ID 数组（字符串格式）
+    const beadsData = bracelet.beads.map((bead) => bead.id)
+
+    // 步骤 1：先保存手串到服务器 (POST /bracelets/)
+    console.log('=== 步骤 1: 保存手串到服务器 ===')
+    const braceletRequest = {
+      name: braceletName,
+      beads: beadsData,
+    }
+    console.log('请求数据:', JSON.stringify(braceletRequest, null, 2))
+    
+    const savedBracelet = await cartApi.saveBracelet(braceletRequest)
+    console.log('保存成功，手串 ID:', savedBracelet.id)
+
+    // 步骤 2：将手串添加到购物车 (POST /cart/items/)
+    console.log('=== 步骤 2: 添加到购物车 ===')
+    const cartRequest = {
       bracelet: {
-        beads: beadIds,
+        id: savedBracelet.id,
+        beads: beadsData, // 珠子 ID 数组
+      },
+      properties: properties || {
+        beadCount: bracelet.beads.length,
+        totalPrice: 0,
+        totalWeight: 0,
+        totalLength: 0,
       },
     }
+    console.log('请求数据:', JSON.stringify(cartRequest, null, 2))
 
-    const response = await cartApi.addToCart(request)
+    const response = await cartApi.addToCart(cartRequest)
     return response
   }
 
@@ -45,10 +74,20 @@ class CartService {
    * @returns 购物车项数组
    */
   async getCartItems(): Promise<CartItem[]> {
+    console.log('=== cartService.getCartItems 开始 ===')
+    console.log('USE_MOCK:', USE_MOCK)
+    
     if (USE_MOCK) {
       return await mockCartService.getCartItems()
     }
-    return await cartApi.getCartItems()
+    
+    // 真实数据走线
+    console.log('调用真实 API: GET /cart/items/')
+    const result = await cartApi.getCartItems()
+    console.log('API 返回数据:', result)
+    console.log('购物车项数量:', result.length)
+    
+    return result
   }
 
   /**
@@ -72,12 +111,15 @@ class CartService {
       return await mockCartService.updateCartItem(itemId, bracelet)
     }
 
-    // 提取珠子ID数组
-    const beadIds = bracelet.beads.map((bead) => bead.id)
+    // 构建珠子数据：需要包含 bead_id 和 position
+    const beadsData = bracelet.beads.map((bead, index) => ({
+      bead_id: parseInt(bead.id),
+      position: index,
+    }))
 
     const request: UpdateCartItemRequest = {
       bracelet: {
-        beads: beadIds,
+        beads: beadsData,
       },
     }
 
@@ -126,8 +168,9 @@ class CartService {
     }
 
     return items.reduce((total, item) => {
-      return total + (item.properties?.totalPrice || 0)
-    }, 0)
+      const totalPrice = item.properties && item.properties.totalPrice ? item.properties.totalPrice : 0;
+      return total + totalPrice;
+    }, 0);
   }
 
   /**

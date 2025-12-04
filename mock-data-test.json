@@ -1,0 +1,80 @@
+{
+  "beads": [
+    {
+      "id": 1,
+      "name": "紫水晶珠子",
+      "category": "amethyst",
+      "price": 25,
+      "size": 8,
+      "color": "#9966CC",
+      "image": "/assets/images/amethyst.png",
+      "description": "高品质紫水晶珠子"
+    },
+    {
+      "id": 2,
+      "name": "粉水晶珠子",
+      "category": "rose_quartz",
+      "price": 20,
+      "size": 10,
+      "color": "#FFB6C1",
+      "image": "/assets/images/rose_quartz.png",
+      "description": "温柔粉水晶珠子"
+    }
+  ],
+  "categories": [
+    {
+      "id": "amethyst",
+      "name": "紫水晶",
+      "description": "紫水晶系列"
+    },
+    {
+      "id": "rose_quartz",
+      "name": "粉水晶",
+      "description": "粉水晶系列"
+    }
+  ],
+  "cartItems": [
+    {
+      "beadId": 1,
+      "quantity": 2,
+      "bead": {
+        "id": 1,
+        "name": "紫水晶珠子",
+        "category": "amethyst",
+        "price": 25,
+        "size": 8,
+        "color": "#9966CC",
+        "image": "/assets/images/amethyst.png",
+        "description": "高品质紫水晶珠子"
+      }
+    }
+  ],
+  "designs": [
+    {
+      "id": "design-1",
+      "name": "测试设计",
+      "beads": [
+        {
+          "beadId": 1,
+          "quantity": 2,
+          "bead": {
+            "id": 1,
+            "name": "紫水晶珠子",
+            "category": "amethyst",
+            "price": 25,
+            "size": 8,
+            "color": "#9966CC",
+            "image": "/assets/images/amethyst.png",
+            "description": "高品质紫水晶珠子"
+          }
+        }
+      ],
+      "totalPrice": 50,
+      "totalWeight": 10,
+      "totalLength": 16
+    }
+  ],
+  "orders": [],
+  "exportTime": "2025-12-01T08:50:59.460Z",
+  "exportVersion": "1.0.0"
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "name": "紫水晶珠子",
+    "category": "amethyst",
+    "price": 25,
+    "size": 8,
+    "color": "#9966CC",
+    "image": "/assets/images/amethyst.png",
+    "description": "高品质紫水晶珠子"
+  },
+  {
+    "id": 2,
+    "name": "粉水晶珠子",
+    "category": "rose_quartz",
+    "price": 20,
+    "size": 10,
+    "color": "#FFB6C1",
+    "image": "/assets/images/rose_quartz.png",
+    "description": "温柔粉水晶珠子"
+  }
+]

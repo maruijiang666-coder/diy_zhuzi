@@ -339,7 +339,8 @@ export default React.memo(DesignCanvas, (prevProps, nextProps) => {
          prevProps.onBeadDelete === nextProps.onBeadDelete &&
          prevProps.onBeadMove === nextProps.onBeadMove &&
          // 深度比较beads数组
-         prevProps.bracelet.beads.every((bead, index) => 
-           bead.id === nextProps.bracelet.beads[index]?.id
-         )
+         prevProps.bracelet.beads.every((bead, index) => {
+           const nextBead = nextProps.bracelet.beads[index]
+           return nextBead && bead.id === nextBead.id
+         })
 })

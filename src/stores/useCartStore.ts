@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { CartItem } from '../types/common'
-import { Bracelet } from '../types/bracelet'
+import { Bracelet, BraceletProperties } from '../types/bracelet'
 import { cartService } from '../services/cartService'
 
 interface CartStore {
@@ -10,7 +10,7 @@ interface CartStore {
   error: string | null
 
   // 操作
-  addToCart: (bracelet: Bracelet) => Promise<string>
+  addToCart: (bracelet: Bracelet, properties?: BraceletProperties) => Promise<string>
   removeFromCart: (itemId: string) => Promise<void>
   updateCartItem: (itemId: string, bracelet: Bracelet) => Promise<void>
   clearCart: () => Promise<void>
@@ -28,11 +28,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
   error: null,
 
   // 添加到购物车
-  addToCart: async (bracelet: Bracelet) => {
+  addToCart: async (bracelet: Bracelet, properties?: BraceletProperties) => {
     set({ loading: true, error: null })
 
     try {
-      const { itemId, cartItem } = await cartService.addToCart(bracelet)
+      const { itemId, cartItem } = await cartService.addToCart(bracelet, properties)
 
       set((state) => ({
         items: [...state.items, cartItem],

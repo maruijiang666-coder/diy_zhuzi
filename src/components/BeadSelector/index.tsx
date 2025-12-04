@@ -48,10 +48,10 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
         console.log('BeadSelector: 开始加载珠子数据...', { currentCategory, searchKeyword })
         
         const result = await beadService.getBeads(
-          currentCategory,
-          searchKeyword,
-          1,
-          20
+          currentCategory,   // 分类筛选参数
+          searchKeyword,     // 搜索关键词
+          1,   //第一页
+          20   //每页20个
         )
 
         console.log('BeadSelector: 珠子数据加载成功:', result)
@@ -59,6 +59,7 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
         console.log('BeadSelector: 第一个珠子:', result.beads[0])
         
         if (isMounted) {
+          // 存储珠子的信息
           setBeads(result.beads)
           setHasMore(result.beads.length === result.pageSize)
           setPage(1)
@@ -98,8 +99,8 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
       const result = await beadService.getBeads(
         currentCategory,
         searchKeyword,
-        page + 1,
-        20
+        page + 1,    // 页码递增
+        20  
       )
 
       setBeads((prev) => [...prev, ...result.beads])
@@ -225,6 +226,7 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
         ) : (
           <>
             {console.log('BeadSelector: 显示珠子列表，数量:', beads.length)}
+            {/*滚动shitu */}
             <ScrollView
               className='bead-selector__list'
               scrollY

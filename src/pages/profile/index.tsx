@@ -1,19 +1,14 @@
 import { View, Text, Image, Button } from '@tarojs/components'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { useUserStore } from '../../stores/useUserStore'
-import { authService } from '../../services/authService'
 import { Loading, Empty } from '../../components/common'
 import './index.scss'
 
 export default function ProfilePage() {
   const { user, isLoggedIn, loading, error, login, logout, loadUserInfo, clearError } = useUserStore()
-  const [isTestMode, setIsTestMode] = useState(false)
 
   useEffect(() => {
-    // 检查是否为测试用户模式
-    setIsTestMode(authService.isTestUserMode())
-
     // 页面加载时检查登录状态
     if (isLoggedIn && !user) {
       // 已登录但没有用户信息，加载用户信息
@@ -23,31 +18,27 @@ export default function ProfilePage() {
     }
   }, [isLoggedIn, user, loadUserInfo])
 
-  // 处理登录
-  const handleLogin = async () => {
+  // 处理微信登录
+  const handleWechatLogin = async () => {
     try {
       clearError()
+      
+      Taro.showLoading({ title: '登录中...', mask: true })
+      
+      // 调用登录接口（内部会调用 wx.login 和 wx.getUserProfile）
       await login()
       
-      // 检查是否为测试用户模式
-      const isTest = authService.isTestUserMode()
-      setIsTestMode(isTest)
+      Taro.hideLoading()
       
-      if (isTest) {
-        Taro.showToast({
-          title: '已使用测试账号登录',
-          icon: 'success',
-          duration: 2000,
-        })
-      } else {
-        Taro.showToast({
-          title: '登录成功',
-          icon: 'success',
-          duration: 2000,
-        })
-      }
+      Taro.showToast({
+        title: '登录成功',
+        icon: 'success',
+        duration: 2000,
+      })
     } catch (error: any) {
+      Taro.hideLoading()
       console.error('登录失败:', error)
+      
       Taro.showToast({
         title: error.message || '登录失败',
         icon: 'none',
@@ -112,9 +103,16 @@ export default function ProfilePage() {
             description='请先登录以使用完整功能'
             icon='https://img.icons8.com/clouds/200/user.png'
           />
-          <Button className='login-button' type='primary' onClick={handleLogin}>
+          <Button 
+            className='login-button' 
+            type='primary'
+            onClick={handleWechatLogin}
+          >
             微信登录
           </Button>
+          <View className='login-tips'>
+            <Text className='tips-text'>点击登录将获取您的微信头像和昵称</Text>
+          </View>
           {error && (
             <View className='error-message'>
               <Text>{error}</Text>
@@ -128,13 +126,6 @@ export default function ProfilePage() {
   // 已登录状态
   return (
     <View className='profile-page'>
-      {/* 测试用户提示 */}
-      {isTestMode && (
-        <View className='test-mode-banner'>
-          <Text className='test-mode-text'>🧪 测试模式（本地数据）</Text>
-        </View>
-      )}
-
       {/* 用户信息区域 */}
       <View className='user-info-section'>
         <View className='user-avatar'>

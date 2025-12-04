@@ -1,10 +1,15 @@
 import Taro from '@tarojs/taro'
-import { API_BASE_URL } from '../constants/config'
+import { API_BASE_URL, API_KEY } from '../constants/config'
 import { ApiResponse, ApiErrorCode } from '../types/api'
 import { ErrorType, AppError } from '../types/common'
 
 // Token存储key
 const TOKEN_KEY = 'auth_token'
+// CSRF Token 存储key
+const CSRF_TOKEN_KEY = 'csrf_token'
+
+// CSRF Token（从你的接口示例中获取）
+const CSRF_TOKEN = 'QjAtpufAC7oTUhnKbQaG8GWwvZ91U2xptiRnJk19S6UXeNW1X6wnmAe6RgYJDf1M'
 
 // 请求配置接口
 interface RequestConfig {
@@ -64,6 +69,9 @@ function buildUrl(url: string, params?: Record<string, any>): string {
 function requestInterceptor(config: RequestConfig): Taro.request.Option {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'accept': 'application/json',
+    'X-API-Key': API_KEY, // 添加 API Key
+    'X-CSRFTOKEN': CSRF_TOKEN, // 添加 CSRF Token
     ...config.headers,
   }
 
@@ -76,6 +84,15 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
   }
 
   const url = buildUrl(config.url, config.params)
+
+  // 调试日志
+  console.log('=== API 请求详情 ===')
+  console.log('URL:', url)
+  console.log('Method:', config.method || 'GET')
+  console.log('Headers:', headers)
+  console.log('Data:', config.data ? JSON.stringify(config.data, null, 2) : 'null')
+  console.log('API_KEY:', API_KEY)
+  console.log('CSRF_TOKEN:', CSRF_TOKEN)
 
   return {
     url,
@@ -90,29 +107,65 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
 async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResult): Promise<T> {
   const { statusCode, data } = response
 
+  // 调试日志
+  console.log('=== API 响应详情 ===')
+  console.log('Status:', statusCode)
+  console.log('Data:', data)
+
   // HTTP状态码检查
   if (statusCode >= 200 && statusCode < 300) {
-    const apiResponse = data as ApiResponse<T>
+    // 检查是否是标准的 ApiResponse 格式
+    if (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+      const apiResponse = data as ApiResponse<T>
 
-    // API业务状态码检查
-    if (apiResponse.code === ApiErrorCode.SUCCESS) {
-      return apiResponse.data
+      // API业务状态码检查
+      if (apiResponse.code === ApiErrorCode.SUCCESS) {
+        return apiResponse.data
+      }
+
+      // Token过期处理
+      if (apiResponse.code === ApiErrorCode.UNAUTHORIZED) {
+        clearToken()
+        // 跳转到登录页面
+        Taro.reLaunch({ url: '/pages/profile/index' })
+        throw createAppError(ErrorType.NETWORK_ERROR, 'Token已过期，请重新登录', apiResponse.code)
+      }
+
+      // 其他业务错误
+      throw createAppError(ErrorType.NETWORK_ERROR, apiResponse.message, apiResponse.code)
     }
 
-    // Token过期处理
-    if (apiResponse.code === ApiErrorCode.UNAUTHORIZED) {
-      clearToken()
-      // 跳转到登录页面
-      Taro.reLaunch({ url: '/pages/profile/index' })
-      throw createAppError(ErrorType.NETWORK_ERROR, 'Token已过期，请重新登录', apiResponse.code)
-    }
-
-    // 其他业务错误
-    throw createAppError(ErrorType.NETWORK_ERROR, apiResponse.message, apiResponse.code)
+    // 直接返回数据（适配 Django REST framework 等直接返回数据的 API）
+    return data as T
   }
 
-  // HTTP错误
-  throw createAppError(ErrorType.NETWORK_ERROR, `请求失败: ${statusCode}`, statusCode)
+  // 401 未授权
+  if (statusCode === 401) {
+    clearToken()
+    Taro.reLaunch({ url: '/pages/profile/index' })
+    throw createAppError(ErrorType.NETWORK_ERROR, 'Token已过期，请重新登录', statusCode)
+  }
+
+  // HTTP错误 - 尝试从响应中提取错误信息
+  let errorMessage = `请求失败: ${statusCode}`
+  
+  if (data && typeof data === 'object') {
+    // 尝试提取常见的错误字段
+    const errorFields = ['error', 'message', 'detail', 'msg', 'error_description']
+    for (const field of errorFields) {
+      if (data[field]) {
+        errorMessage = `${errorMessage} - ${data[field]}`
+        break
+      }
+    }
+    
+    // 如果是字段验证错误，可能是对象格式
+    if (data['non_field_errors']) {
+      errorMessage = `${errorMessage} - ${data['non_field_errors'].join(', ')}`
+    }
+  }
+  
+  throw createAppError(ErrorType.NETWORK_ERROR, errorMessage, statusCode)
 }
 
 // 创建应用错误对象
@@ -120,7 +173,7 @@ function createAppError(type: ErrorType, message: string, code?: number): AppErr
   return {
     type,
     message,
-    code: code?.toString(),
+    code: code ? code.toString() : undefined,
   }
 }
 
@@ -176,5 +229,9 @@ export const httpClient = {
 
   postWithoutAuth: <T>(url: string, data?: any): Promise<T> => {
     return request<T>({ url, method: 'POST', data, skipAuth: true })
+  },
+
+  deleteWithoutAuth: <T>(url: string, params?: Record<string, any>): Promise<T> => {
+    return request<T>({ url, method: 'DELETE', params, skipAuth: true })
   },
 }
