@@ -1,148 +1,171 @@
-# 微信登录实现指南
+# 微信登录功能使用指南
 
-## 概述
+## 📋 概述
 
-本项目使用微信官方提供的登录 API 实现用户认证，完全遵循微信小程序官方文档的标准流程。
+本项目已实现符合微信官方最新规范的登录功能（2021年后）。
 
-## 登录流程
+### 主要变化
+- ❌ **废弃**: `wx.getUserProfile()` 已被微信废弃
+- ✅ **新方案**: 使用 `wx.login()` + 头像昵称填写组件
 
-### 1. 用户触发登录
+## 🔐 登录流程
 
-用户在个人中心页面点击"微信登录"按钮。
-
-### 2. 获取用户信息（必须先调用）
-
-调用 `wx.getUserProfile()` 获取用户信息：
+### 1. 基础登录（仅获取 openid）
 
 ```typescript
-const profileResult = await Taro.getUserProfile({
-  desc: '用于完善用户资料',
-})
-const userInfo = profileResult.userInfo
+import { authService } from '@/services/authService'
+
+// 直接登录，不需要用户授权
+const result = await authService.wechatLogin()
+
+console.log('登录成功:', result)
+// {
+//   token: "64位登录态token",
+//   user: {
+//     id: "1",
+//     nickname: "微信用户",
+//     avatar: "默认头像"
+//   }
+// }
 ```
 
-**特点**：
-- 需要用户主动授权
-- 会弹出授权弹窗
-- 获取用户头像、昵称等信息
-- **必须在用户点击事件中直接调用**，不能在异步操作之后调用
+### 2. 完整登录（包含用户信息）
 
-**重要**：必须先调用 `getUserProfile`，再调用 `login`，否则会报错：
-```
-getUserProfile:fail can only be invoked by user TAP gesture.
-```
+如果需要获取用户昵称和头像，使用头像昵称填写组件：
 
-### 3. 获取登录凭证
+```tsx
+import { View, Button, Input } from '@tarojs/components'
+import { useState } from 'react'
+import Taro from '@tarojs/taro'
+import { authService } from '@/services/authService'
 
-调用 `wx.login()` 获取临时登录凭证 code：
+function LoginPage() {
+  const [nickname, setNickname] = useState('')
+  const [avatar, setAvatar] = useState('')
 
-```typescript
-const loginResult = await Taro.login()
-const code = loginResult.code
-```
-
-**特点**：
-- 静默执行，无需用户授权
-- 不会弹出授权弹窗
-- code 有效期 5 分钟
-- 用于后端换取 openid 和 session_key
-
-### 4. 发送到后端
-
-将 code 发送到后端服务器：
-
-```typescript
-const response = await authApi.wechatLogin({
-  code: loginResult.code,
-  app_type: 'diy',
-})
-```
-
-### 5. 后端处理
-
-后端使用 code 调用微信接口：
-
-```
-GET https://api.weixin.qq.com/sns/jscode2session
-参数：
-  - appid: 小程序 appid
-  - secret: 小程序 secret
-  - js_code: 前端传来的 code
-  - grant_type: authorization_code
-```
-
-后端获取到：
-- openid: 用户唯一标识
-- session_key: 会话密钥
-- unionid: 用户在开放平台的唯一标识（可选）
-
-### 6. 返回 token
-
-后端生成 token 并返回给前端：
-
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "123",
-    "nickname": "微信用户",
-    "avatar": "https://..."
+  // 选择头像
+  const handleChooseAvatar = (e) => {
+    const { avatarUrl } = e.detail
+    setAvatar(avatarUrl)
   }
-}
-```
 
-### 7. 保存 token
+  // 输入昵称
+  const handleNicknameInput = (e) => {
+    setNickname(e.detail.value)
+  }
 
-前端保存 token 到本地存储：
+  // 登录
+  const handleLogin = async () => {
+    try {
+      Taro.showLoading({ title: '登录中...' })
 
-```typescript
-Taro.setStorageSync('auth_token', token)
-```
+      // 调用登录，传入用户信息
+      const result = await authService.wechatLogin({
+        nickname,
+        avatar,
+      })
 
-## 代码实现
+      Taro.hideLoading()
+      Taro.showToast({
+        title: '登录成功',
+        icon: 'success',
+      })
 
-### authService.ts
-
-```typescript
-class AuthService {
-  async wechatLogin(): Promise<{
-    token: string
-    user: {
-      id: string
-      nickname: string
-      avatar: string
+      console.log('登录成功:', result)
+    } catch (error) {
+      Taro.hideLoading()
+      Taro.showToast({
+        title: error.message || '登录失败',
+        icon: 'none',
+      })
     }
-  }> {
-    // 1. 先获取用户信息（必须在用户点击事件中直接调用）
-    const profileResult = await Taro.getUserProfile({
-      desc: '用于完善用户资料',
-    })
-    
-    // 2. 再获取 code
-    const loginResult = await Taro.login()
-    
-    // 3. 发送到后端
-    const response = await authApi.wechatLogin({
-      code: loginResult.code,
-      app_type: 'diy',
-    })
-    
-    // 4. 保存 token
-    saveToken(response.token)
-    
-    return response
+  }
+
+  return (
+    <View className="login-page">
+      {/* 头像选择按钮 */}
+      <Button 
+        openType="chooseAvatar" 
+        onChooseAvatar={handleChooseAvatar}
+      >
+        选择头像
+      </Button>
+
+      {/* 昵称输入框 */}
+      <Input
+        type="nickname"
+        placeholder="请输入昵称"
+        onInput={handleNicknameInput}
+        value={nickname}
+      />
+
+      {/* 登录按钮 */}
+      <Button onClick={handleLogin}>
+        微信登录
+      </Button>
+    </View>
+  )
+}
+```
+
+## 🔧 API 说明
+
+### authService.wechatLogin()
+
+```typescript
+/**
+ * 微信登录
+ * @param userInfo 可选的用户信息
+ * @returns Promise<{ token: string, user: User }>
+ */
+async wechatLogin(userInfo?: {
+  nickname?: string
+  avatar?: string
+}): Promise<{
+  token: string
+  user: {
+    id: string
+    nickname: string
+    avatar: string
+  }
+}>
+```
+
+### 参数说明
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| userInfo | object | 否 | 用户信息对象 |
+| userInfo.nickname | string | 否 | 用户昵称 |
+| userInfo.avatar | string | 否 | 用户头像URL |
+
+### 返回值
+
+```typescript
+{
+  token: string,        // 登录态 token（64位字符串）
+  user: {
+    id: string,         // 用户ID
+    nickname: string,   // 用户昵称
+    avatar: string      // 用户头像URL
   }
 }
 ```
 
-### profile/index.tsx
+## 📱 完整示例
+
+### 简化版（推荐）
+
+当前项目的 `src/pages/profile/index.tsx` 已实现简化版登录：
 
 ```typescript
+// 点击登录按钮
 const handleWechatLogin = async () => {
   try {
     Taro.showLoading({ title: '登录中...', mask: true })
     
-    await login() // 调用 authService.wechatLogin()
+    // 直接调用登录，不需要用户授权
+    await login()
     
     Taro.hideLoading()
     Taro.showToast({
@@ -159,129 +182,213 @@ const handleWechatLogin = async () => {
 }
 ```
 
-## 错误处理
+### 完整版（带用户信息）
 
-### 用户拒绝授权
+如果需要收集用户昵称和头像，可以参考以下实现：
 
-```typescript
-if (error.errMsg && error.errMsg.includes('getUserProfile:fail auth deny')) {
-  throw new Error('您拒绝了授权，无法登录')
+```tsx
+import { View, Button, Input, Image } from '@tarojs/components'
+import { useState } from 'react'
+import Taro from '@tarojs/taro'
+import { useUserStore } from '@/stores/useUserStore'
+
+export default function ProfilePage() {
+  const { login } = useUserStore()
+  const [nickname, setNickname] = useState('')
+  const [avatar, setAvatar] = useState('')
+  const [showUserInfoForm, setShowUserInfoForm] = useState(false)
+
+  // 第一步：显示用户信息表单
+  const handleStartLogin = () => {
+    setShowUserInfoForm(true)
+  }
+
+  // 第二步：选择头像
+  const handleChooseAvatar = (e) => {
+    const { avatarUrl } = e.detail
+    setAvatar(avatarUrl)
+  }
+
+  // 第三步：输入昵称
+  const handleNicknameInput = (e) => {
+    setNickname(e.detail.value)
+  }
+
+  // 第四步：提交登录
+  const handleSubmitLogin = async () => {
+    if (!nickname) {
+      Taro.showToast({
+        title: '请输入昵称',
+        icon: 'none',
+      })
+      return
+    }
+
+    try {
+      Taro.showLoading({ title: '登录中...' })
+
+      // 调用登录，传入用户信息
+      await login({ nickname, avatar })
+
+      Taro.hideLoading()
+      Taro.showToast({
+        title: '登录成功',
+        icon: 'success',
+      })
+
+      setShowUserInfoForm(false)
+    } catch (error) {
+      Taro.hideLoading()
+      Taro.showToast({
+        title: error.message || '登录失败',
+        icon: 'none',
+      })
+    }
+  }
+
+  if (showUserInfoForm) {
+    return (
+      <View className="user-info-form">
+        <View className="form-title">完善个人信息</View>
+
+        {/* 头像预览 */}
+        {avatar && (
+          <Image 
+            className="avatar-preview" 
+            src={avatar} 
+            mode="aspectFill" 
+          />
+        )}
+
+        {/* 选择头像按钮 */}
+        <Button 
+          className="choose-avatar-btn"
+          openType="chooseAvatar" 
+          onChooseAvatar={handleChooseAvatar}
+        >
+          {avatar ? '更换头像' : '选择头像'}
+        </Button>
+
+        {/* 昵称输入 */}
+        <Input
+          className="nickname-input"
+          type="nickname"
+          placeholder="请输入昵称"
+          onInput={handleNicknameInput}
+          value={nickname}
+        />
+
+        {/* 提交按钮 */}
+        <Button 
+          className="submit-btn" 
+          type="primary"
+          onClick={handleSubmitLogin}
+        >
+          完成
+        </Button>
+
+        {/* 跳过按钮 */}
+        <Button 
+          className="skip-btn"
+          onClick={handleSubmitLogin}
+        >
+          跳过
+        </Button>
+      </View>
+    )
+  }
+
+  return (
+    <View className="login-page">
+      <Button 
+        className="login-btn" 
+        type="primary"
+        onClick={handleStartLogin}
+      >
+        微信登录
+      </Button>
+    </View>
+  )
 }
 ```
 
-### 网络错误
+## 🔄 登录态管理
+
+### 自动刷新
 
 ```typescript
-catch (error) {
-  console.error('登录失败:', error)
-  throw error
+import { authService } from '@/services/authService'
+
+// 检查是否需要刷新
+if (authService.shouldRefreshToken()) {
+  await authService.refreshToken()
 }
 ```
 
-## 注意事项
+### 退出登录
 
-### 1. getUserProfile 必须由用户点击直接触发
-
-`wx.getUserProfile()` 必须在用户点击事件中**直接调用**，不能在异步操作之后调用。
-
-**正确**：
 ```typescript
-// ✅ 在点击事件中直接调用
-const handleLogin = async () => {
-  // 先调用 getUserProfile
-  const profile = await Taro.getUserProfile({ desc: '...' })
-  // 再调用其他异步操作
-  const login = await Taro.login()
-}
+import { authService } from '@/services/authService'
 
-<Button onClick={handleLogin}>微信登录</Button>
+authService.logout()
 ```
 
-**错误**：
-```typescript
-// ❌ 在异步操作之后调用
-const handleLogin = async () => {
-  const login = await Taro.login() // 异步操作
-  const profile = await Taro.getUserProfile({ desc: '...' }) // 错误！
-}
+## ⚠️ 注意事项
 
-// ❌ 在 useEffect 中自动调用
-useEffect(() => {
-  Taro.getUserProfile({ desc: '...' })
-}, [])
-```
+### 1. 头像昵称填写组件的限制
 
-### 2. 域名配置
+- `button open-type="chooseAvatar"` 只能在用户点击时触发
+- 不能在异步操作后调用
+- 必须是真实的用户交互
 
-开发阶段：
-- 在微信开发者工具中关闭域名校验
-- 详情 → 本地设置 → 不校验合法域名
+### 2. 登录态有效期
 
-生产环境：
-- 必须配置 HTTPS 域名
-- 在微信公众平台配置 request 合法域名
+- 默认有效期：2小时
+- 建议在即将过期前 5 分钟自动刷新
+- 过期后需要重新登录
 
-### 3. code 有效期
+### 3. 后端接口
 
-- code 有效期只有 5 分钟
-- 每次登录都需要重新获取
-- code 只能使用一次
+- 登录接口：`POST /api/auth/auth/login/`
+- 刷新接口：`POST /api/auth/auth/refresh/`
+- 用户信息：`GET /api/auth/users/me/`
 
-### 4. session_key 管理
+### 4. 测试环境
 
-- session_key 由后端管理
-- 前端不需要处理 session_key
-- 用于解密用户敏感数据
+- 开发环境：`https://therianclouds.mynatapp.cc`
+- AppID：`wxd2242c9f02a34685`
 
-## 测试
+## 📚 相关文档
 
-### 开发者工具测试
+- [微信官方文档 - wx.login](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/login/wx.login.html)
+- [微信官方文档 - 头像昵称填写](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/userProfile.html)
+- [后端接口文档](../微信登录接口文档.md)
 
-1. 关闭域名校验
-2. 点击登录按钮
-3. 查看控制台日志
-4. 确认 token 保存成功
+## 🐛 常见问题
 
-### 真机测试
+### Q: 为什么不使用 getUserProfile？
 
-1. 使用真机预览
-2. 点击登录按钮
-3. 授权后查看用户信息
-4. 确认登录状态
+A: 微信在 2021 年后废弃了 `getUserProfile`，现在推荐使用头像昵称填写组件。
 
-## 参考文档
+### Q: 如何获取用户手机号？
 
-- [wx.login](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/login/wx.login.html)
-- [wx.getUserProfile](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/user-info/wx.getUserProfile.html)
-- [小程序登录](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/login.html)
-- [code2Session](https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-login/code2Session.html)
+A: 使用 `button open-type="getPhoneNumber"`，需要企业认证的小程序。
 
-## 常见问题
+### Q: 登录失败怎么办？
 
-### Q: 为什么要先调用 getUserProfile 再调用 login？
+A: 检查以下几点：
+1. 网络连接是否正常
+2. 后端服务是否启动
+3. AppID 和 AppSecret 是否正确配置
+4. code 是否已过期（5分钟有效期）
 
-A: 因为 `getUserProfile` 必须在用户点击事件中直接调用，不能在异步操作之后调用。如果先调用 `login`（异步操作），再调用 `getUserProfile`，会失去用户点击的上下文，导致报错：
-```
-getUserProfile:fail can only be invoked by user TAP gesture.
-```
+### Q: 如何在开发环境测试？
 
-### Q: code 会过期吗？
+A: 
+1. 确保后端服务运行在 `https://therianclouds.mynatapp.cc`
+2. 在微信开发者工具中打开项目
+3. 点击登录按钮即可测试
 
-A: 会的，code 有效期只有 5 分钟，且只能使用一次。但这不影响我们的流程，因为我们在获取 code 后立即发送到后端。
+---
 
-### Q: 用户拒绝授权怎么办？
-
-A: 如果用户拒绝授权，会抛出错误，前端会显示"您拒绝了授权，无法登录"的提示。用户需要重新点击登录按钮并同意授权。
-
-## 更新日志
-
-- 2025-12-03: 修复 getUserProfile 调用顺序问题
-  - 调整为先调用 getUserProfile，再调用 login
-  - 避免 "can only be invoked by user TAP gesture" 错误
-  - 更新文档说明调用顺序的重要性
-
-- 2025-12-03: 移除测试用户逻辑，使用真实微信登录
-  - 移除 createTestUser、getTestUser、isTestUserMode 方法
-  - 简化登录流程，直接使用微信 API
-  - 移除测试模式相关的 UI 提示
-  - 所有错误直接抛出，由调用方处理
+**最后更新**: 2024-12-04

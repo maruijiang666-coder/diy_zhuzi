@@ -70,16 +70,15 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'accept': 'application/json',
-    'X-API-Key': API_KEY, // 添加 API Key
-    'X-CSRFTOKEN': CSRF_TOKEN, // 添加 CSRF Token
     ...config.headers,
   }
 
-  // 添加Token（除非明确跳过）
+  // 添加登录态 Token（除非明确跳过）
+  // 根据后端文档，使用 X-Login-Token 请求头
   if (!config.skipAuth) {
     const token = getToken()
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`
+      headers['X-Login-Token'] = token
     }
   }
 
@@ -91,8 +90,6 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
   console.log('Method:', config.method || 'GET')
   console.log('Headers:', headers)
   console.log('Data:', config.data ? JSON.stringify(config.data, null, 2) : 'null')
-  console.log('API_KEY:', API_KEY)
-  console.log('CSRF_TOKEN:', CSRF_TOKEN)
 
   return {
     url,
@@ -114,8 +111,27 @@ async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResu
 
   // HTTP状态码检查
   if (statusCode >= 200 && statusCode < 300) {
-    // 检查是否是标准的 ApiResponse 格式
-    if (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+    // 检查是否是后端标准格式：{ code: 0, message: "...", data: {...} }
+    if (data && typeof data === 'object' && 'code' in data) {
+      // code === 0 表示成功
+      if (data.code === 0) {
+        // 直接返回整个响应，让调用方自己处理
+        return data as T
+      }
+
+      // code === 401 表示未授权
+      if (data.code === 401) {
+        clearToken()
+        Taro.reLaunch({ url: '/pages/profile/index' })
+        throw createAppError(ErrorType.NETWORK_ERROR, data.message || '登录态已过期，请重新登录', data.code)
+      }
+
+      // 其他业务错误
+      throw createAppError(ErrorType.NETWORK_ERROR, data.message || '请求失败', data.code)
+    }
+
+    // 检查是否是标准的 ApiResponse 格式（兼容旧格式）
+    if (data && typeof data === 'object' && 'data' in data) {
       const apiResponse = data as ApiResponse<T>
 
       // API业务状态码检查
@@ -126,7 +142,6 @@ async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResu
       // Token过期处理
       if (apiResponse.code === ApiErrorCode.UNAUTHORIZED) {
         clearToken()
-        // 跳转到登录页面
         Taro.reLaunch({ url: '/pages/profile/index' })
         throw createAppError(ErrorType.NETWORK_ERROR, 'Token已过期，请重新登录', apiResponse.code)
       }
@@ -143,25 +158,30 @@ async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResu
   if (statusCode === 401) {
     clearToken()
     Taro.reLaunch({ url: '/pages/profile/index' })
-    throw createAppError(ErrorType.NETWORK_ERROR, 'Token已过期，请重新登录', statusCode)
+    throw createAppError(ErrorType.NETWORK_ERROR, '登录态已过期，请重新登录', statusCode)
   }
 
   // HTTP错误 - 尝试从响应中提取错误信息
   let errorMessage = `请求失败: ${statusCode}`
   
   if (data && typeof data === 'object') {
-    // 尝试提取常见的错误字段
-    const errorFields = ['error', 'message', 'detail', 'msg', 'error_description']
-    for (const field of errorFields) {
-      if (data[field]) {
-        errorMessage = `${errorMessage} - ${data[field]}`
-        break
+    // 优先使用 message 字段
+    if (data['message']) {
+      errorMessage = data['message']
+    } else {
+      // 尝试提取其他常见的错误字段
+      const errorFields = ['error', 'detail', 'msg', 'error_description']
+      for (const field of errorFields) {
+        if (data[field]) {
+          errorMessage = data[field]
+          break
+        }
       }
     }
     
     // 如果是字段验证错误，可能是对象格式
     if (data['non_field_errors']) {
-      errorMessage = `${errorMessage} - ${data['non_field_errors'].join(', ')}`
+      errorMessage = data['non_field_errors'].join(', ')
     }
   }
   

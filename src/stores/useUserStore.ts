@@ -18,7 +18,7 @@ interface UserStore {
   error: string | null
 
   // 操作
-  login: () => Promise<void>
+  login: (userInfo?: { nickname?: string; avatar?: string }) => Promise<void>
   logout: () => void
   loadUserInfo: () => Promise<void>
   initializeAuth: () => void
@@ -36,11 +36,11 @@ export const useUserStore = create<UserStore>((set) => ({
   error: null,
 
   // 微信登录
-  login: async () => {
+  login: async (userInfo?: { nickname?: string; avatar?: string }) => {
     set({ loading: true, error: null })
 
     try {
-      const response = await authService.wechatLogin()
+      const response = await authService.wechatLogin(userInfo)
 
       set({
         user: response.user,
