@@ -25,7 +25,7 @@ export default function DiyPage() {
     removeBead,
     moveBead,
     clearBracelet,
-    getProperties,
+    properties,
     canAddBead,
   } = useDiyStore()
 
@@ -103,8 +103,8 @@ export default function DiyPage() {
     }
   }
 
-  // 获取手串属性
-  const properties = getProperties()
+  // 手串属性已经实时保存在 store 中，直接使用
+  // const properties = getProperties() // 不再需要调用函数
 
   // 处理珠子选中
   const handleBeadSelect = (index: number) => {
@@ -171,8 +171,30 @@ export default function DiyPage() {
         mask: true,
       })
 
-      // 调用购物车服务添加到购物车
-      await addToCart(bracelet)
+      // 生成手串名称：用户名 + 当前时间（格式：202512031914）
+      const now = new Date()
+      const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
+      const braceletName = `用户${timeStr}` // 例如：用户202512031914
+      
+      // 准备手串数据（添加名称）
+      const braceletWithName = {
+        ...bracelet,
+        name: braceletName,
+      }
+      
+      // 准备属性数据
+      const propertiesData = {
+        beadCount: properties.beadCount,
+        totalPrice: properties.totalPrice,
+        totalWeight: properties.totalWeight,
+        totalLength: properties.totalLength,
+      }
+      
+      console.log("添加到购物车 - 手串名称:", braceletName)
+      console.log("添加到购物车 - 属性数据:", JSON.stringify(propertiesData))
+      
+      // 调用购物车服务添加到购物车（传递手串和属性）
+      await addToCart(braceletWithName, propertiesData)
 
       // 隐藏加载提示
       Taro.hideLoading()
@@ -243,6 +265,7 @@ export default function DiyPage() {
   }
 
   // 确认保存设计
+  // 子组件传递来的水晶设计的名称
   const handleConfirmSave = async (designName: string) => {
     setShowNameModal(false)
     setIsSavingDesign(true)
@@ -376,6 +399,7 @@ export default function DiyPage() {
       </View>
 
       {/* 命名对话框 */}
+      {/* 保存设计这个框 */}
       <NameInputModal
         visible={showNameModal}
         defaultName={`设计 ${new Date().toLocaleDateString()}`}

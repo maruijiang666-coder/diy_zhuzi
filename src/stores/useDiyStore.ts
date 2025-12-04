@@ -8,6 +8,7 @@ interface DiyStore {
   // 状态
   bracelet: Bracelet
   selectedBeadIndex: number | null
+  properties: BraceletProperties // 新增：实时保存的计算属性
 
   // 操作
   addBead: (bead: Bead) => void
@@ -27,6 +28,12 @@ export const useDiyStore = create<DiyStore>((set, get) => ({
     beads: [],
   },
   selectedBeadIndex: null,
+  properties: {
+    beadCount: 0,
+    totalPrice: 0,
+    totalWeight: 0,
+    totalLength: 0,
+  },
 
   // 添加珠子到手串末尾
   addBead: (bead: Bead) => {
@@ -38,13 +45,17 @@ export const useDiyStore = create<DiyStore>((set, get) => ({
       return
     }
 
-    set((state) => ({
-      bracelet: {
-        ...state.bracelet,
-        beads: [...state.bracelet.beads, bead],
-        updatedAt: Date.now(),
-      },
-    }))
+    set((state) => {
+      const newBeads = [...state.bracelet.beads, bead]
+      return {
+        bracelet: {
+          ...state.bracelet,
+          beads: newBeads,
+          updatedAt: Date.now(),
+        },
+        properties: calculateProperties(newBeads), // 实时更新属性
+      }
+    })
   },
 
   // 删除指定索引的珠子
@@ -77,6 +88,7 @@ export const useDiyStore = create<DiyStore>((set, get) => ({
           updatedAt: Date.now(),
         },
         selectedBeadIndex: newSelectedIndex,
+        properties: calculateProperties(newBeads), // 实时更新属性
       }
     })
   },
@@ -139,6 +151,7 @@ export const useDiyStore = create<DiyStore>((set, get) => ({
           updatedAt: Date.now(),
         },
         selectedBeadIndex: newSelectedIndex,
+        properties: calculateProperties(newBeads), // 实时更新属性
       }
     })
   },
@@ -151,6 +164,12 @@ export const useDiyStore = create<DiyStore>((set, get) => ({
         updatedAt: Date.now(),
       },
       selectedBeadIndex: null,
+      properties: {
+        beadCount: 0,
+        totalPrice: 0,
+        totalWeight: 0,
+        totalLength: 0,
+      },
     })
   },
 

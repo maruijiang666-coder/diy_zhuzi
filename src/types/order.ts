@@ -17,10 +17,18 @@ export interface Address {
   detail: string
 }
 
+export interface OrderItem {
+  id: string
+  bracelet: CartItem['bracelet']
+  properties: CartItem['properties']
+  price: number // 订单项的价格（可能与购物车时的价格不同）
+  addedAt?: number // 可选，订单项不一定有添加时间
+}
+
 export interface Order {
   id: string
   userId: string
-  items: CartItem[]
+  items: OrderItem[]
   totalPrice: number
   status: OrderStatus
   shippingAddress: Address

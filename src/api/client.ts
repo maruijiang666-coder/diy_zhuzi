@@ -5,6 +5,11 @@ import { ErrorType, AppError } from '../types/common'
 
 // Token存储key
 const TOKEN_KEY = 'auth_token'
+// CSRF Token 存储key
+const CSRF_TOKEN_KEY = 'csrf_token'
+
+// CSRF Token（从你的接口示例中获取）
+const CSRF_TOKEN = 'QjAtpufAC7oTUhnKbQaG8GWwvZ91U2xptiRnJk19S6UXeNW1X6wnmAe6RgYJDf1M'
 
 // 请求配置接口
 interface RequestConfig {
@@ -64,7 +69,9 @@ function buildUrl(url: string, params?: Record<string, any>): string {
 function requestInterceptor(config: RequestConfig): Taro.request.Option {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'accept': 'application/json',
     'X-API-Key': API_KEY, // 添加 API Key
+    'X-CSRFTOKEN': CSRF_TOKEN, // 添加 CSRF Token
     ...config.headers,
   }
 
@@ -84,6 +91,7 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
   console.log('Method:', config.method || 'GET')
   console.log('Headers:', headers)
   console.log('API_KEY:', API_KEY)
+  console.log('CSRF_TOKEN:', CSRF_TOKEN)
 
   return {
     url,

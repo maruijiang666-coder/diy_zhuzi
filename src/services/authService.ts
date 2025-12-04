@@ -7,80 +7,14 @@ import { saveToken, clearToken } from '../api/client'
  * 封装用户认证相关的业务逻辑和API调用
  */
 class AuthService {
-  private readonly TEST_USER_KEY = 'test_user_mode'
-  private readonly TEST_USER_DATA_KEY = 'test_user_data'
-
-  /**
-   * 创建测试用户
-   */
-  private createTestUser(): {
-    token: string
-    user: {
-      id: string
-      nickname: string
-      avatar: string
-    }
-  } {
-    const testUser = {
-      token: 'test_token_' + Date.now(),
-      user: {
-        id: 'test_user_001',
-        nickname: '测试用户',
-        avatar: 'https://img.icons8.com/clouds/200/user.png',
-      },
-    }
-
-    // 保存测试用户标记和数据
-    Taro.setStorageSync(this.TEST_USER_KEY, 'true')
-    Taro.setStorageSync(this.TEST_USER_DATA_KEY, JSON.stringify(testUser))
-    saveToken(testUser.token)
-
-    return testUser
-  }
-
-  /**
-   * 获取测试用户
-   */
-  private getTestUser(): {
-    token: string
-    user: {
-      id: string
-      nickname: string
-      avatar: string
-    }
-  } | null {
-    try {
-      const isTestMode = Taro.getStorageSync(this.TEST_USER_KEY)
-      if (isTestMode === 'true') {
-        const userData = Taro.getStorageSync(this.TEST_USER_DATA_KEY)
-        if (userData) {
-          return JSON.parse(userData)
-        }
-      }
-      return null
-    } catch (error) {
-      console.error('获取测试用户失败:', error)
-      return null
-    }
-  }
-
-  /**
-   * 检查是否为测试用户模式
-   */
-  isTestUserMode(): boolean {
-    try {
-      const isTestMode = Taro.getStorageSync(this.TEST_USER_KEY)
-      return isTestMode === 'true'
-    } catch (error) {
-      return false
-    }
-  }
 
   /**
    * 微信登录
-   * 1. 调用Taro.login()获取微信code
-   * 2. 将code发送到后端换取token
-   * 3. 如果网络出错，自动使用测试用户
+   * 1. 调用 wx.getUserProfile() 获取用户信息（需要用户授权，必须先调用）
+   * 2. 调用 wx.login() 获取临时登录凭证 code
+   * 3. 将 code 发送到后端换取 token
+   * 
+   * 注意：getUserProfile 必须在用户点击事件中直接调用，不能在异步操作之后调用
    * @returns 用户信息和token
    */
   async wechatLogin(): Promise<{
@@ -91,56 +25,85 @@ class AuthService {
       avatar: string
     }
   }> {
-    try {
-      // 1. 获取微信登录code
-      const loginResult = await Taro.login()
-      console.log('code:', loginResult.code)
-      
-      if (!loginResult.code) {
-        throw new Error('获取微信登录code失败')
-      }
+    console.log('开始微信登录流程...')
 
-      // 2. 调用后端接口换取token
-      // 这是一个code
-      const request: WechatLoginRequest = {
-        code: loginResult.code,
-      }
-
-      const response = await authApi.wechatLogin(request)
-
-      // 3. 保存token到本地存储
-      if (response.token) {
-        saveToken(response.token)
-        // 清除测试用户标记
-        Taro.removeStorageSync(this.TEST_USER_KEY)
-        Taro.removeStorageSync(this.TEST_USER_DATA_KEY)
-      } else {
-        throw new Error('登录失败：未获取到token')
-      }
-
-      return response
-    } catch (error: any) {
-      console.error('微信登录失败:', error)
-      
-      // 网络错误或API错误，使用测试用户
-      const isNetworkError = 
-        (error.message && error.message.includes('网络')) ||
-      (error.message && error.message.includes('Network')) ||
-      (error.message && error.message.includes('timeout')) ||
-      (error.message && error.message.includes('Failed to fetch')) ||
-        error.code === 'NETWORK_ERROR'
-
-      if (isNetworkError) {
-        console.log('检测到网络错误，使用测试用户模式')
-        const testUser = this.createTestUser()
-        return testUser
-      }
-
-      // 其他错误也使用测试用户（开发阶段）
-      console.log('登录失败，使用测试用户模式')
-      const testUser = this.createTestUser()
-      return testUser
+    // ========== 模拟登录（开发测试用） ==========
+    // 先返回模拟数据，让用户可以立即使用应用
+    console.log('使用模拟登录数据')
+    const mockToken = 'mock_token_' + Date.now()
+    const mockUser = {
+      id: 'mock_user_123',
+      nickname: '测试用户',
+      avatar: 'https://img.icons8.com/clouds/200/user.png',
     }
+    
+    saveToken(mockToken)
+    console.log('模拟登录成功，token 已保存')
+    
+    // 返回模拟数据
+    return {
+      token: mockToken,
+      user: mockUser,
+    }
+    // ========== 模拟登录结束 ==========
+
+    /* ========== 真实登录逻辑（暂时注释，需要时取消注释） ==========
+    
+    // 1. 先调用 getUserProfile 获取用户信息（必须在用户点击事件中直接调用）
+    console.log('获取用户授权信息...')
+    const profileResult = await Taro.getUserProfile({
+      desc: '用于完善用户资料',
+    })
+    
+    if (!profileResult.userInfo) {
+      throw new Error('获取用户信息失败')
+    }
+    
+    const wxUserInfo = {
+      nickName: profileResult.userInfo.nickName,
+      avatarUrl: profileResult.userInfo.avatarUrl,
+    }
+    
+    console.log('用户信息:', wxUserInfo)
+
+    // 2. 获取微信登录 code
+    console.log('获取登录凭证...')
+    const loginResult = await Taro.login()
+    console.log('获取到 code:', loginResult.code)
+    
+    if (!loginResult.code) {
+      throw new Error('获取微信登录 code 失败')
+    }
+
+    // 3. 调用后端接口换取 token
+    const request: WechatLoginRequest = {
+      code: loginResult.code,
+      app_type: 'diy', // 应用类型固定为 'diy'
+    }
+
+    console.log('发送登录请求到后端:', request)
+    const response = await authApi.wechatLogin(request)
+    console.log('后端登录响应:', response)
+
+    // 4. 保存 token 到本地存储
+    if (!response.token) {
+      throw new Error('登录失败：未获取到 token')
+    }
+    
+    saveToken(response.token)
+    console.log('登录成功，token 已保存')
+
+    // 5. 返回用户信息（优先使用后端返回的，如果没有则使用微信的）
+    return {
+      token: response.token,
+      user: {
+        id: response.user.id,
+        nickname: response.user.nickname || wxUserInfo.nickName,
+        avatar: response.user.avatar || wxUserInfo.avatarUrl,
+      },
+    }
+    
+    ========== 真实登录逻辑结束 ========== */
   }
 
   /**
@@ -148,48 +111,15 @@ class AuthService {
    * @returns 用户详细信息
    */
   async getUserInfo(): Promise<User> {
-    try {
-      // 如果是测试用户模式，返回测试用户信息
-      if (this.isTestUserMode()) {
-        const testUser = this.getTestUser()
-        if (testUser) {
-          return {
-            id: testUser.user.id,
-            nickname: testUser.user.nickname,
-            avatar: testUser.user.avatar,
-            createdAt: Date.now(),
-          }
-        }
-      }
-
-      return await authApi.getUserInfo()
-    } catch (error: any) {
-      console.error('获取用户信息失败:', error)
-      
-      // 如果获取失败且不是测试用户，尝试使用测试用户
-      if (!this.isTestUserMode()) {
-        const testUser = this.createTestUser()
-        return {
-          id: testUser.user.id,
-          nickname: testUser.user.nickname,
-          avatar: testUser.user.avatar,
-          createdAt: Date.now(),
-        }
-      }
-      
-      throw new Error('获取用户信息失败，请重试')
-    }
+    return await authApi.getUserInfo()
   }
 
   /**
    * 退出登录
-   * 清除本地存储的token和测试用户数据
+   * 清除本地存储的token
    */
   logout(): void {
     clearToken()
-    // 清除测试用户数据
-    Taro.removeStorageSync(this.TEST_USER_KEY)
-    Taro.removeStorageSync(this.TEST_USER_DATA_KEY)
   }
 
   /**

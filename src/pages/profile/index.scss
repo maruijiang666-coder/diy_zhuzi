@@ -56,6 +56,17 @@
       font-weight: $font-weight-bold;
       margin-top: $spacing-lg;
     }
+
+    .login-tips {
+      @include flex-center;
+      margin-top: $spacing-sm;
+
+      .tips-text {
+        font-size: $font-size-xs;
+        color: $text-tertiary;
+        text-align: center;
+      }
+    }
   }
 
   // 用户信息区域

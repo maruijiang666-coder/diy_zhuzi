@@ -116,7 +116,17 @@ export const beadApi = {
 
 export interface AddToCartRequest {
   bracelet: {
-    beads: string[] // 珠子ID数组
+    name: string // 手串名称
+    user?: string // 用户标识（临时使用 "API用户"，后期改为真实用户）
+    beads?: string[] // 珠子ID数组（可选）
+  }
+  properties: {
+    description: {
+      beadCount: number
+      totalPrice: number
+      totalWeight: number
+      totalLength: number
+    }
   }
 }
 
@@ -163,9 +173,9 @@ interface ApiCartItemData {
 }
 
 export const cartApi = {
-  // 添加到购物车
+  // 添加到购物车（不需要认证，只需要 API Key）
   addToCart: (data: AddToCartRequest): Promise<AddToCartResponse> => {
-    return httpClient.post<AddToCartResponse>(API_ENDPOINTS.CART_ITEMS, data)
+    return httpClient.postWithoutAuth<AddToCartResponse>(API_ENDPOINTS.CART_ITEMS, data)
   },
 
   // 获取购物车列表
@@ -259,6 +269,50 @@ export interface PaymentStatusResponse {
   paidAt?: number
 }
 
+// API 返回的订单数据格式
+interface ApiOrderData {
+  id: number
+  user: number
+  total_price: string
+  status: string
+  shipping_address: string | { title: string }
+  order_items: Array<{
+    id: number
+    cart_item: {
+      id: number
+      user: number
+      bracelet: {
+        id: number
+        user: number
+        name: string // 手串名称
+        bracelet_beads: Array<{
+          id: number
+          bead: ApiBeadData
+          position: number
+        }>
+        created_at: string
+        updated_at: string
+      }
+      properties: ApiBeadData
+      added_at: string
+    }
+    price: string
+  }>
+  created_at: string
+  paid_at: string | null
+  shipped_at: string | null
+  tracking_number: string | null
+}
+
+// 状态映射
+const statusMap: Record<string, OrderStatus> = {
+  'pending': OrderStatus.PENDING,
+  'paid': OrderStatus.PAID,
+  'shipped': OrderStatus.SHIPPED,
+  'completed': OrderStatus.COMPLETED,
+  'cancelled': OrderStatus.CANCELLED,
+}
+
 export const orderApi = {
   // 创建订单
   createOrder: (data: CreateOrderRequest): Promise<CreateOrderResponse> => {
@@ -266,13 +320,170 @@ export const orderApi = {
   },
 
   // 获取订单列表
-  getOrders: (params?: GetOrdersParams): Promise<GetOrdersResponse> => {
-    return httpClient.get<GetOrdersResponse>(API_ENDPOINTS.ORDERS, params)
+  getOrders: async (params?: GetOrdersParams): Promise<GetOrdersResponse> => {
+    const apiParams: Record<string, any> = {}
+    
+    if (params && params.page) {
+      apiParams.page = params.page
+    }
+    
+    if (params && params.status) {
+      apiParams.status = params.status
+    }
+
+    const response = await httpClient.getWithoutAuth<DjangoPageResponse<ApiOrderData>>(
+      API_ENDPOINTS.ORDERS,
+      apiParams
+    )
+
+    // 转换数据格式
+    const orders: Order[] = response.results.map((item) => {
+      // 解析收货地址
+      let shippingAddress: Address
+      if (typeof item.shipping_address === 'string') {
+        shippingAddress = {
+          name: '',
+          phone: '',
+          province: '',
+          city: '',
+          district: '',
+          detail: item.shipping_address,
+        }
+      } else {
+        shippingAddress = {
+          name: '',
+          phone: '',
+          province: '',
+          city: '',
+          district: '',
+          detail: item.shipping_address.title || '',
+        }
+      }
+
+      // 转换订单项
+      const orderItems = item.order_items.map((orderItem) => {
+        const beads = orderItem.cart_item.bracelet.bracelet_beads
+          .sort((a, b) => a.position - b.position)
+          .map((beadItem) => ({
+            id: String(beadItem.bead.id),
+            name: beadItem.bead.name,
+            category: beadItem.bead.category,
+            imageUrl: beadItem.bead.image_url,
+            price: parseFloat(beadItem.bead.price),
+            weight: parseFloat(beadItem.bead.weight),
+            diameter: parseFloat(beadItem.bead.diameter),
+            stock: beadItem.bead.stock,
+            description: beadItem.bead.description,
+          }))
+
+        const totalPrice = beads.reduce((sum, bead) => sum + bead.price, 0)
+        const totalWeight = beads.reduce((sum, bead) => sum + bead.weight, 0)
+        const totalLength = beads.reduce((sum, bead) => sum + bead.diameter, 0)
+
+        return {
+          id: String(orderItem.id),
+          bracelet: { beads },
+          properties: {
+            totalPrice,
+            totalWeight,
+            totalLength,
+            beadCount: beads.length,
+          },
+          price: parseFloat(orderItem.price),
+        }
+      })
+
+      return {
+        id: String(item.id),
+        userId: String(item.user),
+        items: orderItems,
+        totalPrice: parseFloat(item.total_price),
+        status: statusMap[item.status] || OrderStatus.PENDING,
+        shippingAddress,
+        createdAt: new Date(item.created_at).getTime(),
+        paidAt: item.paid_at ? new Date(item.paid_at).getTime() : undefined,
+        shippedAt: item.shipped_at ? new Date(item.shipped_at).getTime() : undefined,
+        trackingNumber: item.tracking_number || undefined,
+      }
+    })
+
+    return {
+      orders,
+      total: response.count,
+    }
   },
 
   // 获取订单详情
-  getOrderById: (id: string): Promise<Order> => {
-    return httpClient.get<Order>(API_ENDPOINTS.ORDER_DETAIL(id))
+  getOrderById: async (id: string): Promise<Order> => {
+    const item = await httpClient.getWithoutAuth<ApiOrderData>(API_ENDPOINTS.ORDER_DETAIL(id))
+    
+    // 解析收货地址
+    let shippingAddress: Address
+    if (typeof item.shipping_address === 'string') {
+      shippingAddress = {
+        name: '',
+        phone: '',
+        province: '',
+        city: '',
+        district: '',
+        detail: item.shipping_address,
+      }
+    } else {
+      shippingAddress = {
+        name: '',
+        phone: '',
+        province: '',
+        city: '',
+        district: '',
+        detail: item.shipping_address.title || '',
+      }
+    }
+
+    // 转换订单项
+    const orderItems = item.order_items.map((orderItem) => {
+      const beads = orderItem.cart_item.bracelet.bracelet_beads
+        .sort((a, b) => a.position - b.position)
+        .map((beadItem) => ({
+          id: String(beadItem.bead.id),
+          name: beadItem.bead.name,
+          category: beadItem.bead.category,
+          imageUrl: beadItem.bead.image_url,
+          price: parseFloat(beadItem.bead.price),
+          weight: parseFloat(beadItem.bead.weight),
+          diameter: parseFloat(beadItem.bead.diameter),
+          stock: beadItem.bead.stock,
+          description: beadItem.bead.description,
+        }))
+
+      const totalPrice = beads.reduce((sum, bead) => sum + bead.price, 0)
+      const totalWeight = beads.reduce((sum, bead) => sum + bead.weight, 0)
+      const totalLength = beads.reduce((sum, bead) => sum + bead.diameter, 0)
+
+      return {
+        id: String(orderItem.id),
+        bracelet: { beads },
+        properties: {
+          totalPrice,
+          totalWeight,
+          totalLength,
+          beadCount: beads.length,
+        },
+        price: parseFloat(orderItem.price),
+      }
+    })
+
+    return {
+      id: String(item.id),
+      userId: String(item.user),
+      items: orderItems,
+      totalPrice: parseFloat(item.total_price),
+      status: statusMap[item.status] || OrderStatus.PENDING,
+      shippingAddress,
+      createdAt: new Date(item.created_at).getTime(),
+      paidAt: item.paid_at ? new Date(item.paid_at).getTime() : undefined,
+      shippedAt: item.shipped_at ? new Date(item.shipped_at).getTime() : undefined,
+      trackingNumber: item.tracking_number || undefined,
+    }
   },
 
   // 发起支付
@@ -290,6 +501,7 @@ export const orderApi = {
 
 export interface WechatLoginRequest {
   code: string
+  app_type: string // 应用类型，固定为 'diy'
 }
 
 export interface WechatLoginResponse {
@@ -312,11 +524,81 @@ export interface User {
 export const authApi = {
   // 微信登录
   wechatLogin: (data: WechatLoginRequest): Promise<WechatLoginResponse> => {
+    // 使用 API_BASE_URL + /auth/login
     return httpClient.postWithoutAuth<WechatLoginResponse>(API_ENDPOINTS.WECHAT_LOGIN, data)
   },
 
   // 获取用户信息
   getUserInfo: (): Promise<User> => {
     return httpClient.get<User>(API_ENDPOINTS.USER_INFO)
+  },
+}
+
+// ============ 设计相关接口 ============
+
+// API 返回的手串数据格式
+interface ApiBraceletData {
+  id: number
+  user: number
+  name: string
+  bracelet_beads: Array<{
+    id: number
+    bead: ApiBeadData
+    position: number
+  }>
+  created_at: string
+  updated_at: string
+}
+
+export interface SaveDesignRequest {
+  name?: string
+  user?: number
+  beads?: Array<{
+    bead_id: number
+    position: number
+  }>
+}
+
+export interface SaveDesignResponse {
+  id: number
+  name: string
+  user: number
+  bracelet_beads: Array<{
+    id: number
+    bead: ApiBeadData
+    position: number
+  }>
+  created_at: string
+  updated_at: string
+}
+
+export const designApi = {
+  // 保存设计（创建手串）
+  saveDesign: async (data: SaveDesignRequest): Promise<SaveDesignResponse> => {
+    return httpClient.postWithoutAuth<SaveDesignResponse>(API_ENDPOINTS.BRACELETS, data)
+  },
+
+  // 获取所有设计（手串列表）
+  getDesigns: async (page: number = 1): Promise<ApiBraceletData[]> => {
+    const response = await httpClient.getWithoutAuth<DjangoPageResponse<ApiBraceletData>>(
+      API_ENDPOINTS.BRACELETS,
+      { page }
+    )
+    return response.results
+  },
+
+  // 获取单个设计（手串详情）
+  getDesignById: async (id: string): Promise<ApiBraceletData> => {
+    return httpClient.getWithoutAuth<ApiBraceletData>(API_ENDPOINTS.BRACELET_DETAIL(id))
+  },
+
+  // 更新设计
+  updateDesign: async (id: string, data: SaveDesignRequest): Promise<SaveDesignResponse> => {
+    return httpClient.put<SaveDesignResponse>(API_ENDPOINTS.BRACELET_DETAIL(id), data)
+  },
+
+  // 删除设计
+  deleteDesign: async (id: string): Promise<{ success: boolean }> => {
+    return httpClient.delete<{ success: boolean }>(API_ENDPOINTS.BRACELET_DETAIL(id))
   },
 }

@@ -1,10 +1,10 @@
 import { cartApi, AddToCartRequest, UpdateCartItemRequest } from '../api/endpoints'
 import { CartItem } from '../types/common'
-import { Bracelet } from '../types/bracelet'
+import { Bracelet, BraceletProperties } from '../types/bracelet'
 import { mockCartService } from './mockCartService'
 
 // 是否使用Mock数据（开发测试阶段可切换，true=使用Mock数据，false=使用真实API）
-// 注意：使用真实 API 前，需要在微信开发者工具中关闭域名校验
+// 注意：购物车 API 需要用户登录认证（需要有效的用户 token）
 const USE_MOCK = false
 
 /**
@@ -15,9 +15,13 @@ class CartService {
   /**
    * 添加手串设计到购物车
    * @param bracelet 手串设计
+   * @param properties 手串属性（包含价格、重量等）
    * @returns 购物车项ID和完整的购物车项
    */
-  async addToCart(bracelet: Bracelet): Promise<{ itemId: string; cartItem: CartItem }> {
+  async addToCart(
+    bracelet: Bracelet,
+    properties?: BraceletProperties
+  ): Promise<{ itemId: string; cartItem: CartItem }> {
     // 验证手串不为空
     if (!bracelet || !bracelet.beads || bracelet.beads.length === 0) {
       throw new Error('手串设计不能为空，请至少添加一个珠子')
@@ -31,11 +35,28 @@ class CartService {
     // 提取珠子ID数组
     const beadIds = bracelet.beads.map((bead) => bead.id)
 
+    // 生成手串名称（如果没有提供）
+    const braceletName = bracelet.name || `手串设计 ${Date.now()}`
+
+    // 构建请求数据
     const request: AddToCartRequest = {
       bracelet: {
+        name: braceletName,
+        user: 'api_key_default_user', // 临时使用固定用户，后期实现登录后改为真实用户
         beads: beadIds,
       },
+      properties: {
+        description: properties || {
+          beadCount: bracelet.beads.length,
+          totalPrice: 0,
+          totalWeight: 0,
+          totalLength: 0,
+        },
+      },
     }
+
+    console.log('=== 发送到购物车 API 的数据 ===')
+    console.log('完整请求数据:', JSON.stringify(request, null, 2))
 
     const response = await cartApi.addToCart(request)
     return response

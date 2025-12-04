@@ -59,6 +59,7 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
         console.log('BeadSelector: 第一个珠子:', result.beads[0])
         
         if (isMounted) {
+          // 存储珠子的信息
           setBeads(result.beads)
           setHasMore(result.beads.length === result.pageSize)
           setPage(1)
@@ -225,7 +226,7 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
         ) : (
           <>
             {console.log('BeadSelector: 显示珠子列表，数量:', beads.length)}
-            {/* diy 页面珠子的列表 */}
+            {/*滚动shitu */}
             <ScrollView
               className='bead-selector__list'
               scrollY

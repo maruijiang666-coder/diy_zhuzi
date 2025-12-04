@@ -1,5 +1,5 @@
 import { View, Text, ScrollView } from '@tarojs/components'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { useOrderStore } from '../../../stores/useOrderStore'
 import { Loading, Empty } from '../../../components/common'
@@ -27,14 +27,10 @@ const ORDER_STATUS_COLOR: Record<OrderStatus, string> = {
 
 export default function OrderListPage() {
   const { orders, loading, error, loadOrders } = useOrderStore()
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | undefined>(
-    undefined
-  )
-
   // 页面加载时获取订单列表
   useEffect(() => {
-    loadOrders(selectedStatus)
-  }, [selectedStatus])
+    loadOrders()
+  }, [])
 
   // 处理点击订单，跳转到订单详情
   const handleOrderClick = (order: Order) => {
@@ -108,13 +104,7 @@ export default function OrderListPage() {
   if (!loading && orders.length === 0) {
     return (
       <View className='order-list-page'>
-        <Empty
-          description='暂无订单'
-          actionText='去设计手串'
-          onAction={() => {
-            Taro.switchTab({ url: '/pages/diy/index' })
-          }}
-        />
+        <Empty text='暂无订单' description='快去设计你的专属手串吧' />
       </View>
     )
   }

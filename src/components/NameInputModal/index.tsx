@@ -27,7 +27,6 @@ const NameInputModal: React.FC<NameInputModalProps> = ({
       onConfirm(defaultName || `设计 ${new Date().toLocaleDateString()}`)
 
     } else {
-      
       onConfirm(trimmedName)
     }
   }
