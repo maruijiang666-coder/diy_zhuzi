@@ -122,7 +122,16 @@ export interface SaveBraceletRequest {
 
 // 添加到购物车请求（POST /cart/items/）
 export interface AddToCartRequest {
-  bracelet_id: number // 手串ID
+  bracelet: {
+    id: number // 手串ID
+    beads: string[] // 珠子 ID 数组
+  }
+  properties: {
+    beadCount: number
+    totalPrice: number
+    totalWeight: number
+    totalLength: number
+  }
 }
 
 export interface AddToCartResponse {

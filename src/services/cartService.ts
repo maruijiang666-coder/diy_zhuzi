@@ -52,7 +52,16 @@ class CartService {
     // 步骤 2：将手串添加到购物车 (POST /cart/items/)
     console.log('=== 步骤 2: 添加到购物车 ===')
     const cartRequest = {
-      bracelet_id: savedBracelet.id,
+      bracelet: {
+        id: savedBracelet.id,
+        beads: beadsData, // 珠子 ID 数组
+      },
+      properties: properties || {
+        beadCount: bracelet.beads.length,
+        totalPrice: 0,
+        totalWeight: 0,
+        totalLength: 0,
+      },
     }
     console.log('请求数据:', JSON.stringify(cartRequest, null, 2))
 
