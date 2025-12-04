@@ -35,6 +35,7 @@ export default function DiyPage() {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isSavingDesign, setIsSavingDesign] = useState(false)
   const [showNameModal, setShowNameModal] = useState(false)
+  const [previousBeadCount, setPreviousBeadCount] = useState(0)
 
   // 页面加载时检查是否需要加载购物车项
   useEffect(() => {
@@ -54,6 +55,20 @@ export default function DiyPage() {
       }
     })
   }, [router.params.cartItemId])
+
+  // 页面显示时检测是否有新加载的设计
+  Taro.useDidShow(() => {
+    // 如果珠子数量增加了，说明从其他页面加载了设计
+    if (bracelet.beads.length > 0 && bracelet.beads.length !== previousBeadCount) {
+      Taro.showToast({
+        title: '设计已加载',
+        icon: 'success',
+        duration: 2000,
+      })
+    }
+    // 更新珠子数量记录
+    setPreviousBeadCount(bracelet.beads.length)
+  })
 
   // 从购物车加载设计到DIY页面
   const loadCartItemToDesign = async (cartItemId: string) => {

@@ -265,12 +265,12 @@ export const cartApi = {
 
   // 删除购物车项
   removeCartItem: (id: string): Promise<{ success: boolean }> => {
-    return httpClient.delete<{ success: boolean }>(API_ENDPOINTS.CART_ITEM_DETAIL(id))
+    return httpClient.deleteWithoutAuth<{ success: boolean }>(API_ENDPOINTS.CART_ITEM_DETAIL(id))
   },
 
   // 清空购物车
   clearCart: (): Promise<{ success: boolean }> => {
-    return httpClient.delete<{ success: boolean }>(API_ENDPOINTS.CART_ITEMS)
+    return httpClient.deleteWithoutAuth<{ success: boolean }>(API_ENDPOINTS.CART_ITEMS)
   },
 }
 
@@ -635,6 +635,6 @@ export const designApi = {
 
   // 删除设计
   deleteDesign: async (id: string): Promise<{ success: boolean }> => {
-    return httpClient.delete<{ success: boolean }>(API_ENDPOINTS.BRACELET_DETAIL(id))
+    return httpClient.deleteWithoutAuth<{ success: boolean }>(API_ENDPOINTS.BRACELET_DETAIL(id))
   },
 }

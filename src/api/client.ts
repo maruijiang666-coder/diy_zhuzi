@@ -230,4 +230,8 @@ export const httpClient = {
   postWithoutAuth: <T>(url: string, data?: any): Promise<T> => {
     return request<T>({ url, method: 'POST', data, skipAuth: true })
   },
+
+  deleteWithoutAuth: <T>(url: string, params?: Record<string, any>): Promise<T> => {
+    return request<T>({ url, method: 'DELETE', params, skipAuth: true })
+  },
 }
