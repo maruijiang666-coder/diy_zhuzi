@@ -58,25 +58,30 @@
     }
 
     .avatar-button {
-      @include card;
-      width: 400rpx;
-      height: 88rpx;
-      line-height: 88rpx;
-      border-radius: $radius-round;
-      font-size: $font-size-base;
-      color: $primary-color;
-      font-weight: $font-weight-medium;
-      margin-top: $spacing-md;
-      transition: all $transition-base;
-
+      // 隐藏按钮样式，保持内容显示
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      outline: none !important;
+      width: auto !important;
+      height: auto !important;
+      line-height: normal !important;
+      
+      // 移除按钮点击效果
       &:active {
-        transform: scale(0.98);
-        background: linear-gradient(135deg, #E8F2FF 0%, #D1E5FF 100%);
+        transform: none !important;
+        background: transparent !important;
+      }
+      
+      // 确保内容正常显示
+      .empty-state {
+        pointer-events: none; // 让点击事件透传到按钮本身
       }
     }
 
     .nickname-input {
-      @include card;
       width: 400rpx;
       height: 88rpx;
       line-height: 88rpx;
@@ -88,10 +93,11 @@
       margin-top: $spacing-md;
       border: none;
       outline: none;
+      background: transparent;
       transition: all $transition-base;
 
       &:focus {
-        box-shadow: 0 0 0 4rpx rgba($primary-color, 0.2);
+        background: rgba($primary-color, 0.05);
       }
 
       &::placeholder {
@@ -110,14 +116,31 @@
       margin-top: $spacing-md;
     }
 
-    .login-tips {
+    .empty-state {
       @include flex-center;
-      margin-top: $spacing-sm;
+      flex-direction: column;
+      gap: $spacing-md;
+      margin-bottom: $spacing-lg;
 
-      .tips-text {
-        font-size: $font-size-xs;
-        color: $text-tertiary;
+      .empty-icon {
+        width: 120rpx;
+        height: 120rpx;
+        margin-bottom: $spacing-sm;
+      }
+
+      .empty-text {
+        font-size: $font-size-lg;
+        font-weight: $font-weight-bold;
+        color: $text-primary;
         text-align: center;
+      }
+
+      .empty-description {
+        font-size: $font-size-sm;
+        color: $text-secondary;
+        text-align: center;
+        line-height: 1.5;
+        max-width: 480rpx;
       }
     }
   }

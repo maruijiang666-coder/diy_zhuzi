@@ -209,10 +209,31 @@ export default function ProfilePage() {
     return (
       <View className='profile-page'>
         <View className='login-section'>
-          <Empty
-            text='您还未登录'
-            description='请先登录以使用完整功能'
-            icon='https://img.icons8.com/clouds/200/user.png'
+          <Button 
+            openType="chooseAvatar" 
+            onChooseAvatar={(e) => setAvatar(e.detail.avatarUrl)}
+            className='avatar-button'
+            type='default'
+          >
+            <View className='empty-state'>
+              <Image 
+                className='empty-icon' 
+                src='https://img.icons8.com/clouds/200/user.png'
+                mode='aspectFit'
+              />
+              <Text className='empty-text'>您还未登录</Text>
+              <Text className='empty-description'>请选择头像、输入昵称并获取手机号完成登录</Text>
+            </View>
+          </Button>
+          <Input 
+            type="nickname" 
+            placeholder="请输入昵称"
+            className='nickname-input'
+            onBlur={handleNicknameChange}
+            onClick={() => {
+              // 点击输入框时自动聚焦，提升用户体验
+              console.log('点击昵称输入框')
+            }}
           />
           <Button 
             className='login-button' 
@@ -221,24 +242,9 @@ export default function ProfilePage() {
           >
             微信登录
           </Button>
-          {/* 1. 获取头像 */}
-          <Button 
-            openType="chooseAvatar" 
-            onChooseAvatar={(e) => setAvatar(e.detail.avatarUrl)}
-            className='avatar-button'
-            type='default'
-          >
-            选择头像
-          </Button>
+          {/* 1. 获取头像 - 已移到上方图片区域 */}
           
           {/* 2. 获取昵称 */}
-          <Input 
-            type="nickname" 
-            placeholder="请输入昵称"
-            className='nickname-input'
-            onBlur={handleNicknameChange}
-          />
-          
           {/* 3. 获取用户手机号 */}
           <Button 
             openType="getPhoneNumber" 
@@ -248,9 +254,10 @@ export default function ProfilePage() {
           >
             获取手机号
           </Button>
-          <View className='login-tips'>
-            <Text className='tips-text'>点击登录将获取您的微信头像和昵称</Text>
-          </View>
+          
+          {/* 2. 获取昵称 */}
+     
+          
           {error && (
             <View className='error-message'>
               <Text>{error}</Text>
