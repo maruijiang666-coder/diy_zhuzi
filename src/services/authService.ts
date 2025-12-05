@@ -131,17 +131,26 @@ class AuthService {
       const appName = response.user && response.user.app_name ? response.user.app_name : 'diy'
       console.log('应用类型:', appName)
 
-      // 注意：Taro.getUserProfile 必须在用户点击事件中调用
-      // 这里只处理基础的登录逻辑，用户信息获取将在用户点击按钮时触发
+      
+      if (response.openid) {
+        try {
+          const userProfile = await Taro.getUserInfo();
+          const { nickName, avatarUrl, gender, province, city, country } = userProfile.userInfo;
+          console.log('获取微信用户信息成功', { nickName, avatarUrl, gender, province, city, country });
+        } catch (err) {
+          console.warn('获取微信用户信息失败', err);
+        }
+      }
 
       console.log('步骤: 尝试获取用户手机号...')
 
       /* 3. 解密手机号（可放在后端，这里演示前端） */
       console.log("获取用户手机号")
+
       
-      const userId = (response.user && response.user.id) ? response.user.id : (response.openid || '1')
-      const userNickname = (userInfo && userInfo.nickname) ? userInfo.nickname : ((response.user && response.user.nickname) || '微信用户')
-      const userAvatar = (userInfo && userInfo.avatar) ? userInfo.avatar : ((response.user && response.user.avatar) || 'https://img.icons8.com/clouds/200/user.png')
+      const userId = 1
+      const userNickname = '微信用户'
+      const userAvatar = 'https://img.icons8.com/clouds/200/user.png'
       
       const user = {
         id: userId,

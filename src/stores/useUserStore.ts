@@ -22,7 +22,6 @@ interface UserStore {
   logout: () => void
   loadUserInfo: () => Promise<void>
   initializeAuth: () => void
-  updateUserInfo: (userInfo: { nickname?: string; avatar?: string }) => Promise<void>
 
   // 辅助方法
   clearError: () => void
@@ -96,34 +95,5 @@ export const useUserStore = create<UserStore>((set) => ({
   // 清除错误信息
   clearError: () => {
     set({ error: null })
-  },
-
-  // 更新用户信息
-  updateUserInfo: async (userInfo: { nickname?: string; avatar?: string }) => {
-    set({ loading: true, error: null })
-
-    try {
-      // 更新本地用户信息
-      const currentUser = useUserStore.getState().user
-      if (currentUser) {
-        const updatedUser = {
-          ...currentUser,
-          nickname: userInfo.nickname || currentUser.nickname,
-          avatar: userInfo.avatar || currentUser.avatar,
-        }
-        
-        set({
-          user: updatedUser,
-          loading: false,
-        })
-        
-        // 可以在这里调用后端API更新用户信息
-        console.log('用户信息已更新:', updatedUser)
-      }
-    } catch (error: any) {
-      const errorMessage = error.message || '更新用户信息失败'
-      set({ loading: false, error: errorMessage })
-      throw error
-    }
   },
 }))
