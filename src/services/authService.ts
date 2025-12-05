@@ -5,6 +5,23 @@ import { saveToken, clearToken } from '../api/client'
 // 类型导入
 import type { WechatLoginRequest, User } from '../api/endpoints'
 
+
+
+
+export interface WxUserInfo {
+  code: string;
+  app_type: 'diy';
+  nickname: string;
+  avatar: string;
+  gender: 0 | 1 | 2;
+  country: string;
+  province: string;
+  city: string;
+  language: string;
+  phone?: string;
+}
+
+
 /**
  * 认证服务
  * 封装用户认证相关的业务逻辑和API调用
@@ -44,6 +61,8 @@ class AuthService {
     console.log('=== 开始微信登录流程 ===')
     console.log('==============================================')
 
+
+
     try {
       // 1. 获取微信登录 code
       console.log('步骤1: 调用 wx.login() 获取 code...')
@@ -70,6 +89,7 @@ class AuthService {
       // 如果有用户信息，一并发送
       if (userInfo) {
         console.log('包含用户信息:', userInfo)
+
         // 注意：后端接口文档中这些字段是可选的
         if (userInfo.nickname) {
           (request as any).nickname = userInfo.nickname
@@ -110,10 +130,18 @@ class AuthService {
       // 7. 构建返回的用户信息 拿取用户信息
       const appName = response.user && response.user.app_name ? response.user.app_name : 'diy'
       console.log('应用类型:', appName)
+
+      // 注意：Taro.getUserProfile 必须在用户点击事件中调用
+      // 这里只处理基础的登录逻辑，用户信息获取将在用户点击按钮时触发
+
+      console.log('步骤: 尝试获取用户手机号...')
+
+      /* 3. 解密手机号（可放在后端，这里演示前端） */
+      console.log("获取用户手机号")
       
-      const userId = 1
-      const userNickname = '微信用户'
-      const userAvatar = 'https://img.icons8.com/clouds/200/user.png'
+      const userId = (response.user && response.user.id) ? response.user.id : (response.openid || '1')
+      const userNickname = (userInfo && userInfo.nickname) ? userInfo.nickname : ((response.user && response.user.nickname) || '微信用户')
+      const userAvatar = (userInfo && userInfo.avatar) ? userInfo.avatar : ((response.user && response.user.avatar) || 'https://img.icons8.com/clouds/200/user.png')
       
       const user = {
         id: userId,

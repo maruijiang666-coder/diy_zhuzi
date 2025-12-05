@@ -87,6 +87,22 @@
       box-shadow: $shadow-lg;
       background: $bg-primary;
 
+      .avatar-button {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        border: none;
+        background: transparent;
+        border-radius: 50%;
+        position: relative;
+        overflow: hidden;
+
+        &::after {
+          border: none;
+        }
+      }
+
       .avatar-image {
         width: 100%;
         height: 100%;
@@ -98,11 +114,21 @@
       flex-direction: column;
       gap: $spacing-xs;
 
-      .user-nickname {
+      .nickname-input {
         font-size: $font-size-xl;
         font-weight: $font-weight-bold;
         color: $bg-primary;
         text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+        background: transparent;
+        border: none;
+        text-align: center;
+        padding: 8rpx 16rpx;
+        border-radius: $radius-sm;
+        min-width: 200rpx;
+        
+        &:focus {
+          background: rgba(255, 255, 255, 0.1);
+        }
       }
 
       .user-phone {
