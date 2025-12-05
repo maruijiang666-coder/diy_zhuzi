@@ -1,5 +1,5 @@
 import { View, Text, Image, Button, Input } from '@tarojs/components'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { useUserStore } from '../../stores/useUserStore'
 import { Loading, Empty } from '../../components/common'
@@ -8,6 +8,7 @@ import './index.scss'
 export default function ProfilePage() {
   const { user, isLoggedIn, loading, error, login, logout, loadUserInfo, clearError } = useUserStore()
   const hasAttemptedLoad = useRef(false)
+  const [avatar, setAvatar] = useState<string>('')
 
   useEffect(() => {
     // 页面加载时检查登录状态
@@ -82,8 +83,9 @@ export default function ProfilePage() {
   }
 
   // 1. 获取头像 
-  const setAvatar = (avatarUrl: string) => {
+  const handleSetAvatar = (avatarUrl: string) => {
     console.log('获取头像成功:', avatarUrl)
+    setAvatar(avatarUrl)
     // 这里可以添加保存头像的逻辑
     Taro.showToast({
       title: '头像获取成功',
@@ -146,8 +148,10 @@ export default function ProfilePage() {
             duration: 2000
           })
           
-
-
+          // 获取手机号成功后，等弹窗显示完毕执行微信登录
+          setTimeout(() => {
+            handleWechatLogin()
+          }, 2000)
 
         } else {
           console.error('获取手机号失败:', result)
@@ -211,14 +215,14 @@ export default function ProfilePage() {
         <View className='login-section'>
           <Button 
             openType="chooseAvatar" 
-            onChooseAvatar={(e) => setAvatar(e.detail.avatarUrl)}
+            onChooseAvatar={(e) => handleSetAvatar(e.detail.avatarUrl)}
             className='avatar-button'
             type='default'
           >
             <View className='empty-state'>
               <Image 
                 className='empty-icon' 
-                src='https://img.icons8.com/clouds/200/user.png'
+                src={avatar || 'https://img.icons8.com/clouds/200/user.png'}
                 mode='aspectFit'
               />
               <Text className='empty-text'>您还未登录</Text>
@@ -235,13 +239,17 @@ export default function ProfilePage() {
               console.log('点击昵称输入框')
             }}
           />
-          <Button 
+          {/* <Button 
             className='login-button' 
             type='primary'
             onClick={handleWechatLogin}
           >
             微信登录
-          </Button>
+          </Button> */}
+
+
+
+
           {/* 1. 获取头像 - 已移到上方图片区域 */}
           
           {/* 2. 获取昵称 */}
