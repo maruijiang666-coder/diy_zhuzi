@@ -548,7 +548,7 @@ export interface WechatLoginRequest {
 
 // 微信登录响应（符合后端接口文档）
 export interface WechatLoginResponse {
-  login_token: string // 登录态 token（64位字符串）
+  openid: string // 登录态 token（64位字符串）
   expires_at: string // 过期时间（ISO 8601格式）
   user: {
     id: number
@@ -587,7 +587,7 @@ export const authApi = {
     
     console.log('登录 API 原始响应:', response)
     
-    // 后端返回格式：{ code: 0, message: "登录成功", data: { login_token, expires_at, user } }
+    // 后端返回格式：{ code: 0, message: "登录成功", data: { openid, expires_at, user } }
     if (response && response.code === 0 && response.data) {
       return response.data
     }

@@ -349,7 +349,7 @@ authService.logout()
 
 ### 3. 后端接口
 
-- 登录接口：`POST /api/auth/auth/login/`
+- 登录接口：`POST /api/auth/wx/get_openid/`
 - 刷新接口：`POST /api/auth/auth/refresh/`
 - 用户信息：`GET /api/auth/users/me/`
 

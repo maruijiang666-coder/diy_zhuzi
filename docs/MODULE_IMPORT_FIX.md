@@ -125,7 +125,7 @@ npm run dev:weapp
 步骤1: 调用 wx.login() 获取 code...
 ✓ 获取到 code: 081xxxxx
 步骤2: 发送登录请求到后端...
-调用微信登录 API: /auth/auth/login/
+调用微信登录 API: /auth/wx/get_openid/
 请求数据: { code: "...", app_type: "diy" }
 ```
 

@@ -1,9 +1,9 @@
 export const API_ENDPOINTS = {
   // ============ 认证相关 (基础路径: /api/auth) ============
-  WECHAT_LOGIN: '/auth/auth/login/', // 微信登录
-  WECHAT_VALIDATE: '/auth/auth/validate/', // 验证登录态
-  WECHAT_REFRESH: '/auth/auth/refresh/', // 刷新登录态
-  WECHAT_LOGOUT: '/auth/auth/logout/', // 登出
+  WECHAT_LOGIN: '/auth/wx/get_openid/', // 获取openId
+  WECHAT_VALIDATE: '/auth/wx/validate/', // 验证登录态
+  WECHAT_REFRESH: '/auth/wx/refresh/', // 刷新登录态
+  WECHAT_LOGOUT: '/auth/wx/logout/', // 登出
   USER_INFO: '/auth/users/me/', // 获取当前用户信息
 
   // ============ DIY业务相关 (基础路径: /api/diy) ============

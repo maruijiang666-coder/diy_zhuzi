@@ -70,6 +70,9 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'accept': 'application/json',
+    // 老许没有加
+    'X-API-Key': API_KEY, // 添加 API Key
+    'X-CSRFTOKEN': CSRF_TOKEN, // 添加 CSRF Token
     ...config.headers,
   }
 

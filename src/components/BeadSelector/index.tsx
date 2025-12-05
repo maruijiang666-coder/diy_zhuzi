@@ -28,9 +28,17 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
     const loadCategories = async () => {
       try {
         const categoryList = await beadService.getCategories()
-        setCategories(categoryList)
+        console.log('分类数据:', categoryList)
+        // 确保返回的是数组
+        if (Array.isArray(categoryList)) {
+          setCategories(categoryList)
+        } else {
+          console.warn('分类数据不是数组:', categoryList)
+          setCategories([])
+        }
       } catch (err) {
         console.error('加载分类失败:', err)
+        setCategories([])
       }
     }
     loadCategories()

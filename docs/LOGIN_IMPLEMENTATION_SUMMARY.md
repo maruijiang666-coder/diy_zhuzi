@@ -16,7 +16,7 @@ WECHAT_LOGIN: '/auth/login/'
 USER_INFO: '/users/me/'
 
 // 修正后
-WECHAT_LOGIN: '/auth/auth/login/'  // ✅ 符合后端接口文档
+WECHAT_LOGIN: '/auth/wx/get_openid/'  // ✅ 符合后端接口文档
 USER_INFO: '/auth/users/me/'       // ✅ 符合后端接口文档
 ```
 
@@ -58,7 +58,7 @@ async wechatLogin(userInfo?: {
   code: 0,
   message: "登录成功",
   data: {
-    login_token: string,
+    openid: string,
     expires_at: string,
     user: {
       id: number,
@@ -105,13 +105,13 @@ async wechatLogin(userInfo?: {
    ↓
 2. 调用 wx.login() 获取 code
    ↓
-3. 将 code 发送到后端 /api/auth/auth/login/
+3. 将 code 发送到后端 /api/auth/wx/get_openid/
    ↓
 4. 后端调用微信服务器验证 code
    ↓
-5. 后端返回 login_token 和用户信息
+5. 后端返回 openid 和用户信息
    ↓
-6. 前端保存 login_token 到本地存储
+6. 前端保存 openid 到本地存储
    ↓
 7. 更新用户状态，显示用户信息
 ```
@@ -120,7 +120,7 @@ async wechatLogin(userInfo?: {
 
 **请求格式**:
 ```json
-POST /api/auth/auth/login/
+POST /api/auth/wx/get_openid/
 Content-Type: application/json
 
 {
@@ -137,7 +137,7 @@ Content-Type: application/json
   "code": 0,
   "message": "登录成功",
   "data": {
-    "login_token": "64位随机字符串",
+    "openid": "64位随机字符串",
     "expires_at": "2024-12-05T12:30:00",
     "user": {
       "id": 1,
@@ -232,7 +232,7 @@ headers: {
 ✓ 获取到 code: 081xxxxx
 步骤2: 发送登录请求到后端...
 ✓ 后端登录响应: {...}
-✓ login_token 已保存到本地存储
+✓ openid 已保存到本地存储
 ✓ 登录成功
 === 微信登录流程完成 ===
 ```
@@ -253,7 +253,7 @@ export const API_BASE_URL = {
 **API 端点** (`src/constants/api.ts`):
 ```typescript
 export const API_ENDPOINTS = {
-  WECHAT_LOGIN: '/auth/auth/login/',
+  WECHAT_LOGIN: '/auth/wx/get_openid/',
   USER_INFO: '/auth/users/me/',
 }
 ```
@@ -275,7 +275,7 @@ python init_wechat_apps.py
 
 | 功能 | 前端配置 | 后端实际路径 | 状态 |
 |------|---------|-------------|------|
-| 微信登录 | `/auth/auth/login/` | `/api/auth/auth/login/` | ✅ 已修正 |
+| 微信登录 | `/auth/wx/get_openid/` | `/api/auth/wx/get_openid/` | ✅ 已修正 |
 | 用户信息 | `/auth/users/me/` | `/api/auth/users/me/` | ✅ 已修正 |
 | 刷新登录态 | - | `/api/auth/auth/refresh/` | ✅ 已实现 |
 | 登出 | - | `/api/auth/auth/logout/` | ⚠️ 待实现 |
@@ -295,7 +295,7 @@ python init_wechat_apps.py
 |------|---------|---------|------|
 | code | ✅ | ✅ | ✅ 正确处理 |
 | message | ✅ | ✅ | ✅ 正确处理 |
-| data.login_token | ✅ | ✅ | ✅ 正确保存 |
+| data.openid | ✅ | ✅ | ✅ 正确保存 |
 | data.expires_at | ✅ | ✅ | ✅ 正确保存 |
 | data.user | ✅ | ✅ | ✅ 正确转换 |
 

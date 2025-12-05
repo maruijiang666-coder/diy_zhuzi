@@ -6,7 +6,7 @@
 
 ```bash
 # 检查后端服务是否可访问
-curl https://therianclouds.mynatapp.cc/api/auth/auth/login/
+curl https://crystal.quant-speed.com/api/auth/wx/get_openid/
 ```
 
 ### 2. 确认前端配置
@@ -20,7 +20,7 @@ export const API_BASE_URL = 'https://therianclouds.mynatapp.cc/api/diy'
 检查 `src/constants/api.ts`：
 
 ```typescript
-WECHAT_LOGIN: '/auth/auth/login/',  // ✅ 正确
+WECHAT_LOGIN: '/auth/wx/get_openid/',  // ✅ 正确
 USER_INFO: '/auth/users/me/',       // ✅ 正确
 ```
 
@@ -52,8 +52,8 @@ npm run dev:weapp
    ✓ 获取到 code: 081xxxxx
    步骤2: 发送登录请求到后端...
    请求参数: { code: "081xxxxx", app_type: "diy" }
-   ✓ 后端登录响应: { login_token: "...", expires_at: "...", user: {...} }
-   ✓ login_token 已保存到本地存储
+   ✓ 后端登录响应: { openid: "...", expires_at: "...", user: {...} }
+   ✓ openid 已保存到本地存储
    ✓ 登录成功，用户信息: { id: "1", nickname: "微信用户", avatar: "..." }
    === 微信登录流程完成 ===
    ```
@@ -106,7 +106,7 @@ npm run dev:weapp
 
 ```
 === API 请求详情 ===
-URL: https://therianclouds.mynatapp.cc/api/auth/auth/login/
+URL: https://crystal.quant-speed.com/api/auth/wx/get_openid/
 Method: POST
 Headers: { ... }
 Data: { "code": "081xxxxx", "app_type": "diy" }
@@ -134,7 +134,7 @@ console.log('过期时间:', wx.getStorageSync('token_expires_at'))
 wx.login({ success: (res) => console.log(res.code) })
 
 # 使用 code 登录
-curl -X POST https://therianclouds.mynatapp.cc/api/auth/auth/login/ \
+curl -X POST https://crystal.quant-speed.com/api/auth/wx/get_openid/ \
   -H "Content-Type: application/json" \
   -d '{
     "code": "你的code",

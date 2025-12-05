@@ -4,11 +4,19 @@ const ENV = process.env.TARO_ENV || 'weapp'
 // 注意：不同的 API 有不同的基础路径
 // - 认证相关: /api/auth
 // - DIY业务相关: /api/diy
+// 老许测试用
+// export const API_BASE_URL = {
+//   development: 'https://therianclouds.mynatapp.cc/api',
+//   test: 'https://therianclouds.mynatapp.cc/api',
+//   production: 'https://crystal.quant-speed.com/api',
+// }[process.env.NODE_ENV || 'development'] || 'https://therianclouds.mynatapp.cc/api'
+
+// 真实服务器
 export const API_BASE_URL = {
-  development: 'https://therianclouds.mynatapp.cc/api',
-  test: 'https://therianclouds.mynatapp.cc/api',
+  development: 'https://crystal.quant-speed.com/api',
+  test: 'https://crystal.quant-speed.com/api',
   production: 'https://crystal.quant-speed.com/api',
-}[process.env.NODE_ENV || 'development'] || 'https://therianclouds.mynatapp.cc/api'
+}[process.env.NODE_ENV || 'development'] || 'https://crystal.quant-speed.com/api'
 
 
 // API Key 配置

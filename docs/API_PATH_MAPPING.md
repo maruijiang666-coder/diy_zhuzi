@@ -26,7 +26,7 @@ export const API_BASE_URL = 'https://therianclouds.mynatapp.cc/api'
 
 | 功能 | 前端端点 | 完整 URL | 后端实际路径 | 状态 |
 |------|---------|----------|-------------|------|
-| 微信登录 | `/auth/auth/login/` | `https://therianclouds.mynatapp.cc/api/auth/auth/login/` | ✅ 匹配 | ✅ |
+| 微信登录 | `/auth/wx/get_openid/` | `https://crystal.quant-speed.com/api/auth/wx/get_openid/` | ✅ 匹配 | ✅ |
 | 验证登录态 | `/auth/auth/validate/` | `https://therianclouds.mynatapp.cc/api/auth/auth/validate/` | ✅ 匹配 | ✅ |
 | 刷新登录态 | `/auth/auth/refresh/` | `https://therianclouds.mynatapp.cc/api/auth/auth/refresh/` | ✅ 匹配 | ✅ |
 | 登出 | `/auth/auth/logout/` | `https://therianclouds.mynatapp.cc/api/auth/auth/logout/` | ✅ 匹配 | ✅ |
@@ -54,11 +54,11 @@ export const API_BASE_URL = 'https://therianclouds.mynatapp.cc/api'
 ```typescript
 // 配置
 API_BASE_URL = 'https://therianclouds.mynatapp.cc/api'
-WECHAT_LOGIN = '/auth/auth/login/'
+WECHAT_LOGIN = '/auth/wx/get_openid/'
 
 // 构建完整 URL
 const fullUrl = API_BASE_URL + WECHAT_LOGIN
-// 结果: https://therianclouds.mynatapp.cc/api/auth/auth/login/
+// 结果: https://crystal.quant-speed.com/api/auth/wx/get_openid/
 ```
 
 ### 示例 2: 珠子列表
@@ -79,13 +79,13 @@ const fullUrl = API_BASE_URL + BEADS
 
 **问题**:
 - 之前: `API_BASE_URL = '.../api/diy'`
-- 登录接口: `/auth/auth/login/`
-- 完整URL: `.../api/diy/auth/auth/login/` ❌ 错误
+- 登录接口: `/auth/wx/get_openid/`
+- 完整URL: `.../api/diy/auth/wx/get_openid/` ❌ 错误
 
 **修正**:
 - 现在: `API_BASE_URL = '.../api'`
-- 登录接口: `/auth/auth/login/`
-- 完整URL: `.../api/auth/auth/login/` ✅ 正确
+- 登录接口: `/auth/wx/get_openid/`
+- 完整URL: `.../api/auth/wx/get_openid/` ✅ 正确
 
 **影响范围**:
 - ✅ 认证相关 API 路径正确
@@ -96,7 +96,7 @@ const fullUrl = API_BASE_URL + BEADS
 ### 1. 测试登录接口
 
 ```bash
-curl -X POST https://therianclouds.mynatapp.cc/api/auth/auth/login/ \
+curl -X POST https://crystal.quant-speed.com/api/auth/wx/get_openid/ \
   -H "Content-Type: application/json" \
   -d '{
     "code": "test_code",
@@ -110,7 +110,7 @@ curl -X POST https://therianclouds.mynatapp.cc/api/auth/auth/login/ \
   "code": 0,
   "message": "登录成功",
   "data": {
-    "login_token": "...",
+    "openid": "...",
     "expires_at": "...",
     "user": {...}
   }
@@ -140,7 +140,7 @@ curl https://therianclouds.mynatapp.cc/api/diy/beads/
 ```javascript
 // 测试登录接口
 wx.request({
-  url: 'https://therianclouds.mynatapp.cc/api/auth/auth/login/',
+  url: 'https://crystal.quant-speed.com/api/auth/wx/get_openid/',
   method: 'POST',
   data: { code: 'test', app_type: 'diy' },
   success: (res) => console.log('登录接口:', res),

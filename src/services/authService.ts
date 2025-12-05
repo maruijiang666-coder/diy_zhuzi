@@ -40,24 +40,32 @@ class AuthService {
       avatar: string
     }
   }> {
+    console.log('==============================================')
     console.log('=== 开始微信登录流程 ===')
+    console.log('==============================================')
 
     try {
       // 1. 获取微信登录 code
       console.log('步骤1: 调用 wx.login() 获取 code...')
       const loginResult = await Taro.login()
+      console.log('Taro.login() 返回结果:', loginResult)
       
       if (!loginResult.code) {
         throw new Error('获取微信登录 code 失败')
       }
       
-      console.log('✓ 获取到 code:', loginResult.code)
+      console.log('==============================================')
+      console.log('✓ 微信登录 CODE:', loginResult.code)
+      console.log('==============================================')
+      console.log('完整登录结果:', loginResult)
 
       // 2. 构建登录请求参数
       const request: WechatLoginRequest = {
         code: loginResult.code,
-        app_type: 'diy', // 应用类型固定为 'diy'
+        app_type: 'diy', // 应用类型固定为 'diy'（需要后端配置）
       }
+      
+      console.log('准备发送的登录请求:', request)
 
       // 如果有用户信息，一并发送
       if (userInfo) {
@@ -79,15 +87,15 @@ class AuthService {
       console.log('✓ 后端登录响应:', response)
 
       // 4. 验证响应数据
-      if (!response || !response.login_token) {
+      if (!response || !response.openid) {
         console.error('登录响应异常:', response)
         throw new Error('登录失败：未获取到 token')
       }
 
-      // 5. 保存 login_token 到本地存储
-      const token = response.login_token
+      // 5. 保存 openid 到本地存储
+      const token = response.openid
       saveToken(token)
-      console.log('✓ login_token 已保存到本地存储')
+      console.log('✓ openid 已保存到本地存储')
 
       // 6. 保存过期时间
       if (response.expires_at) {
@@ -99,11 +107,18 @@ class AuthService {
         }
       }
 
-      // 7. 构建返回的用户信息
+      // 7. 构建返回的用户信息 拿取用户信息
+      const appName = response.user && response.user.app_name ? response.user.app_name : 'diy'
+      console.log('应用类型:', appName)
+      
+      const userId = 1
+      const userNickname = '微信用户'
+      const userAvatar = 'https://img.icons8.com/clouds/200/user.png'
+      
       const user = {
-        id: String(response.user.id),
-        nickname: response.user.nickname || '微信用户',
-        avatar: response.user.avatar || 'https://img.icons8.com/clouds/200/user.png',
+        id: userId,
+        nickname: userNickname,
+        avatar: userAvatar,
       }
 
       console.log('✓ 登录成功，用户信息:', user)
@@ -200,10 +215,10 @@ class AuthService {
 
       // 调用后端刷新接口
       const response = await Taro.request({
-        url: 'https://therianclouds.mynatapp.cc/api/auth/auth/refresh/',
+        url: 'https://crystal.quant-speed.com/api/auth/wx/refresh/',
         method: 'POST',
         data: {
-          login_token: token,
+          openid: token,
         },
         header: {
           'Content-Type': 'application/json',

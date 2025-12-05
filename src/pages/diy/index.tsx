@@ -45,15 +45,15 @@ export default function DiyPage() {
       loadCartItemToDesign(cartItemId)
     }
     
-    // 测试Mock数据
-    console.log('DIY页面已加载，开始测试Mock数据...')
-    testMockData().then((success) => {
-      if (success) {
-        console.log('Mock数据测试成功！')
-      } else {
-        console.error('Mock数据测试失败！')
-      }
-    })
+    // 测试Mock数据（已禁用，使用真实API）
+    // console.log('DIY页面已加载，开始测试Mock数据...')
+    // testMockData().then((success) => {
+    //   if (success) {
+    //     console.log('Mock数据测试成功！')
+    //   } else {
+    //     console.error('Mock数据测试失败！')
+    //   }
+    // })
   }, [router.params.cartItemId])
 
   // 页面显示时检测是否有新加载的设计

@@ -104,7 +104,7 @@ npm run dev:weapp
 **预期看到**:
 ```
 === API 请求详情 ===
-URL: https://therianclouds.mynatapp.cc/api/diy/auth/auth/login/
+URL: https://therianclouds.mynatapp.cc/api/diy/auth/wx/get_openid/
 Method: POST
 ```
 

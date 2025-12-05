@@ -1,5 +1,5 @@
 import { View, Text, Image, Button } from '@tarojs/components'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Taro from '@tarojs/taro'
 import { useUserStore } from '../../stores/useUserStore'
 import { Loading, Empty } from '../../components/common'
@@ -7,16 +7,22 @@ import './index.scss'
 
 export default function ProfilePage() {
   const { user, isLoggedIn, loading, error, login, logout, loadUserInfo, clearError } = useUserStore()
+  const hasAttemptedLoad = useRef(false)
 
   useEffect(() => {
     // 页面加载时检查登录状态
-    if (isLoggedIn && !user) {
+    if (isLoggedIn && !user && !hasAttemptedLoad.current) {
+      hasAttemptedLoad.current = true
       // 已登录但没有用户信息，加载用户信息
       loadUserInfo().catch((err) => {
         console.error('加载用户信息失败:', err)
+        // 如果是 401 错误，清除登录状态
+        if (err.code === '401' || err.type === 'NETWORK_ERROR') {
+          logout()
+        }
       })
     }
-  }, [isLoggedIn, user, loadUserInfo])
+  }, [isLoggedIn, user, loadUserInfo, logout])
 
   // 处理微信登录
   const handleWechatLogin = async () => {
@@ -39,10 +45,20 @@ export default function ProfilePage() {
       Taro.hideLoading()
       console.error('登录失败:', error)
       
+      // 根据错误码提供更友好的提示
+      let errorMessage = error.message || '登录失败'
+      if (error.code === '502') {
+        errorMessage = '服务器暂时无法访问，请稍后再试'
+      } else if (error.code === '500') {
+        errorMessage = '服务器内部错误，请稍后再试'
+      } else if (error.code === '404') {
+        errorMessage = '登录接口不存在'
+      }
+      
       Taro.showToast({
-        title: error.message || '登录失败',
+        title: errorMessage,
         icon: 'none',
-        duration: 2000,
+        duration: 3000,
       })
     }
   }
