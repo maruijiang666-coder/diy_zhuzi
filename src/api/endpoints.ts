@@ -533,17 +533,38 @@ export const orderApi = {
 
 // ============ 用户相关接口 ============
 
+// 微信登录请求（符合后端接口文档）
 export interface WechatLoginRequest {
-  code: string
-  app_type: string // 应用类型，固定为 'diy'
+  code: string // 微信登录凭证（必填）
+  app_type: string // 应用类型，固定为 'diy'（必填）
+  nickname?: string // 用户昵称（可选）
+  avatar?: string // 用户头像URL（可选）
+  gender?: number // 性别（可选）
+  country?: string // 国家（可选）
+  province?: string // 省份（可选）
+  city?: string // 城市（可选）
+  language?: string // 语言（可选）
 }
 
+// 微信登录响应（符合后端接口文档）
 export interface WechatLoginResponse {
-  token: string
+  login_token: string // 登录态 token（64位字符串）
+  expires_at: string // 过期时间（ISO 8601格式）
   user: {
-    id: string
+    id: number
+    openid: string
+    app: number
+    app_name: string
+    unionid: string | null
     nickname: string
     avatar: string
+    gender: number
+    country: string
+    province: string
+    city: string
+    language: string
+    created_at: string
+    updated_at: string
   }
 }
 
@@ -556,10 +577,24 @@ export interface User {
 }
 
 export const authApi = {
-  // 微信登录
-  wechatLogin: (data: WechatLoginRequest): Promise<WechatLoginResponse> => {
-    // 使用 API_BASE_URL + /auth/login
-    return httpClient.postWithoutAuth<WechatLoginResponse>(API_ENDPOINTS.WECHAT_LOGIN, data)
+  // 微信登录（符合后端接口文档）
+  wechatLogin: async (data: WechatLoginRequest): Promise<WechatLoginResponse> => {
+    console.log('调用微信登录 API:', API_ENDPOINTS.WECHAT_LOGIN)
+    console.log('请求数据:', data)
+    
+    // 直接调用后端接口，不需要认证
+    const response = await httpClient.postWithoutAuth<any>(API_ENDPOINTS.WECHAT_LOGIN, data)
+    
+    console.log('登录 API 原始响应:', response)
+    
+    // 后端返回格式：{ code: 0, message: "登录成功", data: { login_token, expires_at, user } }
+    if (response && response.code === 0 && response.data) {
+      return response.data
+    }
+    
+    // 如果响应格式不符合预期，抛出错误
+    const errorMessage = (response && response.message) ? response.message : '登录失败'
+    throw new Error(errorMessage)
   },
 
   // 获取用户信息

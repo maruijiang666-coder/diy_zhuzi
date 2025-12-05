@@ -1,11 +1,14 @@
 const ENV = process.env.TARO_ENV || 'weapp'
 
 // API 基础地址配置
+// 注意：不同的 API 有不同的基础路径
+// - 认证相关: /api/auth
+// - DIY业务相关: /api/diy
 export const API_BASE_URL = {
-  development: 'https://crystal.quant-speed.com/api/diy',
-  test: 'https://crystal.quant-speed.com/api/diy',
-  production: 'https://crystal.quant-speed.com/api/diy',
-}[process.env.NODE_ENV || 'development'] || 'https://crystal.quant-speed.com/api/diy'
+  development: 'https://therianclouds.mynatapp.cc/api',
+  test: 'https://therianclouds.mynatapp.cc/api',
+  production: 'https://crystal.quant-speed.com/api',
+}[process.env.NODE_ENV || 'development'] || 'https://therianclouds.mynatapp.cc/api'
 
 
 // API Key 配置

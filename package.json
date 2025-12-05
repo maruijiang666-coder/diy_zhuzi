@@ -82,7 +82,7 @@
     "@types/react": "^18.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "babel-preset-taro": "^3.6.23",
-    "cross-env": "^10.1.0",
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-config-taro": "4.1.8",
     "eslint-plugin-react": "^7.34.1",
