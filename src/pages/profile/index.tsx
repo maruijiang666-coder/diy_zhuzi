@@ -106,6 +106,76 @@ export default function ProfilePage() {
     }
   }
 
+  // 3. 获取用户手机号
+  const handleGetPhoneNumber = async (e: any) => {
+    console.log('获取手机号事件:', e)
+    
+    if (e.detail.errMsg === 'getPhoneNumber:ok') {
+      const code = e.detail.code
+      console.log('获取手机号成功，code:', code)
+      
+      try {
+        // 使用真实的后端接口获取手机号
+        Taro.showLoading({ title: '获取手机号中...' })
+        
+        const response = await Taro.request({
+          url: `https://crystal.quant-speed.com/api/auth/wx/get_phone_number/`,
+          method: 'POST',
+          header: {
+            'Content-Type': 'application/json',
+            'X-CSRFTOKEN': 'QjAtpufAC7oTUhnKbQaG8GWwvZ91U2xptiRnJk19S6UXeNW1X6wnmAe6RgYJDf1M',
+            'Accept': 'application/json'
+          },
+          data: {
+            code: code,
+            app_type: 'diy'
+          }
+        })
+        
+        const result = response.data
+        console.log('手机号API返回结果:', result)
+        
+        Taro.hideLoading()
+        
+        if (result.code === 0) {
+          const phoneNumber = result.data.phone_info && result.data.phone_info.phoneNumber
+          console.log('获取到手机号:', phoneNumber)
+          Taro.showToast({
+            title: '手机号获取成功',
+            icon: 'success',
+            duration: 2000
+          })
+          
+
+
+
+        } else {
+          console.error('获取手机号失败:', result)
+          Taro.showToast({
+            title: '获取手机号失败',
+            icon: 'none',
+            duration: 2000
+          })
+        }
+      } catch (error) {
+        Taro.hideLoading()
+        console.error('获取手机号错误:', error)
+        Taro.showToast({
+          title: '网络错误，请重试',
+          icon: 'none',
+          duration: 2000
+        })
+      }
+    } else {
+      console.log('用户拒绝获取手机号')
+      Taro.showToast({
+        title: '已取消获取手机号',
+        icon: 'none',
+        duration: 2000
+      })
+    }
+  }
+
   // 跳转到我的设计
   const handleGoToDesigns = () => {
     Taro.navigateTo({
@@ -168,6 +238,16 @@ export default function ProfilePage() {
             className='nickname-input'
             onBlur={handleNicknameChange}
           />
+          
+          {/* 3. 获取用户手机号 */}
+          <Button 
+            openType="getPhoneNumber" 
+            onGetPhoneNumber={handleGetPhoneNumber}
+            className='phone-button'
+            type='primary'
+          >
+            获取手机号
+          </Button>
           <View className='login-tips'>
             <Text className='tips-text'>点击登录将获取您的微信头像和昵称</Text>
           </View>

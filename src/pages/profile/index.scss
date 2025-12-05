@@ -99,6 +99,17 @@
       }
     }
 
+    .phone-button {
+      @include button-primary;
+      width: 400rpx;
+      height: 88rpx;
+      line-height: 88rpx;
+      border-radius: $radius-round;
+      font-size: $font-size-base;
+      font-weight: $font-weight-medium;
+      margin-top: $spacing-md;
+    }
+
     .login-tips {
       @include flex-center;
       margin-top: $spacing-sm;
