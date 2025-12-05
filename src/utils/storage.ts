@@ -9,6 +9,9 @@ export const STORAGE_KEYS = {
   DIY_DRAFT: 'diy_draft',
   CART_CACHE: 'cart_cache',
   OFFLINE_QUEUE: 'offline_queue',
+  USER_AVATAR: 'user_avatar',
+  USER_NICKNAME: 'user_nickname',
+  USER_PHONE: 'user_phone',
 }
 
 /**

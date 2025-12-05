@@ -3,12 +3,15 @@ import { useEffect, useRef, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { useUserStore } from '../../stores/useUserStore'
 import { Loading, Empty } from '../../components/common'
+import { setStorage, getStorage, STORAGE_KEYS } from '../../utils/storage'
 import './index.scss'
 
 export default function ProfilePage() {
   const { user, isLoggedIn, loading, error, login, logout, loadUserInfo, clearError } = useUserStore()
   const hasAttemptedLoad = useRef(false)
   const [avatar, setAvatar] = useState<string>('')
+  const [nickname, setNickname] = useState<string>('')
+  const [phone, setPhone] = useState<string>('')
 
   useEffect(() => {
     // 页面加载时检查登录状态
@@ -25,6 +28,27 @@ export default function ProfilePage() {
     }
   }, [isLoggedIn, user, loadUserInfo, logout])
 
+  // 加载缓存的用户信息
+  useEffect(() => {
+    const loadCachedUserInfo = async () => {
+      try {
+        const cachedAvatar = await getStorage<string>(STORAGE_KEYS.USER_AVATAR)
+        const cachedNickname = await getStorage<string>(STORAGE_KEYS.USER_NICKNAME)
+        const cachedPhone = await getStorage<string>(STORAGE_KEYS.USER_PHONE)
+        
+        if (cachedAvatar) setAvatar(cachedAvatar)
+        if (cachedNickname) setNickname(cachedNickname)
+        if (cachedPhone) setPhone(cachedPhone)
+        
+        console.log('加载缓存的用户信息:', { cachedAvatar, cachedNickname, cachedPhone })
+      } catch (error) {
+        console.error('加载缓存用户信息失败:', error)
+      }
+    }
+    
+    loadCachedUserInfo()
+  }, [])
+
   // 处理微信登录
   const handleWechatLogin = async () => {
     try {
@@ -36,6 +60,26 @@ export default function ProfilePage() {
       await login()
       
       Taro.hideLoading()
+      
+      // 登录成功后，如果有缓存的用户信息，同步到用户信息中
+      if (user) {
+        const updatedUser = {
+          ...user,
+          avatar: avatar || user.avatar,
+          nickname: nickname || user.nickname,
+          phone: phone || user.phone
+        }
+        
+        // 更新用户信息到缓存
+        try {
+          if (avatar) await setStorage(STORAGE_KEYS.USER_AVATAR, avatar)
+          if (nickname) await setStorage(STORAGE_KEYS.USER_NICKNAME, nickname)
+          if (phone) await setStorage(STORAGE_KEYS.USER_PHONE, phone)
+          console.log('用户信息已同步到缓存')
+        } catch (error) {
+          console.error('同步用户信息到缓存失败:', error)
+        }
+      }
       
       Taro.showToast({
         title: '登录成功',
@@ -83,10 +127,16 @@ export default function ProfilePage() {
   }
 
   // 1. 获取头像 
-  const handleSetAvatar = (avatarUrl: string) => {
+  const handleSetAvatar = async (avatarUrl: string) => {
     console.log('获取头像成功:', avatarUrl)
     setAvatar(avatarUrl)
-    // 这里可以添加保存头像的逻辑
+    // 保存头像到缓存
+    try {
+      await setStorage(STORAGE_KEYS.USER_AVATAR, avatarUrl)
+      console.log('头像已保存到缓存')
+    } catch (error) {
+      console.error('保存头像到缓存失败:', error)
+    }
     Taro.showToast({
       title: '头像获取成功',
       icon: 'success',
@@ -95,10 +145,17 @@ export default function ProfilePage() {
   }
 
   // 2. 获取昵称
-  const handleNicknameChange = (e: any) => {
+  const handleNicknameChange = async (e: any) => {
     const nickname = e.detail.value
     console.log('获取昵称:', nickname)
-    // 这里可以添加保存昵称的逻辑
+    setNickname(nickname)
+    // 保存昵称到缓存
+    try {
+      await setStorage(STORAGE_KEYS.USER_NICKNAME, nickname)
+      console.log('昵称已保存到缓存')
+    } catch (error) {
+      console.error('保存昵称到缓存失败:', error)
+    }
     if (nickname) {
       Taro.showToast({
         title: '昵称已更新',
@@ -142,6 +199,14 @@ export default function ProfilePage() {
         if (result.code === 0) {
           const phoneNumber = result.data.phone_info && result.data.phone_info.phoneNumber
           console.log('获取到手机号:', phoneNumber)
+          setPhone(phoneNumber)
+          // 保存手机号到缓存
+          try {
+            await setStorage(STORAGE_KEYS.USER_PHONE, phoneNumber)
+            console.log('手机号已保存到缓存')
+          } catch (error) {
+            console.error('保存手机号到缓存失败:', error)
+          }
           Taro.showToast({
             title: '手机号获取成功',
             icon: 'success',
@@ -233,7 +298,8 @@ export default function ProfilePage() {
             type="nickname" 
             placeholder="请输入昵称"
             className='nickname-input'
-            onBlur={handleNicknameChange}
+            value={nickname}
+            onInput={handleNicknameChange}
             onClick={() => {
               // 点击输入框时自动聚焦，提升用户体验
               console.log('点击昵称输入框')
@@ -284,13 +350,13 @@ export default function ProfilePage() {
         <View className='user-avatar'>
           <Image
             className='avatar-image'
-            src={user.avatar || 'https://img.icons8.com/clouds/200/user.png'}
+            src={user.avatar || avatar || 'https://img.icons8.com/clouds/200/user.png'}
             mode='aspectFill'
           />
         </View>
         <View className='user-details'>
-          <Text className='user-nickname'>{user.nickname || '未设置昵称'}</Text>
-          {user.phone && <Text className='user-phone'>{user.phone}</Text>}
+          <Text className='user-nickname'>{user.nickname || nickname || '未设置昵称'}</Text>
+          {(user.phone || phone) && <Text className='user-phone'>{user.phone || phone}</Text>}
         </View>
       </View>
 
