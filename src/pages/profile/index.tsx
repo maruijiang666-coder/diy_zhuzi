@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { useUserStore } from '../../stores/useUserStore'
 import { Loading, Empty } from '../../components/common'
-import { setStorage, getStorage, STORAGE_KEYS } from '../../utils/storage'
+import { setStorage, getStorage, setToken, STORAGE_KEYS } from '../../utils/storage'
 import './index.scss'
 
 export default function ProfilePage() {
@@ -17,14 +17,16 @@ export default function ProfilePage() {
     // 页面加载时检查登录状态
     if (isLoggedIn && !user && !hasAttemptedLoad.current) {
       hasAttemptedLoad.current = true
-      // 已登录但没有用户信息，加载用户信息
-      loadUserInfo().catch((err) => {
-        console.error('加载用户信息失败:', err)
-        // 如果是 401 错误，清除登录状态
-        if (err.code === '401' || err.type === 'NETWORK_ERROR') {
-          logout()
-        }
-      })
+      // 延迟加载用户信息，确保token生效
+      setTimeout(() => {
+        loadUserInfo().catch((err) => {
+          console.error('加载用户信息失败:', err)
+          // 如果是 401 错误，清除登录状态
+          if (err.code === '401' || err.type === 'NETWORK_ERROR') {
+            logout()
+          }
+        })
+      }, 300)
     }
   }, [isLoggedIn, user, loadUserInfo, logout])
 
@@ -56,19 +58,84 @@ export default function ProfilePage() {
       
       Taro.showLoading({ title: '登录中...', mask: true })
       
-      // 调用登录接口（内部会调用 wx.login 和 wx.getUserProfile）
-      await login()
+      // 先获取微信登录凭证
+      const loginResult = await Taro.login()
+      console.log('微信登录凭证获取成功:', loginResult)
       
-      Taro.hideLoading()
+      // 准备登录数据（使用已获取的用户信息，不再调用getUserProfile）
+      // 验证头像URL格式
+      let finalAvatar = avatar || 'https://img.icons8.com/clouds/200/user.png'
+      if (avatar && !avatar.startsWith('http')) {
+        // 如果头像不是完整URL，使用默认头像
+        finalAvatar = 'https://img.icons8.com/clouds/200/user.png'
+      }
       
-      // 登录成功后，如果有缓存的用户信息，同步到用户信息中
-      if (user) {
-        const updatedUser = {
-          ...user,
-          avatar: avatar || user.avatar,
-          nickname: nickname || user.nickname,
-          phone: phone || user.phone
-        }
+      console.log('原始头像URL:', avatar)
+      console.log('验证后的头像URL:', finalAvatar)
+      
+      const loginData = {
+        code: loginResult.code, // 使用临时登录凭证code
+        app_type: 'diy',
+        nickname: nickname || '微信用户', // 使用已获取的昵称
+        avatar: finalAvatar, // 使用验证后的头像
+        gender: 0, // 默认未知
+        phone_number: phone || '13800138000', // 使用已获取的手机号，如果没有则使用默认手机号
+        country: 'china', // 默认值
+        province: 'yunnan', // 默认值
+        city: 'kunming', // 默认值
+        language: 'zh_CN' // 默认中文
+      }
+      
+      // 验证必填字段
+      if (!loginData.code) {
+        throw new Error('获取微信登录凭证失败')
+      }
+      if (!loginData.app_type) {
+        throw new Error('应用类型不能为空')
+      }
+      
+      console.log('准备发送到服务器的登录数据:', loginData)
+      console.log('头像URL类型:', typeof loginData.avatar)
+      console.log('头像URL长度:', loginData.avatar ? loginData.avatar.length : 0)
+      
+      // 发送到真实服务器进行登录
+      console.log('开始调用后端登录接口...')
+      const response = await Taro.request({
+        url: 'https://crystal.quant-speed.com/api/auth/wx/login/',
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json',
+          'X-CSRFTOKEN': 'QjAtpufAC7oTUhnKbQaG8GWwvZ91U2xptiRnJk19S6UXeNW1X6wnmAe6RgYJDf1M',
+          'Accept': 'application/json'
+        },
+        data: loginData,
+        timeout: 10000 // 10秒超时
+      })
+      
+      console.log('服务器登录响应:', response.data)
+      console.log('服务器响应状态:', response.statusCode)
+      console.log('服务器响应头:', response.header)
+      
+      // 检查响应状态
+      if (response.statusCode !== 200) {
+        throw new Error(`服务器返回错误状态码: ${response.statusCode}`)
+      }
+      
+      const responseData = response.data
+      
+      // 检查后端返回的业务状态码
+      if (responseData.code === 0) {
+        // 登录成功，保存token和用户信息
+        const { token, user_info } = responseData.data
+        
+        console.log('登录成功，获取到token:', token)
+        console.log('用户信息:', user_info)
+        
+        // 保存token到本地存储（使用正确的工具函数）
+        await setToken(token)
+        
+        // 确保token立即生效
+        console.log('Token已保存，等待生效...')
         
         // 更新用户信息到缓存
         try {
@@ -79,13 +146,69 @@ export default function ProfilePage() {
         } catch (error) {
           console.error('同步用户信息到缓存失败:', error)
         }
+        
+        Taro.hideLoading()
+        
+        Taro.showToast({
+          title: '登录成功',
+          icon: 'success',
+          duration: 2000,
+        })
+        
+        // 登录成功后使用返回的用户信息更新状态
+        if (user_info) {
+          // 验证返回的头像URL
+          let finalUserAvatar = user_info.avatar
+          if (finalUserAvatar && !finalUserAvatar.startsWith('http')) {
+            finalUserAvatar = 'https://img.icons8.com/clouds/200/user.png'
+          }
+          
+          // 使用返回的用户信息更新当前状态
+          setNickname(user_info.nickname || nickname || '微信用户')
+          setAvatar(finalUserAvatar || 'https://img.icons8.com/clouds/200/user.png')
+          
+          // 保存到缓存
+          try {
+            if (user_info.nickname) await setStorage(STORAGE_KEYS.USER_NICKNAME, user_info.nickname)
+            if (finalUserAvatar) await setStorage(STORAGE_KEYS.USER_AVATAR, finalUserAvatar)
+            console.log('用户信息已更新到缓存')
+          } catch (error) {
+            console.error('更新用户信息到缓存失败:', error)
+          }
+        }
+        
+        // 延迟刷新用户信息，确保token生效
+        setTimeout(() => {
+          loadUserInfo().catch(err => {
+            console.error('延迟加载用户信息失败:', err)
+          })
+        }, 500)
+      } else if (responseData.code === 400) {
+        // 参数错误 - 显示具体的字段错误信息
+        let errorMsg = responseData.message || '请求参数错误'
+        if (responseData.data && typeof responseData.data === 'object') {
+          const fieldErrors = []
+          for (const [field, errors] of Object.entries(responseData.data)) {
+            if (Array.isArray(errors)) {
+              fieldErrors.push(`${field}: ${errors.join(', ')}`)
+            }
+          }
+          if (fieldErrors.length > 0) {
+            errorMsg += ` (${fieldErrors.join('; ')})`
+          }
+        }
+        throw new Error(errorMsg)
+      } else if (responseData.code === 401) {
+        // 未授权
+        throw new Error(responseData.message || '登录凭证无效')
+      } else if (responseData.code === 500) {
+        // 服务器错误
+        throw new Error(responseData.message || '服务器内部错误')
+      } else {
+        // 其他错误
+        throw new Error(responseData.message || `登录失败 (错误码: ${responseData.code})`)
       }
       
-      Taro.showToast({
-        title: '登录成功',
-        icon: 'success',
-        duration: 2000,
-      })
     } catch (error: any) {
       Taro.hideLoading()
       console.error('登录失败:', error)
