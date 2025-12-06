@@ -22,9 +22,11 @@ interface RequestConfig {
 }
 
 // 获取Token
-function getToken(): string | null {
+export function getToken(): string | null {
   try {
-    return Taro.getStorageSync(TOKEN_KEY)
+    const token = Taro.getStorageSync('Import_code')
+    console.log(`获取Token: ${token ? token.substring(0, 10) + '...' : 'null'}`)
+    return token
   } catch (error) {
     console.error('Failed to get token:', error)
     return null
@@ -35,6 +37,7 @@ function getToken(): string | null {
 export function saveToken(token: string): void {
   try {
     Taro.setStorageSync(TOKEN_KEY, token)
+    console.log(`保存Token成功: ${token.substring(0, 10)}...`)
   } catch (error) {
     console.error('Failed to save token:', error)
   }
@@ -82,6 +85,9 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
     const token = getToken()
     if (token) {
       headers['X-Login-Token'] = token
+      console.log(`添加认证头 X-Login-Token: ${token.substring(0, 10)}...`)
+    } else {
+      console.log('未找到Token，跳过认证头添加')
     }
   }
 
@@ -159,6 +165,7 @@ async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResu
 
   // 401 未授权
   if (statusCode === 401) {
+    console.error('401未授权错误，清除token并跳转到登录页')
     clearToken()
     Taro.reLaunch({ url: '/pages/profile/index' })
     throw createAppError(ErrorType.NETWORK_ERROR, '登录态已过期，请重新登录', statusCode)

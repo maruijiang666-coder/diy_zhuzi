@@ -72,7 +72,9 @@ export const useUserStore = create<UserStore>((set) => ({
     set({ loading: true, error: null })
 
     try {
+      console.log('开始加载用户信息...')
       const user = await authService.getUserInfo()
+      console.log('用户信息加载成功:', user)
 
       set({
         user,
@@ -81,6 +83,12 @@ export const useUserStore = create<UserStore>((set) => ({
       })
     } catch (error: any) {
       const errorMessage = error.message || '获取用户信息失败'
+      console.error('加载用户信息失败:', {
+        message: errorMessage,
+        code: error.code,
+        type: error.type,
+        originalError: error
+      })
       set({ loading: false, error: errorMessage })
       throw error
     }

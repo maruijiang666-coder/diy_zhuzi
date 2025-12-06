@@ -599,6 +599,7 @@ export const authApi = {
 
   // 获取用户信息
   getUserInfo: (): Promise<User> => {
+    console.log('调用获取用户信息 API:', API_ENDPOINTS.USER_INFO)
     return httpClient.get<User>(API_ENDPOINTS.USER_INFO)
   },
 }

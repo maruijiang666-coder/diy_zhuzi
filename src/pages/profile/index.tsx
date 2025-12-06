@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { useUserStore } from '../../stores/useUserStore'
 import { Loading, Empty } from '../../components/common'
-import { setStorage, getStorage, setToken, STORAGE_KEYS } from '../../utils/storage'
+import { setStorage, getStorage, setToken, getToken, STORAGE_KEYS } from '../../utils/storage'
+import { authService } from '../../services/authService'
 import './index.scss'
 
 export default function ProfilePage() {
@@ -21,12 +22,23 @@ export default function ProfilePage() {
       setTimeout(() => {
         loadUserInfo().catch((err) => {
           console.error('加载用户信息失败:', err)
+          console.error('错误详情:', {
+            code: err.code,
+            type: err.type,
+            message: err.message
+          })
           // 如果是 401 错误，清除登录状态
           if (err.code === '401' || err.type === 'NETWORK_ERROR') {
+            console.log('401错误，清除登录状态')
             logout()
+            Taro.showToast({
+              title: '登录状态失效，请重新登录',
+              icon: 'none',
+              duration: 3000
+            })
           }
         })
-      }, 300)
+      }, 1000) // 增加到1秒，确保token生效
     }
   }, [isLoggedIn, user, loadUserInfo, logout])
 
@@ -51,6 +63,36 @@ export default function ProfilePage() {
     loadCachedUserInfo()
   }, [])
 
+  // 清理和验证头像URL
+  const cleanAndValidateAvatarUrl = (avatarUrl: string): string => {
+    if (!avatarUrl) return 'https://img.icons8.com/clouds/200/user.png'
+    
+    // 清理URL中的特殊字符（如反引号、空格等）
+    let cleanedUrl = avatarUrl.replace(/^`|`$/g, '').trim()
+    cleanedUrl = cleanedUrl.replace(/\s+/g, '') // 移除所有空格
+    
+    // 检查是否包含反引号或其他非法字符
+    if (avatarUrl.includes('`') || avatarUrl.includes('\n') || avatarUrl.includes('\r')) {
+      console.log('检测到非法字符，使用默认头像')
+      return 'https://img.icons8.com/clouds/200/user.png'
+    }
+    
+    // 验证URL格式
+    if (!cleanedUrl.startsWith('http')) {
+      console.log('URL格式不合法，使用默认头像')
+      return 'https://img.icons8.com/clouds/200/user.png'
+    }
+    
+    // 检查URL长度（防止过长的URL）
+    if (cleanedUrl.length > 500) {
+      console.log('URL过长，使用默认头像')
+      return 'https://img.icons8.com/clouds/200/user.png'
+    }
+    
+    console.log('头像URL验证通过:', cleanedUrl)
+    return cleanedUrl
+  }
+
   // 处理微信登录
   const handleWechatLogin = async () => {
     try {
@@ -60,15 +102,14 @@ export default function ProfilePage() {
       
       // 先获取微信登录凭证
       const loginResult = await Taro.login()
-      console.log('微信登录凭证获取成功:', loginResult)
+      console.log('wx.login()的code:', loginResult)
       
       // 准备登录数据（使用已获取的用户信息，不再调用getUserProfile）
       // 验证头像URL格式
-      let finalAvatar = avatar || 'https://img.icons8.com/clouds/200/user.png'
-      if (avatar && !avatar.startsWith('http')) {
-        // 如果头像不是完整URL，使用默认头像
-        finalAvatar = 'https://img.icons8.com/clouds/200/user.png'
-      }
+      console.log('开始验证头像URL，原始值:', avatar)
+      
+      const finalAvatar = cleanAndValidateAvatarUrl(avatar)
+      console.log('验证后的最终头像URL:', finalAvatar)
       
       console.log('原始头像URL:', avatar)
       console.log('验证后的头像URL:', finalAvatar)
@@ -111,8 +152,8 @@ export default function ProfilePage() {
         data: loginData,
         timeout: 10000 // 10秒超时
       })
-      
-      console.log('服务器登录响应:', response.data)
+      setStorage('Import_code', response.data.data.login_token)
+      console.log('服务器登录响应--*-*-*-*-*-*:', response.data)
       console.log('服务器响应状态:', response.statusCode)
       console.log('服务器响应头:', response.header)
       
@@ -123,19 +164,84 @@ export default function ProfilePage() {
       
       const responseData = response.data
       
+      // 详细查看后端返回的数据结构
+      console.log('后端响应数据结构:', JSON.stringify(responseData, null, 2))
+      console.log('responseData.data:', responseData.data)
+      console.log('responseData.code:', responseData.code)
+      console.log('responseData.message:', responseData.message)
+      
       // 检查后端返回的业务状态码
       if (responseData.code === 0) {
         // 登录成功，保存token和用户信息
-        const { token, user_info } = responseData.data
+        // 注意：需要先查看实际的数据结构
+        const data = responseData.data
+        console.log('data 对象:', data)
+        console.log('data 的所有属性:', Object.keys(data))
+        console.log('data 对象完整内容:', JSON.stringify(data, null, 2))
         
-        console.log('登录成功，获取到token:', token)
+        // 尝试不同的字段组合
+        let token, user_info
+        
+        if (data.openid) {
+          // 如果存在 openid 字段
+          token = data.openid
+          user_info = data.user
+          console.log('使用 openid 作为 token:', token)
+        } else if (data.token) {
+          // 如果存在 token 字段
+          token = data.token
+          user_info = data.user_info
+          console.log('使用 token 字段:', token)
+        } else {
+          // 其他情况，尝试从用户对象中获取 openid
+          console.log('尝试从用户对象中获取 openid...')
+          if (data.user && data.user.openid) {
+            token = data.user.openid
+            user_info = data.user
+            console.log('从 user.openid 获取 token:', token)
+          } else {
+            console.error('无法找到合适的 token 字段，可用数据:', data)
+            throw new Error('登录失败：无法从后端响应中获取有效的 token')
+          }
+        }
+        
+        console.log('最终使用的 token:', token)
         console.log('用户信息:', user_info)
         
         // 保存token到本地存储（使用正确的工具函数）
-        await setToken(token)
+        console.log('开始保存token...')
+        try {
+          await setToken(token)
+          console.log('Token保存完成')
+        } catch (saveError) {
+          console.error('Token保存失败:', saveError)
+          throw new Error(`Token保存失败: ${saveError.message}`)
+        }
         
-        // 确保token立即生效
+        // 确保token立即生效，等待存储完成
         console.log('Token已保存，等待生效...')
+        
+        // 验证token是否正确保存
+        let savedToken
+        try {
+          savedToken = await getToken()
+          console.log('验证保存的token:', savedToken ? savedToken.substring(0, 10) + '...' : 'null')
+        } catch (getError) {
+          console.error('Token验证失败:', getError)
+          throw new Error(`Token验证失败: ${getError.message}`)
+        }
+        
+        if (!savedToken) {
+          console.error('Token保存验证失败：保存后获取为null')
+          throw new Error('Token保存失败：保存后无法获取token')
+        }
+
+        if (savedToken !== token) {
+          console.error('Token保存不一致!', {
+            原始: token ? token.substring(0, 10) + '...' : 'null',
+            保存的: savedToken ? savedToken.substring(0, 10) + '...' : 'null'
+          })
+        }
         
         // 更新用户信息到缓存
         try {
@@ -158,10 +264,8 @@ export default function ProfilePage() {
         // 登录成功后使用返回的用户信息更新状态
         if (user_info) {
           // 验证返回的头像URL
-          let finalUserAvatar = user_info.avatar
-          if (finalUserAvatar && !finalUserAvatar.startsWith('http')) {
-            finalUserAvatar = 'https://img.icons8.com/clouds/200/user.png'
-          }
+          const finalUserAvatar = cleanAndValidateAvatarUrl(user_info.avatar)
+          console.log('登录成功后验证的头像URL:', finalUserAvatar)
           
           // 使用返回的用户信息更新当前状态
           setNickname(user_info.nickname || nickname || '微信用户')
@@ -178,11 +282,57 @@ export default function ProfilePage() {
         }
         
         // 延迟刷新用户信息，确保token生效
-        setTimeout(() => {
-          loadUserInfo().catch(err => {
+        setTimeout(async () => {
+          try {
+            // 先验证登录态
+            console.log('开始验证登录态...')
+            const isValid = await authService.validateToken()
+            console.log('登录态验证结果:', isValid)
+            
+            if (!isValid) {
+              console.log('登录态验证失败，需要重新登录')
+              Taro.showToast({
+                title: '登录状态异常，请重新登录',
+                icon: 'none',
+                duration: 3000
+              })
+              // 清除无效token
+              await setToken('')
+              return
+            }
+            
+            // 登录态有效，再获取用户信息
+            console.log('登录态有效，开始获取用户信息...')
+            await loadUserInfo()
+            
+            // 如果用户信息获取成功，显示成功提示
+            Taro.showToast({
+              title: '登录成功',
+              icon: 'success',
+              duration: 2000
+            })
+            
+          } catch (err) {
             console.error('延迟加载用户信息失败:', err)
-          })
-        }, 500)
+            console.error('错误详情:', {
+              code: err.code,
+              type: err.type,
+              message: err.message
+            })
+            
+            // 如果是401错误，可能需要重新登录
+            if (err.code === '401' || err.type === 'NETWORK_ERROR') {
+              console.log('Token可能无效，需要重新登录')
+              Taro.showToast({
+                title: '登录状态异常，请重新登录',
+                icon: 'none',
+                duration: 3000
+              })
+              // 清除无效token
+              await setToken('')
+            }
+          }
+        }, 1500) // 减少到1.5秒，平衡等待时间
       } else if (responseData.code === 400) {
         // 参数错误 - 显示具体的字段错误信息
         let errorMsg = responseData.message || '请求参数错误'
@@ -236,9 +386,9 @@ export default function ProfilePage() {
     Taro.showModal({
       title: '提示',
       content: '确定要退出登录吗？',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm) {
-          logout()
+          await logout()
           Taro.showToast({
             title: '已退出登录',
             icon: 'success',
@@ -251,11 +401,16 @@ export default function ProfilePage() {
 
   // 1. 获取头像 
   const handleSetAvatar = async (avatarUrl: string) => {
-    console.log('获取头像成功:', avatarUrl)
-    setAvatar(avatarUrl)
+    console.log('获取头像成功，原始URL:', avatarUrl)
+    
+    // 使用验证函数清理和验证头像URL
+    const cleanedAvatarUrl = cleanAndValidateAvatarUrl(avatarUrl)
+    console.log('验证后的头像URL:', cleanedAvatarUrl)
+    
+    setAvatar(cleanedAvatarUrl)
     // 保存头像到缓存
     try {
-      await setStorage(STORAGE_KEYS.USER_AVATAR, avatarUrl)
+      await setStorage(STORAGE_KEYS.USER_AVATAR, cleanedAvatarUrl)
       console.log('头像已保存到缓存')
     } catch (error) {
       console.error('保存头像到缓存失败:', error)
@@ -294,7 +449,7 @@ export default function ProfilePage() {
     
     if (e.detail.errMsg === 'getPhoneNumber:ok') {
       const code = e.detail.code
-      console.log('获取手机号成功，code:', code)
+      console.log('获取手机号成功的code:', code)
       
       try {
         // 使用真实的后端接口获取手机号
@@ -401,12 +556,12 @@ export default function ProfilePage() {
     return (
       <View className='profile-page'>
         <View className='login-section'>
-          <Button 
+          {/* <Button 
             openType="chooseAvatar" 
             onChooseAvatar={(e) => handleSetAvatar(e.detail.avatarUrl)}
             className='avatar-button'
             type='default'
-          >
+          > */}
             <View className='empty-state'>
               <Image 
                 className='empty-icon' 
@@ -416,7 +571,7 @@ export default function ProfilePage() {
               <Text className='empty-text'>您还未登录</Text>
               <Text className='empty-description'>请选择头像、输入昵称并获取手机号完成登录</Text>
             </View>
-          </Button>
+          {/* </Button> */}
           <Input 
             type="nickname" 
             placeholder="请输入昵称"

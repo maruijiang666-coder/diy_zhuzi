@@ -1,6 +1,7 @@
 import Taro from '@tarojs/taro'
 import * as endpoints from '../api/endpoints'
-import { saveToken, clearToken } from '../api/client'
+import { getToken } from '../api/client'
+import { setToken, removeToken } from '../utils/storage'
 
 // 类型导入
 import type { WechatLoginRequest, User } from '../api/endpoints'
@@ -114,7 +115,7 @@ class AuthService {
 
       // 5. 保存 openid 到本地存储
       const token = response.openid
-      saveToken(token)
+      await setToken(token)
       console.log('✓ openid 已保存到本地存储')
 
       // 6. 保存过期时间
@@ -191,15 +192,39 @@ class AuthService {
    * @returns 用户详细信息
    */
   async getUserInfo(): Promise<User> {
-    return await endpoints.authApi.getUserInfo()
+    try {
+      console.log('开始获取用户信息...')
+      const user = await endpoints.authApi.getUserInfo()
+      console.log('用户信息获取成功:', user)
+      return user
+    } catch (error: any) {
+      console.error('获取用户信息失败:', {
+        message: error.message,
+        code: error.code,
+        type: error.type,
+        originalError: error
+      })
+      
+      // 如果是401错误，提供更详细的信息
+      if (error.code === '401' || error.code === 401) {
+        console.error('401错误详情 - 可能的原因:', {
+          '1. Token无效或过期': '需要重新登录',
+          '2. Token格式错误': '检查token是否正确',
+          '3. 请求头格式错误': '检查X-Login-Token头',
+          '4. 后端认证配置问题': '联系后端开发人员'
+        })
+      }
+      
+      throw error
+    }
   }
 
   /**
    * 退出登录
    * 清除本地存储的token
    */
-  logout(): void {
-    clearToken()
+  async logout(): Promise<void> {
+    await removeToken()
   }
 
   /**
@@ -209,7 +234,7 @@ class AuthService {
    */
   isLoggedIn(): boolean {
     try {
-      const token = Taro.getStorageSync('auth_token')
+      const token = getToken() // 使用统一的getToken函数
       return !!token
     } catch (error) {
       console.error('检查登录状态失败:', error)
@@ -240,12 +265,58 @@ class AuthService {
   }
 
   /**
+   * 验证登录态
+   * 检查当前token是否有效
+   */
+  async validateToken(): Promise<boolean> {
+    try {
+      const token = getToken()
+      if (!token) {
+        console.log('未找到token，无需验证')
+        return false
+      }
+
+      console.log('开始验证登录态...')
+      // console.log("______-----____---___"+token)
+      
+     // 先获取微信登录凭证
+      const loginResult = await Taro.login()
+      console.log('验证登录的code:', Taro.getStorageSync('Import_code'))
+
+      const response = await Taro.request({
+        url: 'https://crystal.quant-speed.com/api/auth/wx/validate/',
+        method: 'POST',
+        data: {
+          login_token: Taro.getStorageSync('Import_code'),  // 使用 login_token 字段名
+        },
+        header: {
+          'Content-Type': 'application/json',
+          'X-Login-Token': Taro.getStorageSync('Import_code'),
+        },
+      })
+      // console.log('验证登录打印'+JSON.stringify(response))
+      console.log('登录态验证响应:', response.data)
+      
+      if (response.data && response.data.code === 0) {
+        console.log('✓ 登录态验证成功')
+        return true
+      } else {
+        console.log('✗ 登录态验证失败:', response.data && response.data.message)
+        return false
+      }
+    } catch (error) {
+      console.error('登录态验证失败:', error)
+      return false
+    }
+  }
+
+  /**
    * 刷新登录态
    * 延长 token 有效期
    */
   async refreshToken(): Promise<void> {
     try {
-      const token = Taro.getStorageSync('auth_token')
+      const token = getToken() // 使用统一的getToken函数
       if (!token) {
         throw new Error('未找到登录态')
       }
@@ -255,10 +326,11 @@ class AuthService {
         url: 'https://crystal.quant-speed.com/api/auth/wx/refresh/',
         method: 'POST',
         data: {
-          openid: token,
+          login_token: token,  // 使用 login_token 字段名
         },
         header: {
           'Content-Type': 'application/json',
+          'X-Login-Token': token,
         },
       })
 

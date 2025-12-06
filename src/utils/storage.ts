@@ -80,7 +80,14 @@ export async function clearStorage(): Promise<void> {
  * @returns Promise<void>
  */
 export async function setToken(token: string): Promise<void> {
-  return setStorage(STORAGE_KEYS.TOKEN, token)
+  console.log(`[Storage] 开始设置Token，长度: ${token.length}`)
+  try {
+    await setStorage(STORAGE_KEYS.TOKEN, token)
+    console.log(`[Storage] Token设置成功`)
+  } catch (error) {
+    console.error(`[Storage] Token设置失败:`, error)
+    throw error
+  }
 }
 
 /**
@@ -88,7 +95,15 @@ export async function setToken(token: string): Promise<void> {
  * @returns Promise<string | null>
  */
 export async function getToken(): Promise<string | null> {
-  return getStorage<string>(STORAGE_KEYS.TOKEN)
+  console.log(`[Storage] 开始获取Token`)
+  try {
+    const token = await getStorage<string>(STORAGE_KEYS.TOKEN)
+    console.log(`[Storage] Token获取成功: ${token ? token.substring(0, 10) + '...' : 'null'}`)
+    return token
+  } catch (error) {
+    console.error(`[Storage] Token获取失败:`, error)
+    throw error
+  }
 }
 
 /**
