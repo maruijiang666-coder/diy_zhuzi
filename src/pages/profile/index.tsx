@@ -388,12 +388,65 @@ export default function ProfilePage() {
       content: '确定要退出登录吗？',
       success: async (res) => {
         if (res.confirm) {
-          await logout()
-          Taro.showToast({
-            title: '已退出登录',
-            icon: 'success',
-            duration: 2000,
-          })
+          try {
+            // 获取登录token
+            const loginToken = Taro.getStorageSync('Import_code')
+            if (!loginToken) {
+              console.log('未找到登录token，直接清除本地状态')
+              await logout()
+              Taro.showToast({
+                title: '已退出登录',
+                icon: 'success',
+                duration: 2000,
+              })
+              return
+            }
+
+            // 调用真实的退出登录接口
+            console.log('开始调用退出登录接口...')
+            const response = await Taro.request({
+              url: 'https://crystal.quant-speed.com/api/auth/wx/logout/',
+              method: 'POST',
+              header: {
+                'Content-Type': 'application/json',
+                'X-API-Key': '123quant-speed',
+                'X-CSRFTOKEN': 'QjAtpufAC7oTUhnKbQaG8GWwvZ91U2xptiRnJk19S6UXeNW1X6wnmAe6RgYJDf1M',
+                'Accept': 'application/json'
+              },
+              data: {
+                login_token: loginToken
+              }
+            })
+
+            console.log('退出登录接口响应:', response.data)
+
+            // 无论接口返回什么，都清除本地状态
+            await logout()
+            
+            if (response.data && response.data.code === 0) {
+              Taro.showToast({
+                title: '已退出登录',
+                icon: 'success',
+                duration: 2000,
+              })
+            } else {
+              // 即使接口报错，也显示退出成功（因为本地状态已清除）
+              Taro.showToast({
+                title: '已退出登录',
+                icon: 'success',
+                duration: 2000,
+              })
+            }
+          } catch (error) {
+            console.error('退出登录接口调用失败:', error)
+            // 即使接口调用失败，也清除本地状态并显示退出成功
+            await logout()
+            Taro.showToast({
+              title: '已退出登录',
+              icon: 'success',
+              duration: 2000,
+            })
+          }
         }
       },
     })
