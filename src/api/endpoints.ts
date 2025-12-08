@@ -220,8 +220,9 @@ export const cartApi = {
         }
       }
       
-      // 转换珠子数据
-      const beads = item.bracelet.bracelet_beads
+      // 转换珠子数据 - 添加空值检查
+      const braceletBeads = item.bracelet.bracelet_beads || []
+      const beads = braceletBeads
         .sort((a, b) => a.position - b.position)
         .map((beadItem) => ({
           id: String(beadItem.bead.id),
@@ -372,9 +373,21 @@ export const orderApi = {
 
     // 转换数据格式
     const orders: Order[] = response.results.map((item) => {
-      // 解析收货地址
+      // 解析收货地址 - 适配真实接口格式
       let shippingAddress: Address
-      if (typeof item.shipping_address === 'string') {
+      
+      if (item.shipping_address && typeof item.shipping_address === 'object') {
+        // 真实接口返回的地址对象包含完整的地址信息
+        const addr = item.shipping_address as any
+        shippingAddress = {
+          name: addr.name || '',
+          phone: addr.phone || '',
+          province: addr.province || '',
+          city: addr.city || '',
+          district: addr.district || '',
+          detail: addr.detail || '',
+        }
+      } else if (typeof item.shipping_address === 'string') {
         shippingAddress = {
           name: '',
           phone: '',
@@ -383,6 +396,16 @@ export const orderApi = {
           district: '',
           detail: item.shipping_address,
         }
+      } else if (item.shipping_name || item.shipping_phone || item.shipping_address_detail) {
+        // 检查是否有独立的收货地址字段（备用格式）
+        shippingAddress = {
+          name: item.shipping_name || '',
+          phone: item.shipping_phone || '',
+          province: item.shipping_province || '',
+          city: item.shipping_city || '',
+          district: item.shipping_district || '',
+          detail: item.shipping_address_detail || '',
+        }
       } else {
         shippingAddress = {
           name: '',
@@ -390,40 +413,64 @@ export const orderApi = {
           province: '',
           city: '',
           district: '',
-          detail: item.shipping_address.title || '',
+          detail: '',
         }
       }
 
-      // 转换订单项
+      // 转换订单项 - 适配真实接口格式
       const orderItems = item.order_items.map((orderItem) => {
-        const beads = orderItem.cart_item.bracelet.bracelet_beads
-          .sort((a, b) => a.position - b.position)
-          .map((beadItem) => ({
-            id: String(beadItem.bead.id),
-            name: beadItem.bead.name,
-            category: beadItem.bead.category,
-            imageUrl: beadItem.bead.image_url,
-            price: parseFloat(beadItem.bead.price),
-            weight: parseFloat(beadItem.bead.weight),
-            diameter: parseFloat(beadItem.bead.diameter),
-            stock: beadItem.bead.stock,
-            description: beadItem.bead.description,
-          }))
+        // 获取珠子数据 - 适配真实接口的嵌套结构
+        let braceletBeads: any[] = []
+        let properties = {
+          beadCount: 0,
+          totalPrice: 0,
+          totalWeight: 0,
+          totalLength: 0,
+        }
 
-        const totalPrice = beads.reduce((sum, bead) => sum + bead.price, 0)
-        const totalWeight = beads.reduce((sum, bead) => sum + bead.weight, 0)
-        const totalLength = beads.reduce((sum, bead) => sum + bead.diameter, 0)
+        if (orderItem.cart_item && orderItem.cart_item.bracelet) {
+          const cartItem = orderItem.cart_item as any
+          
+          // 获取珠子列表
+          if (cartItem.bracelet.bracelet_beads && Array.isArray(cartItem.bracelet.bracelet_beads)) {
+            braceletBeads = cartItem.bracelet.bracelet_beads
+          }
+          
+          // 获取属性数据（优先使用properties对象，其次使用bracelet的属性）
+          if (cartItem.properties) {
+            const props = cartItem.properties as any
+            properties = {
+              beadCount: parseInt(props.beadCount) || 0,
+              totalPrice: parseFloat(props.totalPrice) || 0,
+              totalWeight: parseFloat(props.totalWeight) || 0,
+              totalLength: parseFloat(props.totalLength) || 0,
+            }
+          }
+        }
+
+        // 转换珠子数据
+        const beads = braceletBeads
+          .sort((a, b) => (a.position || 0) - (b.position || 0))
+          .map((beadItem) => {
+            const bead = beadItem.bead || {}
+            return {
+              id: String(bead.id || ''),
+              name: bead.name || '未知珠子',
+              category: bead.category || '',
+              imageUrl: bead.image_url || '',
+              price: parseFloat(bead.price || '0'),
+              weight: parseFloat(bead.weight || '0'),
+              diameter: parseFloat(bead.diameter || '0'),
+              stock: bead.stock || 0,
+              description: bead.description || '',
+            }
+          })
 
         return {
           id: String(orderItem.id),
           bracelet: { beads },
-          properties: {
-            totalPrice,
-            totalWeight,
-            totalLength,
-            beadCount: beads.length,
-          },
-          price: parseFloat(orderItem.price),
+          properties,
+          price: parseFloat(orderItem.price || '0'),
         }
       })
 
@@ -449,11 +496,25 @@ export const orderApi = {
 
   // 获取订单详情
   getOrderById: async (id: string): Promise<Order> => {
+    console.log(`[orderApi] 获取订单详情，订单ID: ${id}`)
     const item = await httpClient.getWithoutAuth<ApiOrderData>(API_ENDPOINTS.ORDER_DETAIL(id))
+    console.log(`[orderApi] 订单详情原始数据:`, JSON.stringify(item, null, 2))
     
-    // 解析收货地址
+    // 解析收货地址 - 适配真实接口格式
     let shippingAddress: Address
-    if (typeof item.shipping_address === 'string') {
+    
+    if (item.shipping_address && typeof item.shipping_address === 'object') {
+      // 真实接口返回的地址对象包含完整的地址信息
+      const addr = item.shipping_address as any
+      shippingAddress = {
+        name: addr.name || '',
+        phone: addr.phone || '',
+        province: addr.province || '',
+        city: addr.city || '',
+        district: addr.district || '',
+        detail: addr.detail || '',
+      }
+    } else if (typeof item.shipping_address === 'string') {
       shippingAddress = {
         name: '',
         phone: '',
@@ -462,6 +523,16 @@ export const orderApi = {
         district: '',
         detail: item.shipping_address,
       }
+    } else if (item.shipping_name || item.shipping_phone || item.shipping_address_detail) {
+      // 检查是否有独立的收货地址字段（备用格式）
+      shippingAddress = {
+        name: item.shipping_name || '',
+        phone: item.shipping_phone || '',
+        province: item.shipping_province || '',
+        city: item.shipping_city || '',
+        district: item.shipping_district || '',
+        detail: item.shipping_address_detail || '',
+      }
     } else {
       shippingAddress = {
         name: '',
@@ -469,40 +540,64 @@ export const orderApi = {
         province: '',
         city: '',
         district: '',
-        detail: item.shipping_address.title || '',
+        detail: '',
       }
     }
 
-    // 转换订单项
+    // 转换订单项 - 适配真实接口格式
     const orderItems = item.order_items.map((orderItem) => {
-      const beads = orderItem.cart_item.bracelet.bracelet_beads
-        .sort((a, b) => a.position - b.position)
-        .map((beadItem) => ({
-          id: String(beadItem.bead.id),
-          name: beadItem.bead.name,
-          category: beadItem.bead.category,
-          imageUrl: beadItem.bead.image_url,
-          price: parseFloat(beadItem.bead.price),
-          weight: parseFloat(beadItem.bead.weight),
-          diameter: parseFloat(beadItem.bead.diameter),
-          stock: beadItem.bead.stock,
-          description: beadItem.bead.description,
-        }))
+      // 获取珠子数据 - 适配真实接口的嵌套结构
+      let braceletBeads: any[] = []
+      let properties = {
+        beadCount: 0,
+        totalPrice: 0,
+        totalWeight: 0,
+        totalLength: 0,
+      }
 
-      const totalPrice = beads.reduce((sum, bead) => sum + bead.price, 0)
-      const totalWeight = beads.reduce((sum, bead) => sum + bead.weight, 0)
-      const totalLength = beads.reduce((sum, bead) => sum + bead.diameter, 0)
+      if (orderItem.cart_item && orderItem.cart_item.bracelet) {
+        const cartItem = orderItem.cart_item as any
+        
+        // 获取珠子列表
+        if (cartItem.bracelet.bracelet_beads && Array.isArray(cartItem.bracelet.bracelet_beads)) {
+          braceletBeads = cartItem.bracelet.bracelet_beads
+        }
+        
+        // 获取属性数据（优先使用properties对象，其次使用bracelet的属性）
+        if (cartItem.properties) {
+          const props = cartItem.properties as any
+          properties = {
+            beadCount: parseInt(props.beadCount) || 0,
+            totalPrice: parseFloat(props.totalPrice) || 0,
+            totalWeight: parseFloat(props.totalWeight) || 0,
+            totalLength: parseFloat(props.totalLength) || 0,
+          }
+        }
+      }
+
+      // 转换珠子数据
+      const beads = braceletBeads
+        .sort((a, b) => (a.position || 0) - (b.position || 0))
+        .map((beadItem) => {
+          const bead = beadItem.bead || {}
+          return {
+            id: String(bead.id || ''),
+            name: bead.name || '未知珠子',
+            category: bead.category || '',
+            imageUrl: bead.image_url || '',
+            price: parseFloat(bead.price || '0'),
+            weight: parseFloat(bead.weight || '0'),
+            diameter: parseFloat(bead.diameter || '0'),
+            stock: bead.stock || 0,
+            description: bead.description || '',
+          }
+        })
 
       return {
         id: String(orderItem.id),
         bracelet: { beads },
-        properties: {
-          totalPrice,
-          totalWeight,
-          totalLength,
-          beadCount: beads.length,
-        },
-        price: parseFloat(orderItem.price),
+        properties,
+        price: parseFloat(orderItem.price || '0'),
       }
     })
 
@@ -653,11 +748,24 @@ export const designApi = {
 
   // 获取所有设计（手串列表）
   getDesigns: async (page: number = 1): Promise<ApiBraceletData[]> => {
-    const response = await httpClient.getWithoutAuth<DjangoPageResponse<ApiBraceletData>>(
-      API_ENDPOINTS.BRACELETS,
-      { page }
-    )
-    return response.results
+    try {
+      const response = await httpClient.getWithoutAuth<DjangoPageResponse<ApiBraceletData>>(
+        API_ENDPOINTS.BRACELETS,
+        { page }
+      )
+      
+      // 添加空值检查，确保 response.results 存在且是数组
+      if (!response || !Array.isArray(response.results)) {
+        console.warn('API 响应格式不正确，期望包含 results 数组但收到:', response)
+        return []
+      }
+      
+      return response.results
+    } catch (error) {
+      console.error('获取设计列表失败:', error)
+      // 返回空数组而不是抛出错误
+      return []
+    }
   },
 
   // 获取单个设计（手串详情）

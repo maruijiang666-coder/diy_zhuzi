@@ -31,6 +31,19 @@ export default function OrderDetailPage() {
   const router = useRouter()
   const orderId = router.params.orderId as string
 
+  // 添加orderId空值检查
+  if (!orderId || orderId === 'undefined') {
+    Taro.showToast({
+      title: '订单ID无效',
+      icon: 'error',
+      duration: 2000,
+    })
+    setTimeout(() => {
+      Taro.navigateBack()
+    }, 2000)
+    return null
+  }
+
   const { currentOrder, loading, error, loadOrderDetail } = useOrderStore()
   const { clearBracelet, addBead } = useDiyStore()
   const { paying, initiatePayment } = useWechatPay()
@@ -196,12 +209,12 @@ export default function OrderDetailPage() {
           </View>
           <View className='address-content'>
             <View className='address-row'>
-              <Text className='address-name'>{order.shippingAddress.name}</Text>
-              <Text className='address-phone'>{order.shippingAddress.phone}</Text>
+              <Text className='address-name'>{order.shippingAddress && order.shippingAddress.name ? order.shippingAddress.name : '未知'}</Text>
+              <Text className='address-phone'>{order.shippingAddress && order.shippingAddress.phone ? order.shippingAddress.phone : ''}</Text>
             </View>
             <Text className='address-detail'>
-              {order.shippingAddress.province} {order.shippingAddress.city}{' '}
-              {order.shippingAddress.district} {order.shippingAddress.detail}
+              {order.shippingAddress && order.shippingAddress.province ? order.shippingAddress.province : ''} {order.shippingAddress && order.shippingAddress.city ? order.shippingAddress.city : ''}{' '}
+              {order.shippingAddress && order.shippingAddress.district ? order.shippingAddress.district : ''} {order.shippingAddress && order.shippingAddress.detail ? order.shippingAddress.detail : ''}
             </Text>
           </View>
         </View>
@@ -224,7 +237,7 @@ export default function OrderDetailPage() {
           <View className='section-title'>
             <Text>手串设计</Text>
           </View>
-          {order.items.map((item, index) => (
+          {order.items && order.items.map((item, index) => (
             <View key={`${order.id}-${index}`} className='design-item'>
               <View className='design-header'>
                 <Text className='design-title'>设计 {index + 1}</Text>
@@ -232,11 +245,11 @@ export default function OrderDetailPage() {
               
               {/* 珠子预览 */}
               <View className='design-beads'>
-                {item.bracelet.beads.map((bead, beadIndex) => (
+                {item.bracelet && item.bracelet.beads && item.bracelet.beads.map((bead, beadIndex) => (
                   <Image
                     key={`${order.id}-${index}-${beadIndex}`}
                     className='bead-image'
-                    src={bead.imageUrl}
+                    src={bead.imageUrl || ''}
                     mode='aspectFill'
                   />
                 ))}
@@ -247,25 +260,25 @@ export default function OrderDetailPage() {
                 <View className='property-row'>
                   <Text className='property-label'>珠子数量</Text>
                   <Text className='property-value'>
-                    {item.properties.beadCount}颗
+                    {item.properties && item.properties.beadCount ? item.properties.beadCount : 0}颗
                   </Text>
                 </View>
                 <View className='property-row'>
                   <Text className='property-label'>价格</Text>
                   <Text className='property-value price'>
-                    {formatPrice(item.properties.totalPrice)}
+                    {formatPrice(item.properties && item.properties.totalPrice ? item.properties.totalPrice : 0)}
                   </Text>
                 </View>
                 <View className='property-row'>
                   <Text className='property-label'>重量</Text>
                   <Text className='property-value'>
-                    {formatWeight(item.properties.totalWeight)}
+                    {formatWeight(item.properties && item.properties.totalWeight ? item.properties.totalWeight : 0)}
                   </Text>
                 </View>
                 <View className='property-row'>
                   <Text className='property-label'>长度</Text>
                   <Text className='property-value'>
-                    {formatLength(item.properties.totalLength)}
+                    {formatLength(item.properties && item.properties.totalLength ? item.properties.totalLength : 0)}
                   </Text>
                 </View>
               </View>

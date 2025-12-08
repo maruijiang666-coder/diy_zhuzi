@@ -89,7 +89,20 @@ export default function OrderConfirmPage() {
     try {
       // 创建订单
       const cartItemIds = items.map((item) => item.id)
+      console.log('=== 订单确认页 - 开始创建订单 ===')
+      console.log('购物车项ID:', cartItemIds)
+      
       const orderId = await createOrder(cartItemIds, address)
+      console.log('=== 订单确认页 - 创建订单完成 ===')
+      console.log('获取到的orderId:', orderId)
+      console.log('orderId类型:', typeof orderId)
+
+      // 验证orderId不为空
+      if (!orderId) {
+        throw new Error('订单创建失败：未获取到订单ID')
+      }
+      
+      console.log('orderId验证通过，准备跳转')
 
       // 创建成功，跳转到订单详情页面
       Taro.showToast({

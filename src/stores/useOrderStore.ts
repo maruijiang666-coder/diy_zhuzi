@@ -32,10 +32,19 @@ export const useOrderStore = create<OrderStore>((set) => ({
     set({ loading: true, error: null })
 
     try {
-      const { orderId, order } = await orderService.createOrder(
+      console.log('=== 订单存储 - 开始创建订单 ===')
+      const result = await orderService.createOrder(
         cartItemIds,
         shippingAddress
       )
+      
+      console.log('=== 订单存储 - 创建订单结果 ===')
+      console.log('orderService返回结果:', JSON.stringify(result, null, 2))
+      
+      const { orderId, order } = result
+      
+      console.log('提取的orderId:', orderId)
+      console.log('提取的order:', JSON.stringify(order, null, 2))
 
       set((state) => ({
         orders: [order, ...state.orders],
@@ -46,6 +55,9 @@ export const useOrderStore = create<OrderStore>((set) => ({
       return orderId
     } catch (error: any) {
       const errorMessage = error.message || '创建订单失败'
+      console.error('=== 订单存储 - 创建订单失败 ===')
+      console.error('错误信息:', errorMessage)
+      console.error('完整错误:', error)
       set({ loading: false, error: errorMessage })
       throw error
     }
@@ -58,8 +70,11 @@ export const useOrderStore = create<OrderStore>((set) => ({
     try {
       const { orders } = await orderService.getOrders(status, page, pageSize)
 
+      // 添加空值检查，确保 orders 是数组
+      const validOrders = Array.isArray(orders) ? orders : []
+      
       // 按创建时间倒序排列（最新的在前）
-      const sortedOrders = orders.sort((a, b) => b.createdAt - a.createdAt)
+      const sortedOrders = validOrders.sort((a, b) => b.createdAt - a.createdAt)
 
       set({
         orders: sortedOrders,
@@ -77,6 +92,11 @@ export const useOrderStore = create<OrderStore>((set) => ({
     set({ loading: true, error: null })
 
     try {
+      // 添加orderId空值检查
+      if (!orderId || orderId === 'undefined') {
+        throw new Error('订单ID无效')
+      }
+
       const order = await orderService.getOrderById(orderId)
 
       set({

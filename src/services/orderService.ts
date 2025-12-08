@@ -34,7 +34,24 @@ class OrderService {
     console.log('=== 创建订单 - 请求数据 ===')
     console.log('请求数据:', JSON.stringify(request, null, 2))
 
-    return await orderApi.createOrder(request)
+    const response = await orderApi.createOrder(request)
+    
+    console.log('=== 创建订单 - 响应数据 ===')
+    console.log('完整响应:', JSON.stringify(response, null, 2))
+    
+    // 检查响应数据结构 - 处理嵌套的data结构
+    if (response && response.data && response.data.orderId) {
+      console.log('返回data中的数据:', JSON.stringify(response.data, null, 2))
+      return response.data
+    }
+    
+    // 如果直接返回的是data数据（兼容格式）
+    if (response && response.orderId) {
+      console.log('直接返回orderId数据:', JSON.stringify(response, null, 2))
+      return response
+    }
+    
+    throw new Error('创建订单响应数据格式错误：缺少orderId字段')
   }
 
   /**
@@ -67,8 +84,8 @@ class OrderService {
    * @returns 订单详情
    */
   async getOrderById(orderId: string): Promise<Order> {
-    if (!orderId || !orderId.trim()) {
-      throw new Error('订单ID不能为空')
+    if (!orderId || !orderId.trim() || orderId === 'undefined') {
+      throw new Error('订单ID无效')
     }
 
     return await orderApi.getOrderById(orderId)
@@ -80,8 +97,8 @@ class OrderService {
    * @returns 微信支付参数
    */
   async initiatePayment(orderId: string): Promise<WechatPayParams> {
-    if (!orderId || !orderId.trim()) {
-      throw new Error('订单ID不能为空')
+    if (!orderId || !orderId.trim() || orderId === 'undefined') {
+      throw new Error('订单ID无效')
     }
 
     const response = await orderApi.initiatePayment(orderId)
@@ -97,8 +114,8 @@ class OrderService {
     status: 'pending' | 'paid' | 'failed'
     paidAt?: number
   }> {
-    if (!orderId || !orderId.trim()) {
-      throw new Error('订单ID不能为空')
+    if (!orderId || !orderId.trim() || orderId === 'undefined') {
+      throw new Error('订单ID无效')
     }
 
     return await orderApi.checkPaymentStatus(orderId)

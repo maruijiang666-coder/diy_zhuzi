@@ -55,9 +55,12 @@ export const useDesignStore = create<DesignStore>((set, get) => ({
 
     try {
       const designs = await designService.getSavedDesigns()
+      
+      // 添加空值检查，确保 designs 是数组
+      const validDesigns = Array.isArray(designs) ? designs : []
 
       set({
-        designs: designs.sort((a, b) => b.updatedAt - a.updatedAt),
+        designs: validDesigns.sort((a, b) => b.updatedAt - a.updatedAt),
         loading: false,
       })
     } catch (error: any) {

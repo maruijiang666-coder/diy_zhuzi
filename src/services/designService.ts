@@ -60,9 +60,22 @@ class DesignService {
       return await mockDesignService.getSavedDesigns()
     }
 
-    // 真实API调用
-    const designs = await designApi.getDesigns()
-    return designs.map((design) => this.convertApiDataToSavedDesign(design))
+    try {
+      // 真实API调用
+      const designs = await designApi.getDesigns()
+      
+      // 添加空值检查，确保 designs 是数组
+      if (!Array.isArray(designs)) {
+        console.warn('API 返回的设计数据格式不正确，期望数组但收到:', typeof designs)
+        return []
+      }
+      
+      return designs.map((design) => this.convertApiDataToSavedDesign(design))
+    } catch (error) {
+      console.error('获取保存的设计失败:', error)
+      // 返回空数组而不是抛出错误，避免界面崩溃
+      return []
+    }
   }
 
   /**
@@ -139,8 +152,9 @@ class DesignService {
    * 转换 API 数据为 SavedDesign 格式
    */
   private convertApiDataToSavedDesign(apiData: any): SavedDesign {
-    // 转换珠子数据
-    const beads: Bead[] = apiData.bracelet_beads
+    // 转换珠子数据 - 添加空值检查
+    const braceletBeads = apiData.bracelet_beads || []
+    const beads: Bead[] = braceletBeads
       .sort((a: any, b: any) => a.position - b.position)
       .map((beadItem: any) => ({
         id: String(beadItem.bead.id),
