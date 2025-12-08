@@ -460,19 +460,90 @@ export default function ProfilePage() {
     const cleanedAvatarUrl = cleanAndValidateAvatarUrl(avatarUrl)
     console.log('验证后的头像URL:', cleanedAvatarUrl)
     
-    setAvatar(cleanedAvatarUrl)
-    // 保存头像到缓存
-    try {
-      await setStorage(STORAGE_KEYS.USER_AVATAR, cleanedAvatarUrl)
-      console.log('头像已保存到缓存')
-    } catch (error) {
-      console.error('保存头像到缓存失败:', error)
-    }
-    Taro.showToast({
-      title: '头像获取成功',
-      icon: 'success',
-      duration: 2000
+    // 显示上传中提示
+    Taro.showLoading({
+      title: '上传头像中...',
+      mask: true
     })
+    
+    try {
+      // 使用 wx.uploadFile 上传头像到服务器
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        Taro.uploadFile({
+          url: 'https://data.tangledup-ai.com/upload?folder=diyminiuser',
+          filePath: cleanedAvatarUrl,
+          name: 'file',
+          header: {
+            'accept': 'application/json',
+            'Content-Type': 'multipart/form-data'
+          },
+          formData: {
+            // 可以添加额外的表单数据
+          },
+          success: (res) => {
+            console.log('头像上传成功:', res)
+            resolve(res)
+          },
+          fail: (err) => {
+            console.error('头像上传失败:', err)
+            reject(err)
+          }
+        })
+      })
+      
+      Taro.hideLoading()
+      
+      // 解析上传结果
+      if (uploadResult.statusCode === 200) {
+        const responseData = JSON.parse(uploadResult.data)
+        console.log('头像上传返回数据:', responseData)
+        
+        if (responseData.file_url) {
+          // 使用服务器返回的图片URL
+          const serverAvatarUrl = responseData.file_url
+          console.log('服务器头像URL:', serverAvatarUrl)
+          
+          setAvatar(serverAvatarUrl)
+          // 保存头像URL到缓存
+          try {
+            // 头像缓存键名
+            await setStorage(STORAGE_KEYS.USER_AVATAR, serverAvatarUrl)
+            console.log('头像URL已保存到缓存')
+          } catch (error) {
+            console.error('保存头像URL到缓存失败:', error)
+          }
+          
+          Taro.showToast({
+            title: '头像上传成功',
+            icon: 'success',
+            duration: 2000
+          })
+        } else {
+          console.error('上传成功但未返回图片URL:', responseData)
+          Taro.showToast({
+            title: '头像上传失败',
+            icon: 'none',
+            duration: 2000
+          })
+        }
+      } else {
+        console.error('头像上传失败，状态码:', uploadResult.statusCode)
+        Taro.showToast({
+          title: '头像上传失败',
+          icon: 'none',
+          duration: 2000
+        })
+      }
+      
+    } catch (error) {
+      Taro.hideLoading()
+      console.error('头像上传过程出错:', error)
+      Taro.showToast({
+        title: '头像上传失败',
+        icon: 'none',
+        duration: 2000
+      })
+    }
   }
 
   // 2. 获取昵称
@@ -609,12 +680,12 @@ export default function ProfilePage() {
     return (
       <View className='profile-page'>
         <View className='login-section'>
-          {/* <Button 
+           <Button 
             openType="chooseAvatar" 
             onChooseAvatar={(e) => handleSetAvatar(e.detail.avatarUrl)}
             className='avatar-button'
             type='default'
-          > */}
+          > 
             <View className='empty-state'>
               <Image 
                 className='empty-icon' 
@@ -624,7 +695,7 @@ export default function ProfilePage() {
               <Text className='empty-text'>您还未登录</Text>
               <Text className='empty-description'>请选择头像、输入昵称并获取手机号完成登录</Text>
             </View>
-          {/* </Button> */}
+          </Button> 
           <Input 
             type="nickname" 
             placeholder="请输入昵称"
