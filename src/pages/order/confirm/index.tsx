@@ -92,7 +92,14 @@ export default function OrderConfirmPage() {
       console.log('=== 订单确认页 - 开始创建订单 ===')
       console.log('购物车项ID:', cartItemIds)
       
-      const orderId = await createOrder(cartItemIds, address)
+      const totalPrice = getTotalPrice()
+      console.log('订单总价:', totalPrice)
+      
+      // 检查Token
+      const token = Taro.getStorageSync('Import_code')
+      console.log('当前Token:', token ? token.substring(0, 10) + '...' : 'null')
+      
+      const orderId = await createOrder(cartItemIds, address, totalPrice)
       console.log('=== 订单确认页 - 创建订单完成 ===')
       console.log('获取到的orderId:', orderId)
       console.log('orderId类型:', typeof orderId)

@@ -2,6 +2,7 @@ import { cartApi, AddToCartRequest, UpdateCartItemRequest } from '../api/endpoin
 import { CartItem } from '../types/common'
 import { Bracelet, BraceletProperties } from '../types/bracelet'
 import { mockCartService } from './mockCartService'
+import { calculateTotalPrice, calculateTotalWeight, calculateTotalLength } from '../utils/calculator'
 
 // 是否使用Mock数据（开发测试阶段可切换，true=使用Mock数据，false=使用真实API）
 // 注意：购物车 API 需要用户登录认证（需要有效的用户 token）
@@ -35,32 +36,29 @@ class CartService {
     // 生成手串名称（如果没有提供）
     const braceletName = bracelet.name || `手串设计 ${Date.now()}`
 
-    // 提取珠子 ID 数组（字符串格式）
-    const beadsData = bracelet.beads.map((bead) => bead.id)
+    // 提取珠子 ID 数组（转换为数字格式）
+    const beadsData = bracelet.beads.map((bead) => parseInt(bead.id))
 
-    // 步骤 1：先保存手串到服务器 (POST /bracelets/)
-    console.log('=== 步骤 1: 保存手串到服务器 ===')
-    const braceletRequest = {
-      name: braceletName,
-      beads: beadsData,
-    }
-    console.log('请求数据:', JSON.stringify(braceletRequest, null, 2))
+    // 根据接口文档，直接调用 /cart/items/ 接口，包含完整的手串信息
+    console.log('=== 添加到购物车 ===')
     
-    const savedBracelet = await cartApi.saveBracelet(braceletRequest)
-    console.log('保存成功，手串 ID:', savedBracelet.id)
-
-    // 步骤 2：将手串添加到购物车 (POST /cart/items/)
-    console.log('=== 步骤 2: 添加到购物车 ===')
+    // 使用提供的属性或创建默认属性，转换为字符串格式
+    const finalProperties = properties || {
+      totalPrice: calculateTotalPrice(bracelet.beads),
+      totalWeight: calculateTotalWeight(bracelet.beads),
+      totalLength: calculateTotalLength(bracelet.beads),
+      beadCount: bracelet.beads.length,
+    }
+    
     const cartRequest = {
       bracelet: {
-        id: savedBracelet.id,
-        beads: beadsData, // 珠子 ID 数组
+        name: braceletName,
+        beads: beadsData, // 珠子 ID 数组（数字格式）
       },
-      properties: properties || {
-        beadCount: bracelet.beads.length,
-        totalPrice: 0,
-        totalWeight: 0,
-        totalLength: 0,
+      properties: {
+        totalPrice: String(finalProperties.totalPrice),
+        totalWeight: String(finalProperties.totalWeight),
+        totalLength: String(finalProperties.totalLength),
       },
     }
     console.log('请求数据:', JSON.stringify(cartRequest, null, 2))
@@ -81,13 +79,28 @@ class CartService {
       return await mockCartService.getCartItems()
     }
     
-    // 真实数据走线
-    console.log('调用真实 API: GET /cart/items/')
-    const result = await cartApi.getCartItems()
-    console.log('API 返回数据:', result)
-    console.log('购物车项数量:', result.length)
-    
-    return result
+    try {
+      // 真实数据走线
+      console.log('调用真实 API: GET /cart/items/')
+      const result = await cartApi.getCartItems()
+      console.log('API 返回数据:', result)
+      console.log('购物车项数量:', result.length)
+      
+      // 过滤掉无效的购物车项
+      const validItems = result.filter((item, index) => {
+        if (!item || !item.id || !item.bracelet || !item.properties) {
+          console.warn(`购物车项 ${index} 数据无效:`, item)
+          return false
+        }
+        return true
+      })
+      
+      console.log('有效购物车项数量:', validItems.length)
+      return validItems
+    } catch (error) {
+      console.error('获取购物车列表失败:', error)
+      throw error
+    }
   }
 
   /**
@@ -168,8 +181,14 @@ class CartService {
     }
 
     return items.reduce((total, item) => {
-      const totalPrice = item.properties && item.properties.totalPrice ? item.properties.totalPrice : 0;
-      return total + totalPrice;
+      // 防御性编程：检查item和properties是否存在
+      if (!item || !item.properties) {
+        console.warn('购物车项或properties为空，跳过价格计算:', item)
+        return total
+      }
+      
+      const totalPrice = item.properties.totalPrice || 0;
+      return total + (typeof totalPrice === 'number' ? totalPrice : parseFloat(String(totalPrice)) || 0);
     }, 0);
   }
 
@@ -179,7 +198,11 @@ class CartService {
    * @returns 项数量
    */
   getItemCount(items: CartItem[]): number {
-    return items ? items.length : 0
+    if (!items || !Array.isArray(items)) {
+      console.warn('购物车items参数无效:', items)
+      return 0
+    }
+    return items.length
   }
 }
 

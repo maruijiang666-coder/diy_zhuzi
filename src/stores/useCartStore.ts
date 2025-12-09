@@ -124,12 +124,22 @@ export const useCartStore = create<CartStore>((set, get) => ({
   // 计算购物车总价
   getTotalPrice: () => {
     const state = get()
+    // 防御性编程：确保items存在且是数组
+    if (!state.items || !Array.isArray(state.items)) {
+      console.warn('购物车items数据无效:', state.items)
+      return 0
+    }
     return cartService.calculateTotalPrice(state.items)
   },
 
   // 获取购物车项数量
   getItemCount: () => {
     const state = get()
+    // 防御性编程：确保items存在且是数组
+    if (!state.items || !Array.isArray(state.items)) {
+      console.warn('购物车items数据无效:', state.items)
+      return 0
+    }
     return cartService.getItemCount(state.items)
   },
 }))

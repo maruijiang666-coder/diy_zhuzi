@@ -39,8 +39,20 @@ export default function CartPage() {
   useEffect(() => {
     console.log('=== 购物车数据更新 ===')
     console.log('items:', items)
+    console.log('items长度:', items.length)
+    console.log('items类型:', typeof items)
     console.log('loading:', loading)
     console.log('error:', error)
+    
+    // 检查 items 数组中的每个元素
+    if (items && Array.isArray(items)) {
+      items.forEach((item, index) => {
+        console.log(`购物车项 ${index}:`, item)
+        if (!item || !item.id || !item.bracelet || !item.properties) {
+          console.warn(`购物车项 ${index} 数据不完整`)
+        }
+      })
+    }
   }, [items, loading, error])
 
   // 处理删除购物车项
@@ -125,6 +137,12 @@ export default function CartPage() {
 
   // 渲染购物车项
   const renderCartItem = (item: CartItem) => {
+    // 防御性编程：检查 item 是否存在且结构完整
+    if (!item || !item.id || !item.bracelet || !item.properties) {
+      console.warn('购物车项数据不完整:', item)
+      return null
+    }
+
     const { bracelet, properties } = item
     const isDeleting = deletingItemId === item.id
 
@@ -210,15 +228,15 @@ export default function CartPage() {
 
       {/* 购物车列表 */}
       <ScrollView className='cart-list' scrollY>
-        {items.map((item) => renderCartItem(item))}
+        {items.filter(item => item && item.id && item.bracelet && item.properties).map((item) => renderCartItem(item))}
       </ScrollView>
 
       {/* 底部结算栏 */}
       <View className='cart-footer'>
         <View className='footer-info'>
           <View className='total-info'>
-            <Text className='total-label'>共{getItemCount()}件</Text>
-            <Text className='total-price'>合计：{formatPrice(getTotalPrice())}</Text>
+            <Text className='total-label'>共{loading ? 0 : getItemCount()}件</Text>
+            <Text className='total-price'>合计：{formatPrice(loading ? 0 : getTotalPrice())}</Text>
           </View>
         </View>
         <Button

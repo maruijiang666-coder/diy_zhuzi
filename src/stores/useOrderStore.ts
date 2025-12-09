@@ -10,7 +10,7 @@ interface OrderStore {
   error: string | null
 
   // 操作
-  createOrder: (cartItemIds: string[], shippingAddress: Address) => Promise<string>
+  createOrder: (cartItemIds: string[], shippingAddress: Address, totalPrice: number) => Promise<string>
   loadOrders: (status?: OrderStatus, page?: number, pageSize?: number) => Promise<void>
   loadOrderDetail: (orderId: string) => Promise<void>
   updateOrderStatus: (orderId: string, status: OrderStatus) => void
@@ -28,14 +28,19 @@ export const useOrderStore = create<OrderStore>((set) => ({
   error: null,
 
   // 创建订单
-  createOrder: async (cartItemIds: string[], shippingAddress: Address) => {
+  createOrder: async (cartItemIds: string[], shippingAddress: Address, totalPrice: number) => {
     set({ loading: true, error: null })
 
     try {
       console.log('=== 订单存储 - 开始创建订单 ===')
+      console.log('购物车项ID:', cartItemIds)
+      console.log('收货地址:', shippingAddress)
+      console.log('订单总价:', totalPrice)
+      
       const result = await orderService.createOrder(
         cartItemIds,
-        shippingAddress
+        shippingAddress,
+        totalPrice
       )
       
       console.log('=== 订单存储 - 创建订单结果 ===')

@@ -53,6 +53,10 @@ export default function OrderDetailPage() {
   // 页面加载时获取订单详情
   useEffect(() => {
     if (orderId) {
+      console.log(`[OrderDetail] 开始加载订单详情，订单ID: ${orderId}`)
+      // 检查Token
+      const token = Taro.getStorageSync('Import_code')
+      console.log(`[OrderDetail] 当前Token: ${token ? token.substring(0, 10) + '...' : 'null'}`)
       loadOrderDetail(orderId)
     }
   }, [orderId])

@@ -123,14 +123,13 @@ export interface SaveBraceletRequest {
 // 添加到购物车请求（POST /cart/items/）
 export interface AddToCartRequest {
   bracelet: {
-    id: number // 手串ID
-    beads: string[] // 珠子 ID 数组
+    name: string // 手串名称
+    beads: number[] // 珠子 ID 数组（数字格式）
   }
   properties: {
-    beadCount: number
-    totalPrice: number
-    totalWeight: number
-    totalLength: number
+    totalPrice: number | string // 总价格（支持字符串格式）
+    totalWeight: number | string // 总重量（支持字符串格式）
+    totalLength: number | string // 总长度（支持字符串格式）
   }
 }
 
@@ -187,38 +186,47 @@ export const cartApi = {
 
   // 添加到购物车（POST /cart/items/）
   addToCart: (data: AddToCartRequest): Promise<AddToCartResponse> => {
-    return httpClient.postWithoutAuth<AddToCartResponse>(API_ENDPOINTS.CART_ITEMS, data)
+    return httpClient.post<AddToCartResponse>(API_ENDPOINTS.CART_ITEMS, data)
   },
 
   // 获取购物车列表
   getCartItems: async (page: number = 1): Promise<CartItem[]> => {
-    const response = await httpClient.getWithoutAuth<DjangoPageResponse<ApiCartItemData>>(
+    const response = await httpClient.get<DjangoPageResponse<ApiCartItemData>>(
       API_ENDPOINTS.CART_ITEMS,
       { page }
     )
 
     // 转换数据格式
-    const cartItems: CartItem[] = response.results.map((item) => {
-      console.log('=== 转换购物车项 ===')
-      console.log('原始数据:', JSON.stringify(item, null, 2))
-      
-      // 安全检查：确保 bracelet_beads 存在
-      if (!item.bracelet || !item.bracelet.bracelet_beads) {
-        console.warn('购物车项缺少 bracelet_beads 数据:', item)
-        return {
-          id: String(item.id),
-          bracelet: {
-            beads: [],
-          },
-          properties: {
-            totalPrice: 0,
-            totalWeight: 0,
-            totalLength: 0,
-            beadCount: 0,
-          },
-          addedAt: new Date(item.added_at).getTime(),
+    const cartItems: CartItem[] = response.results
+      .filter((item) => {
+        // 过滤掉无效的数据项
+        if (!item || !item.id || !item.bracelet || !item.properties) {
+          console.warn('过滤掉无效的购物车项:', item)
+          return false
         }
-      }
+        return true
+      })
+      .map((item) => {
+        console.log('=== 转换购物车项 ===')
+        console.log('原始数据:', JSON.stringify(item, null, 2))
+        
+        // 安全检查：确保 bracelet_beads 存在
+        if (!item.bracelet || !item.bracelet.bracelet_beads) {
+          console.warn('购物车项缺少 bracelet_beads 数据:', item)
+          return {
+            id: String(item.id),
+            bracelet: {
+              beads: [],
+            },
+            properties: {
+              totalPrice: 0,
+              totalWeight: 0,
+              totalLength: 0,
+              beadCount: 0,
+            },
+            addedAt: new Date(item.added_at).getTime(),
+          }
+        }
       
       // 转换珠子数据 - 添加空值检查
       const braceletBeads = item.bracelet.bracelet_beads || []
@@ -266,21 +274,22 @@ export const cartApi = {
 
   // 删除购物车项
   removeCartItem: (id: string): Promise<{ success: boolean }> => {
-    return httpClient.deleteWithoutAuth<{ success: boolean }>(API_ENDPOINTS.CART_ITEM_DETAIL(id))
+    return httpClient.delete<{ success: boolean }>(API_ENDPOINTS.CART_ITEM_DETAIL(id))
   },
 
   // 清空购物车
   clearCart: (): Promise<{ success: boolean }> => {
-    return httpClient.deleteWithoutAuth<{ success: boolean }>(API_ENDPOINTS.CART_ITEMS)
+    return httpClient.delete<{ success: boolean }>(API_ENDPOINTS.CART_ITEMS)
   },
 }
 
 // ============ 订单相关接口 ============
 
 export interface CreateOrderRequest {
-  user?: string // 用户标识（使用API用户标识）
-  cart_item_ids: string[] // 后端使用下划线命名
-  shipping_address: Address // 后端使用下划线命名
+  total_price: string           // 订单总价（字符串格式）
+  cart_item_ids: string[]      // 购物车项ID数组
+  status: 'pending'           // 订单状态，默认为pending
+  shipping_address: Address    // 收货地址
 }
 
 export interface CreateOrderResponse {
@@ -351,7 +360,7 @@ const statusMap: Record<string, OrderStatus> = {
 export const orderApi = {
   // 创建订单（使用真实接口）
   createOrder: (data: CreateOrderRequest): Promise<CreateOrderResponse> => {
-    return httpClient.postWithoutAuth<CreateOrderResponse>(API_ENDPOINTS.ORDERS, data)
+    return httpClient.post<CreateOrderResponse>(API_ENDPOINTS.ORDERS, data)
   },
 
   // 获取订单列表
@@ -497,7 +506,8 @@ export const orderApi = {
   // 获取订单详情
   getOrderById: async (id: string): Promise<Order> => {
     console.log(`[orderApi] 获取订单详情，订单ID: ${id}`)
-    const item = await httpClient.getWithoutAuth<ApiOrderData>(API_ENDPOINTS.ORDER_DETAIL(id))
+    // 使用带认证的GET请求，X-Login-Token从Import_code获取
+    const item = await httpClient.get<ApiOrderData>(API_ENDPOINTS.ORDER_DETAIL(id))
     console.log(`[orderApi] 订单详情原始数据:`, JSON.stringify(item, null, 2))
     
     // 解析收货地址 - 适配真实接口格式
@@ -743,13 +753,13 @@ export interface SaveDesignResponse {
 export const designApi = {
   // 保存设计（创建手串）
   saveDesign: async (data: SaveDesignRequest): Promise<SaveDesignResponse> => {
-    return httpClient.postWithoutAuth<SaveDesignResponse>(API_ENDPOINTS.BRACELETS, data)
+    return httpClient.post<SaveDesignResponse>(API_ENDPOINTS.BRACELETS, data)
   },
 
   // 获取所有设计（手串列表）
   getDesigns: async (page: number = 1): Promise<ApiBraceletData[]> => {
     try {
-      const response = await httpClient.getWithoutAuth<DjangoPageResponse<ApiBraceletData>>(
+      const response = await httpClient.get<DjangoPageResponse<ApiBraceletData>>(
         API_ENDPOINTS.BRACELETS,
         { page }
       )
@@ -770,7 +780,7 @@ export const designApi = {
 
   // 获取单个设计（手串详情）
   getDesignById: async (id: string): Promise<ApiBraceletData> => {
-    return httpClient.getWithoutAuth<ApiBraceletData>(API_ENDPOINTS.BRACELET_DETAIL(id))
+    return httpClient.get<ApiBraceletData>(API_ENDPOINTS.BRACELET_DETAIL(id))
   },
 
   // 更新设计
@@ -780,6 +790,6 @@ export const designApi = {
 
   // 删除设计
   deleteDesign: async (id: string): Promise<{ success: boolean }> => {
-    return httpClient.deleteWithoutAuth<{ success: boolean }>(API_ENDPOINTS.BRACELET_DETAIL(id))
+    return httpClient.delete<{ success: boolean }>(API_ENDPOINTS.BRACELET_DETAIL(id))
   },
 }

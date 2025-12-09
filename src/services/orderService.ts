@@ -11,11 +11,13 @@ class OrderService {
    * 创建订单
    * @param cartItemIds 购物车项ID数组
    * @param shippingAddress 收货地址
+   * @param totalPrice 订单总价
    * @returns 订单ID和订单详情
    */
   async createOrder(
     cartItemIds: string[],
-    shippingAddress: Address
+    shippingAddress: Address,
+    totalPrice: number
   ): Promise<{ orderId: string; order: Order }> {
     // 验证购物车项不为空
     if (!cartItemIds || cartItemIds.length === 0) {
@@ -25,9 +27,11 @@ class OrderService {
     // 验证收货地址
     this.validateAddress(shippingAddress)
 
+    // 构建请求数据，按照后端接口要求
     const request: CreateOrderRequest = {
-      user: 'API用户(遣山水晶)', // 使用API用户标识
+      total_price: totalPrice.toString(), // 转换为字符串格式
       cart_item_ids: cartItemIds,
+      status: 'pending', // 固定为pending状态
       shipping_address: shippingAddress,
     }
 
@@ -88,7 +92,10 @@ class OrderService {
       throw new Error('订单ID无效')
     }
 
-    return await orderApi.getOrderById(orderId)
+    console.log(`=== 获取订单详情 - 订单ID: ${orderId} ===`)
+    const order = await orderApi.getOrderById(orderId)
+    console.log(`=== 获取订单详情完成 - 订单数据:`, JSON.stringify(order, null, 2))
+    return order
   }
 
   /**

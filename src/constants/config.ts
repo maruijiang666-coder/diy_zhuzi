@@ -12,15 +12,7 @@ const ENV = process.env.TARO_ENV || 'weapp'
 // }[process.env.NODE_ENV || 'development'] || 'https://therianclouds.mynatapp.cc/api'
 
 // 真实服务器
-export const API_BASE_URL = {
-  development: 'https://crystal.quant-speed.com/api',
-  test: 'https://crystal.quant-speed.com/api',
-  production: 'https://crystal.quant-speed.com/api',
-}[process.env.NODE_ENV || 'development'] || 'https://crystal.quant-speed.com/api'
-
-
-// API Key 配置
-export const API_KEY = '123quant-speed'
+export const API_BASE_URL = 'https://crystal.quant-speed.com/api'
 
 // CDN配置
 export const CDN_BASE_URL = {

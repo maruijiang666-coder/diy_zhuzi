@@ -152,7 +152,10 @@ export default function ProfilePage() {
         data: loginData,
         timeout: 10000 // 10秒超时
       })
-      setStorage('Import_code', response.data.data.login_token)
+      // 保存Token到Import_code（用于API客户端）
+      Taro.setStorageSync('Import_code', response.data.data.login_token)
+      // 同时保存到标准Token存储（用于一致性）
+      await setToken(response.data.data.login_token)
       console.log('服务器登录响应--*-*-*-*-*-*:', response.data)
       console.log('服务器响应状态:', response.statusCode)
       console.log('服务器响应头:', response.header)
