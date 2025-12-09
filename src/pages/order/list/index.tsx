@@ -29,6 +29,11 @@ export default function OrderListPage() {
   const { orders, loading, error, loadOrders } = useOrderStore()
   // 页面加载时获取订单列表
   useEffect(() => {
+    // 添加调试日志，验证Token和加载状态
+    const token = Taro.getStorageSync('Import_code')
+    console.log(`[OrderListPage] 加载订单列表 - Token前10位: ${token ? token.substring(0, 10) + '...' : '无Token'}`)
+    console.log(`[OrderListPage] 当前订单数量: ${orders.length}`)
+    
     loadOrders()
   }, [])
 

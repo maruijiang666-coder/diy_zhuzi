@@ -4,6 +4,7 @@ import { Bead } from '../types/bead'
 import { Category, CartItem } from '../types/common'
 import { Order, Address, OrderStatus } from '../types/order'
 import { WechatPayParams } from '../types/api'
+import Taro from '@tarojs/taro'
 
 // ============ 珠子相关接口 ============
 
@@ -375,7 +376,12 @@ export const orderApi = {
       apiParams.status = params.status
     }
 
-    const response = await httpClient.getWithoutAuth<DjangoPageResponse<ApiOrderData>>(
+    // 添加调试日志，验证Token获取情况
+    const token = Taro.getStorageSync('Import_code')
+    console.log(`[orderApi] 获取订单列表 - Token前10位: ${token ? token.substring(0, 10) + '...' : '无Token'}`)
+
+    // 使用带认证的GET请求，X-Login-Token从Import_code获取
+    const response = await httpClient.get<DjangoPageResponse<ApiOrderData>>(
       API_ENDPOINTS.ORDERS,
       apiParams
     )

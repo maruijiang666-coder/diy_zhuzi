@@ -79,7 +79,10 @@ class OrderService {
       params.status = status
     }
 
-    return await orderApi.getOrders(params)
+    console.log(`[orderService] 获取订单列表 - 参数:`, JSON.stringify(params, null, 2))
+    const result = await orderApi.getOrders(params)
+    console.log(`[orderService] 获取订单列表完成 - 订单数量: ${result.orders.length}, 总数: ${result.total}`)
+    return result
   }
 
   /**

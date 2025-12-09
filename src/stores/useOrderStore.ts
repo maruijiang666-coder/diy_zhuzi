@@ -73,7 +73,9 @@ export const useOrderStore = create<OrderStore>((set) => ({
     set({ loading: true, error: null })
 
     try {
+      console.log(`[useOrderStore] 开始加载订单列表 - 状态: ${status || '全部'}, 页码: ${page}`)
       const { orders } = await orderService.getOrders(status, page, pageSize)
+      console.log(`[useOrderStore] 订单列表加载完成 - 获取到 ${orders.length} 条订单`)
 
       // 添加空值检查，确保 orders 是数组
       const validOrders = Array.isArray(orders) ? orders : []
@@ -87,6 +89,7 @@ export const useOrderStore = create<OrderStore>((set) => ({
       })
     } catch (error: any) {
       const errorMessage = error.message || '加载订单列表失败'
+      console.error(`[useOrderStore] 加载订单列表失败:`, error)
       set({ loading: false, error: errorMessage })
       throw error
     }
