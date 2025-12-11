@@ -1,6 +1,6 @@
 import { View, Button } from '@tarojs/components'
 import { useState, useEffect } from 'react'
-import Taro, { useRouter } from '@tarojs/taro'
+import Taro, { useRouter, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useDiyStore } from '../../stores/useDiyStore'
 import { useCartStore } from '../../stores/useCartStore'
 import { useDesignStore } from '../../stores/useDesignStore'
@@ -44,6 +44,12 @@ export default function DiyPage() {
     if (cartItemId) {
       loadCartItemToDesign(cartItemId)
     }
+    
+    // 启用分享功能
+    Taro.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline']
+    })
     
     // 测试Mock数据（已禁用，使用真实API）
     // console.log('DIY页面已加载，开始测试Mock数据...')
@@ -357,6 +363,64 @@ export default function DiyPage() {
     })
   }
 
+  // 分享给好友
+  useShareAppMessage(() => {
+    const beadCount = bracelet.beads.length
+    const totalPrice = properties.totalPrice
+    
+    return {
+      title: beadCount > 0 
+        ? `我设计了一个${beadCount}颗珠子的水晶手串，总价¥${totalPrice}！`
+        : 'DIY水晶手串设计 - 定制你的专属饰品',
+      path: '/pages/diy/index',
+      imageUrl: '/assets/crystal.png',
+      success: () => {
+        Taro.showToast({
+          title: '分享成功',
+          icon: 'success',
+          duration: 2000,
+        })
+      },
+      fail: (error) => {
+        console.error('分享失败:', error)
+        Taro.showToast({
+          title: '分享失败',
+          icon: 'none',
+          duration: 2000,
+        })
+      }
+    }
+  })
+
+  // 分享到朋友圈
+  useShareTimeline(() => {
+    const beadCount = bracelet.beads.length
+    const totalPrice = properties.totalPrice
+    
+    return {
+      title: beadCount > 0 
+        ? `我设计了一个${beadCount}颗珠子的水晶手串，总价¥${totalPrice}！`
+        : 'DIY水晶手串设计 - 定制你的专属饰品',
+      query: '',
+      imageUrl: '/assets/crystal.png',
+      success: () => {
+        Taro.showToast({
+          title: '分享成功',
+          icon: 'success',
+          duration: 2000,
+        })
+      },
+      fail: (error) => {
+        console.error('分享朋友圈失败:', error)
+        Taro.showToast({
+          title: '分享失败',
+          icon: 'none',
+          duration: 2000,
+        })
+      }
+    }
+  })
+
   return (
     <View className='diy-page'>
       {/* 设计画布 - 上方 */}
@@ -391,6 +455,18 @@ export default function DiyPage() {
           loading={isSavingDesign}
         >
           保存设计
+        </Button>
+        <Button
+          className='diy-page__action-btn diy-page__action-btn--share'
+          onClick={() => {
+            Taro.showShareMenu({
+              withShareTicket: true,
+              menus: ['shareAppMessage', 'shareTimeline']
+            })
+          }}
+          disabled={bracelet.beads.length === 0}
+        >
+          分享设计
         </Button>
         <Button
           className='diy-page__action-btn diy-page__action-btn--cart'

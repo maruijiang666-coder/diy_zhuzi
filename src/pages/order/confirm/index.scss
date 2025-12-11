@@ -50,6 +50,53 @@
           padding: 20rpx;
           background-color: #f8f8f8;
           border-radius: 8rpx;
+          height: 80rpx; // 明确设置输入框高度
+          line-height: 40rpx; // 设置行高确保文字垂直居中
+          box-sizing: border-box; // 确保padding包含在高度内
+          display: flex;
+          // align-items: center; // 垂直居中对齐
+        }
+
+        // 地区选择器样式
+        .region-picker {
+          flex: 1;
+        }
+
+        .region-picker-view {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 20rpx;
+          background-color: #f8f8f8;
+          border-radius: 8rpx;
+          height: 80rpx;
+          box-sizing: border-box;
+          position: relative;
+
+          &::after {
+            content: '';
+            position: absolute;
+            right: 20rpx;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8rpx solid transparent;
+            border-right: 8rpx solid transparent;
+            border-top: 12rpx solid #999;
+          }
+        }
+
+        .region-text {
+          font-size: 28rpx;
+          color: #333;
+          padding-right: 40rpx; // 给箭头留出空间
+        }
+
+        .region-placeholder {
+          font-size: 28rpx;
+          color: #999;
+          padding-right: 40rpx; // 给箭头留出空间
         }
       }
     }

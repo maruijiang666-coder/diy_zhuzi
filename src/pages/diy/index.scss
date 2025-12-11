@@ -81,6 +81,23 @@
       }
     }
 
+    &--share {
+      background: linear-gradient(135deg, #36D1DC 0%, #5B86E5 100%);
+      color: $bg-primary;
+      box-shadow: $shadow-sm;
+
+      &:active {
+        transform: scale(0.98);
+        box-shadow: none;
+      }
+
+      &[disabled] {
+        opacity: 0.6;
+        background: $text-disabled;
+        box-shadow: none;
+      }
+    }
+
     &--cart {
       @include gradient-bg;
       color: $bg-primary;

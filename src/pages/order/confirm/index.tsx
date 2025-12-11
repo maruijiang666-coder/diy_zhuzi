@@ -1,4 +1,4 @@
-import { View, Text, Button, Input, ScrollView } from '@tarojs/components'
+import { View, Text, Button, Input, ScrollView, Picker } from '@tarojs/components'
 import { useEffect, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { useCartStore } from '../../../stores/useCartStore'
@@ -21,6 +21,16 @@ export default function OrderConfirmPage() {
     detail: '',
   })
 
+  // 输入框焦点状态管理
+  const [focusedFields, setFocusedFields] = useState<Record<string, boolean>>({
+    name: false,
+    phone: false,
+    province: false,
+    city: false,
+    district: false,
+    detail: false,
+  })
+
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // 页面加载时获取购物车数据
@@ -34,6 +44,30 @@ export default function OrderConfirmPage() {
       ...prev,
       [field]: value,
     }))
+  }
+
+  const handleFocus = (field: string) => {
+    setFocusedFields((prev) => ({ ...prev, [field]: true }))
+  }
+
+  const handleBlur = (field: string) => {
+    setFocusedFields((prev) => ({ ...prev, [field]: false }))
+  }
+
+  // 处理地区选择变化
+  const handleRegionChange = (e: any) => {
+    const region = e.detail.value
+    console.log('地区选择结果:', region)
+    
+    // region 格式：["北京市", "北京市", "东城区"]
+    if (region && region.length >= 3) {
+      setAddress((prev) => ({
+        ...prev,
+        province: region[0] || '',
+        city: region[1] || '',
+        district: region[2] || '',
+      }))
+    }
   }
 
   // 验证地址是否完整
@@ -149,9 +183,11 @@ export default function OrderConfirmPage() {
               <Text className='form-label'>收货人</Text>
               <Input
                 className='form-input'
-                placeholder='请输入收货人姓名'
+                placeholder={focusedFields.name ? '' : '请输入收货人姓名'}
                 value={address.name}
                 onInput={(e) => handleAddressChange('name', e.detail.value)}
+                onFocus={() => handleFocus('name')}
+                onBlur={() => handleBlur('name')}
               />
             </View>
             <View className='form-item'>
@@ -159,46 +195,40 @@ export default function OrderConfirmPage() {
               <Input
                 className='form-input'
                 type='number'
-                placeholder='请输入手机号'
+                placeholder={focusedFields.phone ? '' : '请输入手机号'}
                 value={address.phone}
                 maxlength={11}
                 onInput={(e) => handleAddressChange('phone', e.detail.value)}
+                onFocus={() => handleFocus('phone')}
+                onBlur={() => handleBlur('phone')}
               />
             </View>
             <View className='form-item'>
-              <Text className='form-label'>省份</Text>
-              <Input
-                className='form-input'
-                placeholder='请输入省份'
-                value={address.province}
-                onInput={(e) => handleAddressChange('province', e.detail.value)}
-              />
-            </View>
-            <View className='form-item'>
-              <Text className='form-label'>城市</Text>
-              <Input
-                className='form-input'
-                placeholder='请输入城市'
-                value={address.city}
-                onInput={(e) => handleAddressChange('city', e.detail.value)}
-              />
-            </View>
-            <View className='form-item'>
-              <Text className='form-label'>区县</Text>
-              <Input
-                className='form-input'
-                placeholder='请输入区县'
-                value={address.district}
-                onInput={(e) => handleAddressChange('district', e.detail.value)}
-              />
+              <Text className='form-label'>所在地区</Text>
+              <Picker
+                mode='region'
+                value={[address.province, address.city, address.district]}
+                onChange={handleRegionChange}
+                className='region-picker'
+              >
+                <View className='region-picker-view'>
+                  {address.province && address.city && address.district ? (
+                    <Text className='region-text'>{address.province} {address.city} {address.district}</Text>
+                  ) : (
+                    <Text className='region-placeholder'>请选择省市区</Text>
+                  )}
+                </View>
+              </Picker>
             </View>
             <View className='form-item'>
               <Text className='form-label'>详细地址</Text>
               <Input
                 className='form-input'
-                placeholder='请输入详细地址'
+                placeholder={focusedFields.detail ? '' : '请输入详细地址'}
                 value={address.detail}
                 onInput={(e) => handleAddressChange('detail', e.detail.value)}
+                onFocus={() => handleFocus('detail')}
+                onBlur={() => handleBlur('detail')}
               />
             </View>
           </View>
