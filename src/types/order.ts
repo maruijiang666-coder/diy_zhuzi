@@ -25,6 +25,29 @@ export interface OrderItem {
   addedAt?: number // 可选，订单项不一定有添加时间
 }
 
+export interface PaymentInfo {
+  paymentId: string
+  paymentUrl: string
+  status: string
+}
+
+export interface ExternalPaymentInfo {
+  externalOrderId: string
+  status: 'created' | 'failed'
+  response?: {
+    wechatPayParams?: {
+      outTradeNo: string
+      nonceStr: string
+      package: string
+      paySign: string
+      timeStamp: string
+      signType: string
+    }
+    originalResponse?: any
+  }
+  error?: string
+}
+
 export interface Order {
   id: string
   userId: string
@@ -36,4 +59,6 @@ export interface Order {
   paidAt?: number
   shippedAt?: number
   trackingNumber?: string
+  paymentInfo?: PaymentInfo
+  externalPaymentInfo?: ExternalPaymentInfo
 }

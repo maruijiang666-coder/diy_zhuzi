@@ -314,6 +314,30 @@ export interface PaymentStatusResponse {
   paidAt?: number
 }
 
+// ============ 外部支付接口 ============
+
+// 外部支付创建请求（新格式）
+export interface ExternalPaymentCreateRequest {
+  openid: string      // 用户openid
+  amount: number      // 订单总价
+  description: string // 商品描述
+  orderId: string     // 6位唯一订单ID
+}
+
+// 🔥 外部支付创建响应（适配实际返回的微信支付参数格式）
+export interface ExternalPaymentCreateResponse {
+  code: 'SUCCESS' | 'FAIL'
+  message: string
+  data: {
+    outTradeNo: string      // 外部订单号
+    nonceStr: string        // 随机字符串
+    package: string         // 预支付ID
+    paySign: string         // 支付签名
+    timeStamp: string       // 时间戳
+    signType: string        // 签名类型
+  }
+}
+
 // API 返回的订单数据格式
 interface ApiOrderData {
   id: number
@@ -362,6 +386,11 @@ export const orderApi = {
   // 创建订单（使用真实接口）
   createOrder: (data: CreateOrderRequest): Promise<CreateOrderResponse> => {
     return httpClient.post<CreateOrderResponse>(API_ENDPOINTS.ORDERS, data)
+  },
+
+  // 创建外部支付订单（移除认证头）
+  createExternalPayment: (data: ExternalPaymentCreateRequest, timeout?: number): Promise<ExternalPaymentCreateResponse> => {
+    return httpClient.postWithoutAuth<ExternalPaymentCreateResponse>(API_ENDPOINTS.EXTERNAL_PAYMENT_CREATE, data)
   },
 
   // 获取订单列表

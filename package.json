@@ -62,6 +62,8 @@
     "@tarojs/runtime": "^3.6.23",
     "@tarojs/shared": "^3.6.23",
     "@tarojs/taro": "^3.6.23",
+    "@tarojs/webpack-runner": "^3.6.37",
+    "nanoid": "^5.1.6",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "sass": "^1.94.2",

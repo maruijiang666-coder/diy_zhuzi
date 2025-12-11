@@ -1,6 +1,13 @@
-import { orderApi, CreateOrderRequest, GetOrdersParams } from '../api/endpoints'
+import {
+  orderApi,
+  CreateOrderRequest,
+  GetOrdersParams,
+  ExternalPaymentCreateRequest,
+  ExternalPaymentCreateResponse
+} from '../api/endpoints'
 import { Order, Address, OrderStatus } from '../types/order'
 import { WechatPayParams } from '../types/api'
+import Taro from '@tarojs/taro'
 
 /**
  * 订单服务
@@ -38,24 +45,264 @@ class OrderService {
     console.log('=== 创建订单 - 请求数据 ===')
     console.log('请求数据:', JSON.stringify(request, null, 2))
 
+    // 1. 首先创建订单到主系统
     const response = await orderApi.createOrder(request)
-    
+
     console.log('=== 创建订单 - 响应数据 ===')
     console.log('完整响应:', JSON.stringify(response, null, 2))
-    
+
     // 检查响应数据结构 - 处理嵌套的data结构
+    let orderResult: { orderId: string; order: Order }
+
     if (response && response.data && response.data.orderId) {
       console.log('返回data中的数据:', JSON.stringify(response.data, null, 2))
-      return response.data
-    }
-    
-    // 如果直接返回的是data数据（兼容格式）
-    if (response && response.orderId) {
+      orderResult = response.data
+    } else if (response && response.orderId) {
       console.log('直接返回orderId数据:', JSON.stringify(response, null, 2))
-      return response
+      orderResult = response
+    } else {
+      throw new Error('创建订单响应数据格式错误：缺少orderId字段')
     }
-    
-    throw new Error('创建订单响应数据格式错误：缺少orderId字段')
+
+    // 2. 同时创建外部支付订单（可选，失败不影响主订单）
+    try {
+      console.log('=== 创建外部支付订单 ===')
+      console.log('订单ID:', orderResult.orderId)
+      console.log('订单总价:', totalPrice)
+
+      // 获取用户openid
+      const openid = Taro.getStorageSync('auth_token')
+      if (!openid) {
+        console.warn('未找到用户openid，跳过外部支付订单创建')
+        throw new Error('用户未登录')
+      }
+
+      // 生成6位唯一订单ID（使用时间戳+随机数）
+      const generateOrderId = () => {
+        const timestamp = Date.now().toString(36).slice(-4)
+        const random = Math.random().toString(36).slice(-2)
+        return (timestamp + random).toUpperCase().slice(0, 6)
+      }
+      const externalOrderId = generateOrderId()
+
+      const externalPaymentRequest: ExternalPaymentCreateRequest = {
+        openid: openid,
+        amount: totalPrice,
+        description: `水晶手串订单 - ${orderResult.orderId}`,
+        orderId: externalOrderId
+      }
+
+      console.log('🌐 === 外部支付请求详情 ===')
+      console.log('📡 请求URL:', 'https://therianclouds.mynatapp.cc/api/payment/create')
+      console.log('🔧 请求方法:', 'POST')
+      console.log('📋 请求头:', JSON.stringify({
+        'Content-Type': 'application/json',
+        'X-CSRFTOKEN': '***',
+        'X-Login-Token': '***'
+      }, null, 2))
+      console.log('📦 请求体:', JSON.stringify(externalPaymentRequest, null, 2))
+      console.log('🔍 请求参数说明:')
+      console.log('  ├─ openid: 用户认证token，长度:', externalPaymentRequest.openid.length)
+      console.log('  ├─ amount: 订单总价，值为:', externalPaymentRequest.amount)
+      console.log('  ├─ description: 商品描述，值为:', externalPaymentRequest.description)
+      console.log('  └─ orderId: 6位唯一订单ID，值为:', externalPaymentRequest.orderId)
+      console.log('⏱️  超时设置: 10000ms (10秒)')
+
+      // 调用外部支付接口，设置10秒超时避免阻塞主流程（从5秒增加到10秒）
+      console.log('🚀 正在调用外部支付接口...')
+      console.log('⏰ 注意：超时时间已调整为10000ms (10秒)，如需调整请修改orderService.ts')
+      const externalPaymentResponse = await orderApi.createExternalPayment(externalPaymentRequest, 10000)
+
+      console.log('✅ 外部支付订单创建成功！')
+      console.log('📋 外部订单ID:', externalOrderId)
+      console.log('📊 支付响应原始数据:', JSON.stringify(externalPaymentResponse, null, 2))
+
+      // 🔥 适配实际返回的微信支付参数格式
+      if (externalPaymentResponse.code === 'SUCCESS') {
+        console.log('🎯 微信支付参数获取成功！')
+        console.log('� 支付响应详细信息:')
+        console.log('  ├─ code:', externalPaymentResponse.code)
+        console.log('  ├─ message:', externalPaymentResponse.message)
+        console.log('  └─ data:', JSON.stringify(externalPaymentResponse.data, null, 2))
+
+        if (externalPaymentResponse.data) {
+          console.log('💰 微信支付参数详情:')
+          console.log('  ├─ 外部订单号:', externalPaymentResponse.data.outTradeNo || '无')
+          console.log('  ├─ 预支付ID:', externalPaymentResponse.data.package || '无')
+          console.log('  ├─ 随机字符串:', externalPaymentResponse.data.nonceStr || '无')
+          console.log('  ├─ 时间戳:', externalPaymentResponse.data.timeStamp || '无')
+          console.log('  ├─ 签名类型:', externalPaymentResponse.data.signType || '无')
+          console.log('  └─ 支付签名:', externalPaymentResponse.data.paySign ? '已生成' : '无')
+
+          // 🚀 保存微信支付参数，用于后续调起支付
+          const wechatPayParams = {
+            outTradeNo: externalPaymentResponse.data.outTradeNo,
+            nonceStr: externalPaymentResponse.data.nonceStr,
+            package: externalPaymentResponse.data.package,
+            paySign: externalPaymentResponse.data.paySign,
+            timeStamp: externalPaymentResponse.data.timeStamp,
+            signType: externalPaymentResponse.data.signType
+          }
+
+          console.log('📱 微信支付参数已保存，可直接调起微信支付！-*-*-**--*-*-')
+          console.log('🔧 支付参数:', JSON.stringify(wechatPayParams, null, 2))
+
+          // 使用微信原生写法调起微信支付
+          wx.requestPayment({
+            timeStamp: wechatPayParams.timeStamp,
+            nonceStr: wechatPayParams.nonceStr,
+            package: wechatPayParams.package,
+            signType: 'RSA',
+            paySign: wechatPayParams.paySign,
+            // 原本的
+            //   success: function (res) {
+            //   console.log('🎉 支付成功:', res)
+            //   // 支付成功，跳转到订单详情页
+            //   Taro.showToast({
+            //     title: '支付成功',
+            //     icon: 'success',
+            //     duration: 2000,
+            //   })
+            //   setTimeout(() => {
+            //     Taro.redirectTo({
+            //       url: `/pages/order/detail/index?orderId=${orderId}`,
+            //     })
+            //   }, 2000)
+            // },
+            success: function (res) {
+              console.log('🎉 支付成功:', res)
+              
+              // 支付成功后查询外部支付接口状态
+              wx.request({
+                url: `https://crystalpay.quant-speed.com/api/payment/query/${externalOrderId}`,
+                method: 'GET',
+                success: function(queryRes) {
+                  console.log('📋 支付查询结果:', queryRes.data)
+                  
+                  if (queryRes.data && queryRes.data.code === 'SUCCESS' && 
+                      queryRes.data.data && queryRes.data.data.trade_state === 'SUCCESS') {
+                    Taro.showToast({
+                      title: '支付成功',
+                      icon: 'success',
+                      duration: 2000,
+                    })    
+                  } else {
+                    Taro.showToast({
+                      title: '支付处理中，请稍后查看订单状态',
+                      icon: 'none',
+                      duration: 2000,
+                    })
+                  }
+                  
+                  setTimeout(() => {
+                    Taro.redirectTo({
+                      url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
+                    })
+                  }, 2000)
+                },
+                fail: function(queryErr) {
+                  console.error('查询支付状态失败:', queryErr)
+                  // 查询失败也显示支付成功并跳转
+                  Taro.showToast({
+                    title: '支付成功',
+                    icon: 'success',
+                    duration: 2000,
+                  })
+                  setTimeout(() => {
+                    Taro.redirectTo({
+                      url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
+                    })
+                  }, 2000)
+                }
+              })
+            },
+
+
+
+            fail: function (res) {
+              console.error('💸 支付失败:', res)
+              Taro.showToast({
+                title: '支付失败',
+                icon: 'none',
+                duration: 2000,
+              })
+            }
+          })
+
+
+
+
+        }
+      } else {
+        console.warn('⚠️ 外部支付接口返回非成功状态:', externalPaymentResponse.code)
+      }
+
+      // 🎯 保存微信支付参数到订单数据中，用于后续支付流程
+      if (orderResult.order && externalPaymentResponse.code === 'SUCCESS' && externalPaymentResponse.data) {
+        orderResult.order.externalPaymentInfo = {
+          externalOrderId: externalPaymentResponse.data.outTradeNo || externalOrderId,
+          status: 'created',
+          response: {
+            wechatPayParams: {
+              outTradeNo: externalPaymentResponse.data.outTradeNo,
+              nonceStr: externalPaymentResponse.data.nonceStr,
+              package: externalPaymentResponse.data.package,
+              paySign: externalPaymentResponse.data.paySign,
+              timeStamp: externalPaymentResponse.data.timeStamp,
+              signType: externalPaymentResponse.data.signType
+            },
+            originalResponse: externalPaymentResponse
+          }
+        }
+        console.log('💾 微信支付参数已保存到订单数据中！')
+      }
+
+    } catch (externalError) {
+      console.error('❌ === 创建外部支付订单失败 ===')
+      console.error('📛 错误信息:', externalError)
+      console.error('🔍 错误详情:')
+      console.error('  ├─ 错误类型:', externalError.constructor.name)
+      console.error('  ├─ 错误消息:', externalError.message)
+      console.error('  ├─ 错误堆栈:', externalError.stack)
+
+      // 如果是网络错误，提供更多信息
+      if (externalError.message && externalError.message.includes('超时')) {
+        console.error('⏰ 超时错误分析:')
+        console.error('  ├─ 请求URL: https://therianclouds.mynatapp.cc/api/payment/create')
+        console.error('  ├─ 超时时间: 10000ms (10秒)')
+        console.error('  ├─ 建议: 检查网络连接或增加超时时间')
+        console.error('  ├─ 域名配置: 确保已配置request合法域名')
+        console.error('  └─ 微信小程序: 在开发者工具中勾选"不校验合法域名"')
+      }
+
+      if (externalError.response) {
+        console.error('📡 响应信息:')
+        console.error('  ├─ 响应状态:', externalError.response.status)
+        console.error('  ├─ 响应数据:', JSON.stringify(externalError.response.data, null, 2))
+        console.error('  └─ 响应头:', externalError.response.headers)
+      }
+
+      // 检查是否有更详细的错误信息
+      if (externalError.code) {
+        console.error('🔢 错误代码:', externalError.code)
+      }
+      if (externalError.errMsg) {
+        console.error('📢 错误消息详情:', externalError.errMsg)
+      }
+
+      console.log('⚠️ === 主订单创建仍然成功，继续流程 ===')
+
+      // 记录失败信息但不影响主流程
+      if (orderResult.order) {
+        orderResult.order.externalPaymentInfo = {
+          externalOrderId: 'failed',
+          status: 'failed',
+          error: externalError.message || '外部支付订单创建失败'
+        }
+      }
+    }
+
+    return orderResult
   }
 
   /**

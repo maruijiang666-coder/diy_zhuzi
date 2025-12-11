@@ -24,6 +24,7 @@ interface RequestConfig {
   params?: Record<string, any>
   headers?: Record<string, string>
   skipAuth?: boolean // 是否跳过认证
+  timeout?: number // 自定义超时时间（毫秒）
 }
 
 // 获取Token
@@ -109,7 +110,7 @@ function requestInterceptor(config: RequestConfig): Taro.request.Option {
     method: config.method || 'GET',
     data: config.data,
     header: headers,
-    timeout: 10000, // 10秒超时
+    timeout: config.timeout || 10000, // 使用自定义超时时间，默认10秒
   }
 }
 
@@ -125,10 +126,17 @@ async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResu
   // HTTP状态码检查
   if (statusCode >= 200 && statusCode < 300) {
     // 检查是否是后端标准格式：{ code: 0, message: "...", data: {...} }
+    // 🔥 适配外部支付接口：支持 code: "SUCCESS" 作为成功标志
     if (data && typeof data === 'object' && 'code' in data) {
-      // code === 0 表示成功
+      // code === 0 表示成功（标准格式）
       if (data.code === 0) {
         // 直接返回整个响应，让调用方自己处理
+        return data as T
+      }
+      
+      // 🔥 新增：code === "SUCCESS" 也表示成功（外部支付接口格式）
+      if (data.code === 'SUCCESS') {
+        console.log('✅ 外部支付接口返回成功标志，直接返回响应数据')
         return data as T
       }
 
@@ -137,6 +145,12 @@ async function responseInterceptor<T>(response: Taro.request.SuccessCallbackResu
         clearToken()
         Taro.reLaunch({ url: '/pages/profile/index' })
         throw createAppError(ErrorType.NETWORK_ERROR, data.message || '登录态已过期，请重新登录', data.code)
+      }
+      
+      // 🔥 新增：code === "FAIL" 表示外部支付接口失败
+      if (data.code === 'FAIL') {
+        console.error('❌ 外部支付接口返回失败标志:', data.message)
+        throw createAppError(ErrorType.NETWORK_ERROR, data.message || '外部支付请求失败', data.code)
       }
 
       // 其他业务错误
@@ -244,8 +258,8 @@ export const httpClient = {
     return request<T>({ url, method: 'GET', params, headers })
   },
 
-  post: <T>(url: string, data?: any, headers?: Record<string, string>): Promise<T> => {
-    return request<T>({ url, method: 'POST', data, headers })
+  post: <T>(url: string, data?: any, headers?: Record<string, string>, timeout?: number): Promise<T> => {
+    return request<T>({ url, method: 'POST', data, headers, timeout })
   },
 
   put: <T>(url: string, data?: any, headers?: Record<string, string>): Promise<T> => {

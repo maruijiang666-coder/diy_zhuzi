@@ -15,8 +15,22 @@ export interface WechatPayParams {
   timeStamp: string
   nonceStr: string
   package: string
-  signType: string
+  signType: 'MD5' | 'HMAC-SHA256' | 'RSA'
   paySign: string
+}
+
+// 🔥 外部支付接口返回的微信支付参数格式
+export interface ExternalPaymentResponse {
+  code: 'SUCCESS' | 'FAIL'
+  message: string
+  data: {
+    outTradeNo: string      // 外部订单号
+    nonceStr: string        // 随机字符串
+    package: string         // 预支付ID
+    paySign: string         // 支付签名
+    timeStamp: string       // 时间戳
+    signType: 'MD5' | 'HMAC-SHA256' | 'RSA'  // 签名类型
+  }
 }
 
 export enum ApiErrorCode {

@@ -22,6 +22,9 @@ export const API_ENDPOINTS = {
   ORDER_PAY: (id: string) => `/diy/orders/${id}/pay/`,
   ORDER_PAYMENT_STATUS: (id: string) => `/diy/orders/${id}/payment-status/`,
 
+  // 支付相关（外部接口）
+  EXTERNAL_PAYMENT_CREATE: 'https://crystalpay.quant-speed.com/api/payment/create', // 外部支付创建接口
+
   // 设计相关（手串）
   BRACELETS: '/diy/bracelets/', // 手串列表
   BRACELET_DETAIL: (id: string) => `/diy/bracelets/${id}/`, // 手串详情
