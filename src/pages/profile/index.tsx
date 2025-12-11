@@ -67,6 +67,14 @@ export default function ProfilePage() {
   const cleanAndValidateAvatarUrl = (avatarUrl: string): string => {
     if (!avatarUrl) return 'https://img.icons8.com/clouds/200/user.png'
     
+    console.log('原始头像URL:', avatarUrl)
+    
+    // 微信临时文件路径检查 - 不过度清理，保持原始路径
+    if (avatarUrl.includes('tmp') || avatarUrl.includes('http://tmp') || avatarUrl.includes('wxfile://tmp')) {
+      console.log('检测到微信临时文件路径，直接使用:', avatarUrl)
+      return avatarUrl
+    }
+    
     // 清理URL中的特殊字符（如反引号、空格等）
     let cleanedUrl = avatarUrl.replace(/^`|`$/g, '').trim()
     cleanedUrl = cleanedUrl.replace(/\s+/g, '') // 移除所有空格
@@ -463,6 +471,25 @@ export default function ProfilePage() {
     const cleanedAvatarUrl = cleanAndValidateAvatarUrl(avatarUrl)
     console.log('验证后的头像URL:', cleanedAvatarUrl)
     
+    // 检查文件是否存在（针对临时文件）
+    if (cleanedAvatarUrl.includes('tmp') || cleanedAvatarUrl.includes('http://tmp') || cleanedAvatarUrl.includes('wxfile://tmp')) {
+      try {
+        // 尝试获取文件信息以验证文件是否存在
+        const fileInfo = await Taro.getFileInfo({
+          filePath: cleanedAvatarUrl
+        })
+        console.log('文件存在验证通过:', fileInfo)
+      } catch (fileError) {
+        console.error('文件不存在或无法访问:', fileError)
+        Taro.showToast({
+          title: '头像文件已过期，请重新选择',
+          icon: 'none',
+          duration: 2000
+        })
+        return
+      }
+    }
+    
     // 显示上传中提示
     Taro.showLoading({
       title: '上传头像中...',
@@ -541,8 +568,21 @@ export default function ProfilePage() {
     } catch (error) {
       Taro.hideLoading()
       console.error('头像上传过程出错:', error)
+      
+      // 更详细的错误处理
+      let errorMessage = '头像上传失败'
+      if (error.errMsg) {
+        if (error.errMsg.includes('file doesn\'t exist')) {
+          errorMessage = '头像文件已过期，请重新选择'
+        } else if (error.errMsg.includes('uploadFile:fail')) {
+          errorMessage = '上传失败，请检查网络连接'
+        } else {
+          errorMessage = error.errMsg
+        }
+      }
+      
       Taro.showToast({
-        title: '头像上传失败',
+        title: errorMessage,
         icon: 'none',
         duration: 2000
       })
