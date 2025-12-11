@@ -180,7 +180,7 @@ class OrderService {
                   console.log('📋 支付查询结果:', queryRes.data)
                   
                   if (queryRes.data && queryRes.data.code === 'SUCCESS' && 
-                      queryRes.data.data && queryRes.data.data.trade_state === 'SUCCESS') {
+                      queryRes.data.data && queryRes.data.data.trade_state === 'SUCCESS') {         
                     Taro.showToast({
                       title: '支付成功',
                       icon: 'success',
@@ -194,11 +194,39 @@ class OrderService {
                     })
                   }
                   
-                  setTimeout(() => {
-                    Taro.redirectTo({
-                      url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
-                    })
-                  }, 2000)
+                  // 支付成功后先更新数据库订单状态
+                  console.log('🔄 正在更新订单状态...')
+                  wx.request({
+                    url: `https://crystal.quant-speed.com/api/diy/orders/${orderResult.orderId}/`,
+                    method: 'PATCH',
+                    header: {
+                      'accept': 'application/json',
+                      'X-Login-Token': Taro.getStorageSync('Import_code'),
+                      'Content-Type': 'application/json',
+                      'X-CSRFTOKEN': 'WyAhBHRewvQOg4IYB4AosFpNEpfUYmtPLDJHpFbaQWTWh8Skt562hm8MNJ5h701y'
+                    },
+                    data: {
+                      status: 'paid'
+                    },
+                    success: function(updateRes) {
+                      console.log('✅ 订单状态更新成功:', updateRes.data)
+                      // 支付成功且订单状态更新成功后，跳转到订单详情页
+                      setTimeout(() => {
+                        Taro.redirectTo({
+                          url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
+                        })
+                      }, 2000)
+                    },
+                    fail: function(updateErr) {
+                      console.error('❌ 订单状态更新失败:', updateErr)
+                      // 即使更新失败也跳转到订单详情页（支付已成功，但状态更新失败）
+                      setTimeout(() => {
+                        Taro.redirectTo({
+                          url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
+                        })
+                      }, 2000)
+                    }
+                  })
                 },
                 fail: function(queryErr) {
                   console.error('查询支付状态失败:', queryErr)
@@ -208,11 +236,39 @@ class OrderService {
                     icon: 'success',
                     duration: 2000,
                   })
-                  setTimeout(() => {
-                    Taro.redirectTo({
-                      url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
-                    })
-                  }, 2000)
+                  // 查询失败时也更新订单状态
+                  console.log('🔄 正在更新订单状态...')
+                  wx.request({
+                    url: `https://crystal.quant-speed.com/api/diy/orders/${orderResult.orderId}/`,
+                    method: 'PATCH',
+                    header: {
+                      'accept': 'application/json',
+                      'X-Login-Token': Taro.getStorageSync('Import_code'),
+                      'Content-Type': 'application/json',
+                      'X-CSRFTOKEN': 'WyAhBHRewvQOg4IYB4AosFpNEpfUYmtPLDJHpFbaQWTWh8Skt562hm8MNJ5h701y'
+                    },
+                    data: {
+                      status: 'paid'
+                    },
+                    success: function(updateRes) {
+                      console.log('✅ 订单状态更新成功:', updateRes.data)
+                      // 查询失败但支付成功，跳转到订单详情页
+                      setTimeout(() => {
+                        Taro.redirectTo({
+                          url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
+                        })
+                      }, 2000)
+                    },
+                    fail: function(updateErr) {
+                      console.error('❌ 订单状态更新失败:', updateErr)
+                      // 查询失败但支付成功，跳转到订单详情页
+                      setTimeout(() => {
+                        Taro.redirectTo({
+                          url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
+                        })
+                      }, 2000)
+                    }
+                  })
                 }
               })
             },
@@ -226,6 +282,8 @@ class OrderService {
                 icon: 'none',
                 duration: 2000,
               })
+              // 支付失败，不跳转，用户可以继续支付或返回
+              console.log('支付失败，用户可以继续支付或返回订单列表')
             }
           })
 

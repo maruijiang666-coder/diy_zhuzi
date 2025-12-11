@@ -111,19 +111,15 @@ export default function OrderConfirmPage() {
       
       console.log('orderId验证通过，准备跳转')
 
-      // 创建成功，跳转到订单详情页面
+      // 创建成功，显示提示但不跳转
       Taro.showToast({
         title: '订单创建成功',
         icon: 'success',
         duration: 2000,
       })
 
-      // 跳转到订单详情页面
-      setTimeout(() => {
-        Taro.redirectTo({
-          url: `/pages/order/detail/index?orderId=${orderId}`,
-        })
-      }, 2000)
+      // 注意：跳转逻辑移到了支付成功回调中
+      // 这里不再自动跳转，等待支付结果
     } catch (err: any) {
       Taro.showToast({
         title: err.message || '创建订单失败',
