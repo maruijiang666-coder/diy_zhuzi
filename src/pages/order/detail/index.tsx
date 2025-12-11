@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
 import { useOrderStore } from '../../../stores/useOrderStore'
 import { useDiyStore } from '../../../stores/useDiyStore'
-import { useWechatPay } from '../../../hooks/useWechatPay'
 import { Loading } from '../../../components/common'
 import { formatPrice, formatWeight, formatLength } from '../../../utils/formatter'
 import { OrderStatus } from '../../../types/order'
+import { orderApi } from '../../../api/endpoints'
 import './index.scss'
 
 // 订单状态显示文本
@@ -46,7 +46,6 @@ export default function OrderDetailPage() {
 
   const { currentOrder, loading, error, loadOrderDetail } = useOrderStore()
   const { clearBracelet, addBead } = useDiyStore()
-  const { paying, initiatePayment } = useWechatPay()
 
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -76,43 +75,186 @@ export default function OrderDetailPage() {
   const handleContinuePayment = async () => {
     if (!currentOrder) return
 
+    setIsProcessing(true)
+
     try {
-      const result = await initiatePayment(currentOrder.id)
-
-      if (result.success) {
-        // 支付成功
+      // 获取用户openid
+      const openid = Taro.getStorageSync('auth_token')
+      if (!openid) {
         Taro.showToast({
-          title: '支付成功',
-          icon: 'success',
-          duration: 2000,
-        })
-
-        // 重新加载订单详情
-        setTimeout(() => {
-          loadOrderDetail(currentOrder.id)
-        }, 2000)
-      } else if (result.cancelled) {
-        // 用户取消支付
-        Taro.showToast({
-          title: '支付已取消',
+          title: '用户未登录',
           icon: 'none',
           duration: 2000,
         })
+        return
+      }
+
+      // 生成6位唯一订单ID
+      const generateOrderId = () => {
+        const timestamp = Date.now().toString(36).slice(-4)
+        const random = Math.random().toString(36).slice(-2)
+        return (timestamp + random).toUpperCase().slice(0, 6)
+      }
+      const externalOrderId = generateOrderId()
+
+      // 创建外部支付订单
+      const externalPaymentRequest = {
+        openid: openid,
+        amount: currentOrder.totalPrice,
+        description: `水晶手串订单 - ${currentOrder.id}`,
+        orderId: externalOrderId
+      }
+
+      console.log('🌐 === 继续支付 - 外部支付请求 ===')
+      console.log('📦 请求体:', JSON.stringify(externalPaymentRequest, null, 2))
+
+      // 调用外部支付接口创建支付订单
+      const externalPaymentResponse = await orderApi.createExternalPayment(externalPaymentRequest, 10000)
+
+      console.log('✅ 外部支付订单创建成功！')
+      console.log('📋 外部订单ID:', externalOrderId)
+      console.log('📊 支付响应:', JSON.stringify(externalPaymentResponse, null, 2))
+
+      // 检查支付响应
+      if (externalPaymentResponse.code === 'SUCCESS' && externalPaymentResponse.data) {
+        console.log('🎯 微信支付参数获取成功！')
+        
+        // 调起微信支付
+        wx.requestPayment({
+          timeStamp: externalPaymentResponse.data.timeStamp,
+          nonceStr: externalPaymentResponse.data.nonceStr,
+          package: externalPaymentResponse.data.package,
+          signType: 'RSA',
+          paySign: externalPaymentResponse.data.paySign,
+          success: function (res) {
+            console.log('🎉 支付成功:', res)
+            
+            // 支付成功后查询外部支付接口状态
+            wx.request({
+              url: `https://crystalpay.quant-speed.com/api/payment/query/${externalOrderId}`,
+              method: 'GET',
+              success: function(queryRes) {
+                console.log('📋 支付查询结果:', queryRes.data)
+                
+                if (queryRes.data && queryRes.data.code === 'SUCCESS' && 
+                    queryRes.data.data && queryRes.data.data.trade_state === 'SUCCESS') {         
+                  // 更新订单状态
+                  updateOrderStatusAfterPayment(currentOrder.id, externalOrderId)
+                } else {
+                  Taro.showToast({
+                    title: '支付处理中，请稍后查看订单状态',
+                    icon: 'none',
+                    duration: 2000,
+                  })
+                  // 即使查询失败也尝试更新订单状态
+                  updateOrderStatusAfterPayment(currentOrder.id, externalOrderId)
+                }
+              },
+              fail: function(queryErr) {
+                console.error('查询支付状态失败:', queryErr)
+                // 查询失败但支付成功，也更新订单状态
+                updateOrderStatusAfterPayment(currentOrder.id, externalOrderId)
+              }
+            })
+          },
+          fail: function (res) {
+            console.error('💸 支付失败:', res)
+            Taro.showToast({
+              title: '支付失败',
+              icon: 'none',
+              duration: 2000,
+            })
+          }
+        })
       } else {
-        // 支付失败
+        console.error('⚠️ 外部支付接口返回非成功状态:', externalPaymentResponse.code)
         Taro.showToast({
-          title: result.message,
+          title: externalPaymentResponse.message || '支付创建失败',
           icon: 'none',
           duration: 2000,
         })
       }
     } catch (err: any) {
+      console.error('❌ 继续支付失败:', err)
       Taro.showToast({
         title: err.message || '支付失败',
         icon: 'none',
         duration: 2000,
       })
+    } finally {
+      setIsProcessing(false)
     }
+  }
+
+  // 支付成功后更新订单状态和清空购物车
+  const updateOrderStatusAfterPayment = (orderId: string, externalOrderId: string) => {
+    console.log('🔄 正在更新订单状态...')
+    
+    // 更新数据库订单状态
+    wx.request({
+      url: `https://crystal.quant-speed.com/api/diy/orders/${orderId}/`,
+      method: 'PATCH',
+      header: {
+        'accept': 'application/json',
+        'X-Login-Token': Taro.getStorageSync('Import_code'),
+        'Content-Type': 'application/json',
+        'X-CSRFTOKEN': 'WyAhBHRewvQOg4IYB4AosFpNEpfUYmtPLDJHpFbaQWTWh8Skt562hm8MNJ5h701y'
+      },
+      data: {
+        status: 'paid'
+      },
+      success: function(updateRes) {
+        console.log('✅ 订单状态更新成功:', updateRes.data)
+        
+        // 订单状态更新成功后，清空购物车
+        console.log('🗑️ 正在清空购物车...')
+        wx.request({
+          url: 'https://crystal.quant-speed.com/api/diy/cart/items/clear/',
+          method: 'DELETE',
+          header: {
+            'accept': 'application/json',
+            'X-Login-Token': Taro.getStorageSync('Import_code'),
+            'X-CSRFTOKEN': 'WyAhBHRewvQOg4IYB4AosFpNEpfUYmt562hm8MNJ5h701y'
+          },
+          success: function(clearRes) {
+            console.log('✅ 购物车清空成功:', clearRes.data)
+            Taro.showToast({
+              title: '支付成功',
+              icon: 'success',
+              duration: 2000,
+            })
+            // 重新加载订单详情
+            setTimeout(() => {
+              loadOrderDetail(orderId)
+            }, 2000)
+          },
+          fail: function(clearErr) {
+            console.error('❌ 购物车清空失败:', clearErr)
+            // 即使购物车清空失败也显示支付成功
+            Taro.showToast({
+              title: '支付成功',
+              icon: 'success',
+              duration: 2000,
+            })
+            setTimeout(() => {
+              loadOrderDetail(orderId)
+            }, 2000)
+          }
+        })
+      },
+      fail: function(updateErr) {
+        console.error('❌ 订单状态更新失败:', updateErr)
+        // 即使更新失败也显示支付成功
+        Taro.showToast({
+          title: '支付成功',
+          icon: 'success',
+          duration: 2000,
+        })
+        setTimeout(() => {
+          loadOrderDetail(orderId)
+        }, 2000)
+      }
+    })
   }
 
   // 处理再次购买
@@ -314,22 +456,22 @@ export default function OrderDetailPage() {
             className='action-btn primary'
             type='primary'
             onClick={handleContinuePayment}
-            loading={paying}
-            disabled={paying}
+            loading={isProcessing}
+            disabled={isProcessing}
           >
             继续支付
           </Button>
         )}
 
         {/* 再次购买按钮 */}
-        <Button
+        {/* <Button
           className='action-btn'
           onClick={handleBuyAgain}
           loading={isProcessing}
           disabled={isProcessing}
         >
           再次购买
-        </Button>
+        </Button> */}
       </View>
     </View>
   )

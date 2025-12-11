@@ -752,13 +752,20 @@ export default function ProfilePage() {
     <View className='profile-page'>
       {/* 用户信息区域 */}
       <View className='user-info-section'>
-        <View className='user-avatar'>
-          <Image
-            className='avatar-image'
-            src={user.avatar || avatar || 'https://img.icons8.com/clouds/200/user.png'}
-            mode='aspectFill'
-          />
-        </View>
+        <Button 
+          openType="chooseAvatar" 
+          onChooseAvatar={(e) => handleSetAvatar(e.detail.avatarUrl)}
+          className='avatar-button'
+          type='default'
+        >
+          <View className='user-avatar'>
+            <Image
+              className='avatar-image'
+              src={user.avatar || avatar || 'https://img.icons8.com/clouds/200/user.png'}
+              mode='aspectFill'
+            />
+          </View>
+        </Button>
         <View className='user-details'>
           <Text className='user-nickname'>{user.nickname || nickname || '未设置昵称'}</Text>
           {(user.phone || phone) && <Text className='user-phone'>{user.phone || phone}</Text>}
