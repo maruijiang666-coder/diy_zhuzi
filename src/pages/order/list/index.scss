@@ -94,21 +94,48 @@
       // 订单底部
       .order-footer {
         display: flex;
-        justify-content: flex-end;
-        align-items: baseline;
+        justify-content: space-between;
+        align-items: center;
         padding-top: 20rpx;
         border-top: 1px solid #eee;
 
-        .total-label {
-          font-size: 28rpx;
-          color: #666;
-          margin-right: 10rpx;
+        .total-section {
+          display: flex;
+          align-items: baseline;
+
+          .total-label {
+            font-size: 28rpx;
+            color: #666;
+            margin-right: 10rpx;
+          }
+
+          .total-price {
+            font-size: 36rpx;
+            color: #ff6b6b;
+            font-weight: bold;
+          }
         }
 
-        .total-price {
-          font-size: 36rpx;
-          color: #ff6b6b;
-          font-weight: bold;
+        .delete-button {
+          padding: 12rpx 24rpx;
+          background-color: #f44336;
+          color: #fff;
+          font-size: 24rpx;
+          border: none;
+          border-radius: 20rpx;
+          line-height: 1;
+          box-shadow: 0 4rpx 12rpx rgba(244, 67, 54, 0.3);
+          transition: all 0.2s ease;
+          
+          &:active {
+            background-color: #d32f2f;
+            box-shadow: 0 2rpx 6rpx rgba(244, 67, 54, 0.4);
+            transform: translateY(2rpx);
+          }
+          
+          &:hover {
+            box-shadow: 0 6rpx 16rpx rgba(244, 67, 54, 0.25);
+          }
         }
       }
     }

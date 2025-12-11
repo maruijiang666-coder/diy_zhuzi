@@ -701,6 +701,11 @@ export const orderApi = {
   checkPaymentStatus: (orderId: string): Promise<PaymentStatusResponse> => {
     return httpClient.get<PaymentStatusResponse>(API_ENDPOINTS.ORDER_PAYMENT_STATUS(orderId))
   },
+
+  // 删除订单
+  deleteOrder: (orderId: string): Promise<void> => {
+    return httpClient.delete<void>(API_ENDPOINTS.ORDER_DETAIL(orderId))
+  },
 }
 
 // ============ 用户相关接口 ============

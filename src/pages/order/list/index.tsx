@@ -1,10 +1,11 @@
-import { View, Text, ScrollView } from '@tarojs/components'
+import { View, Text, ScrollView, Button } from '@tarojs/components'
 import { useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { useOrderStore } from '../../../stores/useOrderStore'
 import { Loading, Empty } from '../../../components/common'
 import { formatPrice } from '../../../utils/formatter'
 import { Order, OrderStatus } from '../../../types/order'
+import { orderApi } from '../../../api/endpoints'
 import './index.scss'
 
 // 订单状态显示文本
@@ -42,6 +43,60 @@ export default function OrderListPage() {
     Taro.navigateTo({
       url: `/pages/order/detail/index?orderId=${order.id}`,
     })
+  }
+
+  // 处理删除订单
+  const handleDeleteOrder = async (orderId: string, event: any) => {
+    // 阻止事件冒泡，避免触发订单点击
+    event.stopPropagation()
+    
+    // 显示确认对话框
+    const res = await Taro.showModal({
+      title: '确认删除',
+      content: '确定要删除这个订单吗？此操作不可恢复。',
+      confirmText: '删除',
+      confirmColor: '#f44336',
+      cancelText: '取消'
+    })
+    
+    if (res.confirm) {
+      try {
+        // 显示加载提示
+        Taro.showLoading({
+          title: '删除中...',
+          mask: true
+        })
+        
+        // 调用删除订单API
+        await orderApi.deleteOrder(orderId)
+        
+        // 隐藏加载提示
+        Taro.hideLoading()
+        
+        // 显示成功提示
+        Taro.showToast({
+          title: '删除成功',
+          icon: 'success',
+          duration: 2000
+        })
+        
+        // 重新加载订单列表
+        loadOrders()
+        
+      } catch (error: any) {
+        // 隐藏加载提示
+        Taro.hideLoading()
+        
+        // 显示错误提示
+        Taro.showToast({
+          title: error.message || '删除失败',
+          icon: 'none',
+          duration: 3000
+        })
+        
+        console.error('删除订单失败:', error)
+      }
+    }
   }
 
   // 格式化时间
@@ -107,8 +162,16 @@ export default function OrderListPage() {
 
         {/* 订单底部 */}
         <View className='order-footer'>
-          <Text className='total-label'>合计：</Text>
-          <Text className='total-price'>{formatPrice(order.totalPrice || 0)}</Text>
+          <Button 
+            className='delete-button'
+            onClick={(e) => handleDeleteOrder(order.id, e)}
+          >
+            删除
+          </Button>
+          <View className='total-section'>
+            <Text className='total-label'>合计：</Text>
+            <Text className='total-price'>{formatPrice(order.totalPrice || 0)}</Text>
+          </View>
         </View>
       </View>
     )
