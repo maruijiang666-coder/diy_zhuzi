@@ -183,6 +183,7 @@ export default function OrderConfirmPage() {
               <Text className='form-label'>收货人</Text>
               <Input
                 className='form-input'
+                placeholderClass='input-placeholder'
                 placeholder={focusedFields.name ? '' : '请输入收货人姓名'}
                 value={address.name}
                 onInput={(e) => handleAddressChange('name', e.detail.value)}
@@ -194,6 +195,7 @@ export default function OrderConfirmPage() {
               <Text className='form-label'>联系电话</Text>
               <Input
                 className='form-input'
+                placeholderClass='input-placeholder'
                 type='number'
                 placeholder={focusedFields.phone ? '' : '请输入手机号'}
                 value={address.phone}
@@ -224,6 +226,7 @@ export default function OrderConfirmPage() {
               <Text className='form-label'>详细地址</Text>
               <Input
                 className='form-input'
+                placeholderClass='input-placeholder'
                 placeholder={focusedFields.detail ? '' : '请输入详细地址'}
                 value={address.detail}
                 onInput={(e) => handleAddressChange('detail', e.detail.value)}
