@@ -417,6 +417,12 @@ export const orderApi = {
 
     // 转换数据格式
     const orders: Order[] = response.results.map((item) => {
+      // 添加基础数据验证
+      if (!item || !item.id) {
+        console.warn(`[orderApi] 跳过无效订单数据: 缺少基础字段`, item)
+        return null
+      }
+
       // 解析收货地址 - 适配真实接口格式
       let shippingAddress: Address
       
@@ -461,9 +467,9 @@ export const orderApi = {
         }
       }
 
-      // 转换订单项 - 适配真实接口格式
-      const orderItems = item.order_items.map((orderItem) => {
-        // 获取珠子数据 - 适配真实接口的嵌套结构
+      // 转换订单项 - 适配真实接口格式，添加空值检查
+      const orderItems = (item.order_items && Array.isArray(item.order_items) ? item.order_items : []).map((orderItem) => {
+        // 获取珠子数据 - 适配真实接口的嵌套结构，添加订单项验证
         let braceletBeads: any[] = []
         let properties = {
           beadCount: 0,
@@ -472,12 +478,16 @@ export const orderApi = {
           totalLength: 0,
         }
 
-        if (orderItem.cart_item && orderItem.cart_item.bracelet) {
+        if (!orderItem || !orderItem.cart_item) {
+          console.warn(`[orderApi] 订单项缺少cart_item数据`, orderItem)
+        } else if (orderItem.cart_item && orderItem.cart_item.bracelet) {
           const cartItem = orderItem.cart_item as any
           
           // 获取珠子列表
           if (cartItem.bracelet.bracelet_beads && Array.isArray(cartItem.bracelet.bracelet_beads)) {
             braceletBeads = cartItem.bracelet.bracelet_beads
+          } else {
+            console.warn(`[orderApi] 缺少珠子数据: bracelet_beads`, cartItem.bracelet)
           }
           
           // 获取属性数据（优先使用properties对象，其次使用bracelet的属性）
@@ -489,11 +499,14 @@ export const orderApi = {
               totalWeight: parseFloat(props.totalWeight) || 0,
               totalLength: parseFloat(props.totalLength) || 0,
             }
+          } else {
+            console.warn(`[orderApi] 缺少属性数据: properties`, cartItem)
           }
         }
 
-        // 转换珠子数据
+        // 转换珠子数据，添加空值检查
         const beads = braceletBeads
+          .filter((beadItem) => beadItem && beadItem.bead)
           .sort((a, b) => (a.position || 0) - (b.position || 0))
           .map((beadItem) => {
             const bead = beadItem.bead || {}
@@ -532,8 +545,15 @@ export const orderApi = {
       }
     })
 
+    // 过滤掉转换失败的订单
+    const validOrders = orders.filter((order) => order !== null)
+    
+    if (validOrders.length < orders.length) {
+      console.warn(`[orderApi] 过滤了 ${orders.length - validOrders.length} 个无效订单`)
+    }
+
     return {
-      orders,
+      orders: validOrders,
       total: response.count,
     }
   },
@@ -544,6 +564,11 @@ export const orderApi = {
     // 使用带认证的GET请求，X-Login-Token从Import_code获取
     const item = await httpClient.get<ApiOrderData>(API_ENDPOINTS.ORDER_DETAIL(id))
     console.log(`[orderApi] 订单详情原始数据:`, JSON.stringify(item, null, 2))
+    
+    // 添加基础数据验证
+    if (!item || !item.id) {
+      throw new Error(`[orderApi] 订单详情数据无效: 缺少基础字段`)
+    }
     
     // 解析收货地址 - 适配真实接口格式
     let shippingAddress: Address
@@ -589,9 +614,9 @@ export const orderApi = {
       }
     }
 
-    // 转换订单项 - 适配真实接口格式
-    const orderItems = item.order_items.map((orderItem) => {
-      // 获取珠子数据 - 适配真实接口的嵌套结构
+    // 转换订单项 - 适配真实接口格式，添加空值检查
+    const orderItems = (item.order_items && Array.isArray(item.order_items) ? item.order_items : []).map((orderItem) => {
+      // 获取珠子数据 - 适配真实接口的嵌套结构，添加订单项验证
       let braceletBeads: any[] = []
       let properties = {
         beadCount: 0,
@@ -600,12 +625,16 @@ export const orderApi = {
         totalLength: 0,
       }
 
-      if (orderItem.cart_item && orderItem.cart_item.bracelet) {
+      if (!orderItem || !orderItem.cart_item) {
+        console.warn(`[orderApi] 订单项缺少cart_item数据`, orderItem)
+      } else if (orderItem.cart_item && orderItem.cart_item.bracelet) {
         const cartItem = orderItem.cart_item as any
         
         // 获取珠子列表
         if (cartItem.bracelet.bracelet_beads && Array.isArray(cartItem.bracelet.bracelet_beads)) {
           braceletBeads = cartItem.bracelet.bracelet_beads
+        } else {
+          console.warn(`[orderApi] 缺少珠子数据: bracelet_beads`, cartItem.bracelet)
         }
         
         // 获取属性数据（优先使用properties对象，其次使用bracelet的属性）
@@ -617,11 +646,14 @@ export const orderApi = {
             totalWeight: parseFloat(props.totalWeight) || 0,
             totalLength: parseFloat(props.totalLength) || 0,
           }
+        } else {
+          console.warn(`[orderApi] 缺少属性数据: properties`, cartItem)
         }
       }
 
-      // 转换珠子数据
+      // 转换珠子数据，添加空值检查
       const beads = braceletBeads
+        .filter((beadItem) => beadItem && beadItem.bead)
         .sort((a, b) => (a.position || 0) - (b.position || 0))
         .map((beadItem) => {
           const bead = beadItem.bead || {}

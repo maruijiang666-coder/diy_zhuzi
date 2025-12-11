@@ -80,8 +80,31 @@ export const useOrderStore = create<OrderStore>((set) => ({
       // 添加空值检查，确保 orders 是数组
       const validOrders = Array.isArray(orders) ? orders : []
       
+      // 进一步验证每个订单的数据完整性
+      const validatedOrders = validOrders.filter(order => {
+        if (!order || !order.id) {
+          console.warn(`[useOrderStore] 过滤掉无效订单: 缺少基础字段`, order)
+          return false
+        }
+        if (!order.items || !Array.isArray(order.items)) {
+          console.warn(`[useOrderStore] 过滤掉无效订单 - ID: ${order.id}, 原因: items字段无效`, order)
+          return false
+        }
+        if (typeof order.totalPrice !== 'number' || order.totalPrice < 0) {
+          console.warn(`[useOrderStore] 过滤掉无效订单 - ID: ${order.id}, 原因: totalPrice字段无效`, order)
+          return false
+        }
+        if (typeof order.createdAt !== 'number' || order.createdAt <= 0) {
+          console.warn(`[useOrderStore] 过滤掉无效订单 - ID: ${order.id}, 原因: createdAt字段无效`, order)
+          return false
+        }
+        return true
+      })
+      
+      console.log(`[useOrderStore] 数据验证完成 - 有效订单数量: ${validatedOrders.length}`)
+      
       // 按创建时间倒序排列（最新的在前）
-      const sortedOrders = validOrders.sort((a, b) => b.createdAt - a.createdAt)
+      const sortedOrders = validatedOrders.sort((a, b) => b.createdAt - a.createdAt)
 
       set({
         orders: sortedOrders,

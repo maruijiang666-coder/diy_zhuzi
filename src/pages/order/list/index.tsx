@@ -57,6 +57,12 @@ export default function OrderListPage() {
 
   // 渲染订单项
   const renderOrderItem = (order: Order) => {
+    // 添加空值检查，确保订单数据完整
+    if (!order || !order.items || !Array.isArray(order.items)) {
+      console.warn('[OrderListPage] 订单数据不完整:', order)
+      return null
+    }
+
     return (
       <View
         key={order.id}
@@ -80,21 +86,29 @@ export default function OrderListPage() {
         {/* 订单内容 */}
         <View className='order-content'>
           <View className='order-items'>
-            {order.items.map((item, index) => (
-              <View key={`${order.id}-${index}`} className='item-row'>
-                <Text className='item-label'>手串设计 {index + 1}</Text>
-                <Text className='item-value'>
-                  {item.properties.beadCount}颗珠子
-                </Text>
-              </View>
-            ))}
+            {order.items.map((item, index) => {
+              // 添加订单项空值检查
+              if (!item || !item.properties) {
+                console.warn(`[OrderListPage] 订单项数据不完整 - 订单ID: ${order.id}, 项索引: ${index}`)
+                return null
+              }
+              
+              return (
+                <View key={`${order.id}-${index}`} className='item-row'>
+                  <Text className='item-label'>手串设计 {index + 1}</Text>
+                  <Text className='item-value'>
+                    {item.properties.beadCount || 0}颗珠子
+                  </Text>
+                </View>
+              )
+            }).filter(Boolean)}
           </View>
         </View>
 
         {/* 订单底部 */}
         <View className='order-footer'>
           <Text className='total-label'>合计：</Text>
-          <Text className='total-price'>{formatPrice(order.totalPrice)}</Text>
+          <Text className='total-price'>{formatPrice(order.totalPrice || 0)}</Text>
         </View>
       </View>
     )
@@ -125,7 +139,7 @@ export default function OrderListPage() {
 
       {/* 订单列表 */}
       <ScrollView className='order-list' scrollY>
-        {orders.map((order) => renderOrderItem(order))}
+        {orders && Array.isArray(orders) ? orders.map((order) => renderOrderItem(order)).filter(Boolean) : []}
       </ScrollView>
     </View>
   )
