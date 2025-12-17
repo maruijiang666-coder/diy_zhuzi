@@ -12,6 +12,7 @@ import { validateBracelet } from '../../utils/validator'
 import { MAX_BEADS } from '../../constants/limits'
 import type { Bead } from '../../types/bead'
 import { testMockData } from '../../utils/testMockData'
+import { checkLoginAndPrompt } from '../../utils/authGuard'
 import './index.scss'
 
 export default function DiyPage() {
@@ -36,6 +37,44 @@ export default function DiyPage() {
   const [isSavingDesign, setIsSavingDesign] = useState(false)
   const [showNameModal, setShowNameModal] = useState(false)
   const [previousBeadCount, setPreviousBeadCount] = useState(0)
+
+  // 页面显示时检查登录状态
+  Taro.useDidShow(() => {
+    const isLoggedIn = checkLoginForPage()
+    if (!isLoggedIn) {
+      // 未登录，显示提示并跳转
+      return
+    }
+  })
+
+  // 检查登录状态的辅助函数
+  const checkLoginForPage = () => {
+    const { authService } = require('../../services/authService')
+    const isLoggedIn = authService.isLoggedIn()
+    
+    if (!isLoggedIn) {
+      console.log('DIY 页面需要登录')
+      Taro.showModal({
+        title: '需要登录',
+        content: '访问此页面需要先登录，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            Taro.switchTab({
+              url: '/pages/profile/index'
+            })
+          } else {
+            Taro.switchTab({
+              url: '/pages/profile/index'
+            })
+          }
+        }
+      })
+      return false
+    }
+    return true
+  }
 
   // 页面加载时检查是否需要加载购物车项
   useEffect(() => {
@@ -167,6 +206,12 @@ export default function DiyPage() {
 
   // 处理加入购物车
   const handleAddToCart = async () => {
+    // 检查登录状态
+    const isLoggedIn = await checkLoginAndPrompt('加入购物车')
+    if (!isLoggedIn) {
+      return // 用户未登录或取消登录，不执行后续操作
+    }
+
     // 验证手串是否有效
     const validation = validateBracelet(bracelet)
     if (!validation.valid) {
@@ -239,16 +284,22 @@ export default function DiyPage() {
 
       // 显示错误提示
       const errorMessage = error.message || '加入购物车失败，请重试'
+      // 0.0.3改动
+      // const errorMessage =  '未登录，请跳转登录'
       Taro.showModal({
         title: '加入购物车失败',
         content: errorMessage,
         showCancel: true,
-        confirmText: '重试',
+        confirmText: '去登录',
         cancelText: '取消',
         success: (res) => {
           if (res.confirm) {
             // 用户选择重试
             handleAddToCart()
+            // 0.0.3改动，跳转去登录页面
+            // Taro.navigateTo({
+            //   url: '/pages/login/index',
+            // })                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
           }
         },
       })
@@ -258,7 +309,13 @@ export default function DiyPage() {
   }
 
   // 处理保存设计
-  const handleSaveDesign = () => {
+  const handleSaveDesign = async () => {
+    // 检查登录状态
+    const isLoggedIn = await checkLoginAndPrompt('保存设计')
+    if (!isLoggedIn) {
+      return // 用户未登录或取消登录，不执行后续操作
+    }
+
     // 验证手串是否有效
     const validation = validateBracelet(bracelet)
     
@@ -458,12 +515,7 @@ export default function DiyPage() {
         </Button>
         <Button
           className='diy-page__action-btn diy-page__action-btn--share'
-          onClick={() => {
-            Taro.showShareMenu({
-              withShareTicket: true,
-              menus: ['shareAppMessage', 'shareTimeline']
-            })
-          }}
+          openType='share'
           disabled={bracelet.beads.length === 0}
         >
           分享设计

@@ -23,17 +23,46 @@ export default function CartPage() {
   const { clearBracelet, addBead } = useDiyStore()
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
 
+  // 页面显示时检查登录状态并刷新购物车数据
+  Taro.useDidShow(() => {
+    console.log('=== 购物车页面 - useDidShow ===')
+    
+    // 检查登录状态
+    const { authService } = require('../../services/authService')
+    const isLoggedIn = authService.isLoggedIn()
+    
+    if (!isLoggedIn) {
+      console.log('购物车页面需要登录')
+      Taro.showModal({
+        title: '需要登录',
+        content: '访问此页面需要先登录，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            Taro.switchTab({
+              url: '/pages/profile/index'
+            })
+          } else {
+            Taro.switchTab({
+              url: '/pages/profile/index'
+            })
+          }
+        }
+      })
+      return
+    }
+    
+    // 已登录，刷新购物车数据
+    console.log('=== 购物车页面 - 刷新数据 ===')
+    loadCartItems()
+  })
+
   // 页面加载时获取购物车数据，页面初次加载时使用。
   useEffect(() => {
     console.log('=== 购物车页面 - useEffect 加载数据 ===')
     loadCartItems()
   }, [loadCartItems])
-
-  // 页面显示时刷新购物车数据，从其他页面返回时刷新。
-  Taro.useDidShow(() => {
-    console.log('=== 购物车页面 - useDidShow 刷新数据 ===')
-    loadCartItems()
-  })
 
   // 监听数据变化
   useEffect(() => {

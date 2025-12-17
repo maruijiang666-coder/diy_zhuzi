@@ -1,13 +1,13 @@
 export default defineAppConfig({
   pages: [
-    'pages/splash/index',
+    'pages/profile/index', // 未登录时的默认首页
     'pages/diy/index',
     'pages/cart/index',
     'pages/designs/index',
     'pages/order/list/index',
     'pages/order/detail/index',
     'pages/order/confirm/index',
-    'pages/profile/index'
+    'pages/splash/index'
   ],
   window: {
     backgroundTextStyle: 'light',

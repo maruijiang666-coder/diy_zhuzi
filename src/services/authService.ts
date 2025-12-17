@@ -224,7 +224,24 @@ class AuthService {
    * 清除本地存储的token
    */
   async logout(): Promise<void> {
-    await removeToken()
+    console.log('[AuthService] 开始退出登录，清除所有 token')
+    try {
+      // 清除所有可能的 token 存储
+      await removeToken()
+      Taro.removeStorageSync('Import_code')
+      Taro.removeStorageSync('token_expires_at')
+      console.log('[AuthService] 退出登录成功，所有 token 已清除')
+    } catch (error) {
+      console.error('[AuthService] 退出登录失败:', error)
+      // 即使出错也尝试清除
+      try {
+        Taro.removeStorageSync('auth_token')
+        Taro.removeStorageSync('Import_code')
+        Taro.removeStorageSync('token_expires_at')
+      } catch (e) {
+        console.error('[AuthService] 强制清除 token 失败:', e)
+      }
+    }
   }
 
   /**
@@ -234,8 +251,12 @@ class AuthService {
    */
   isLoggedIn(): boolean {
     try {
-      const token = getToken() // 使用统一的getToken函数
-      return !!token
+      // 使用同步方式获取 token
+      const token = Taro.getStorageSync('auth_token')
+      const importCode = Taro.getStorageSync('Import_code')
+      const hasToken = !!(token || importCode)
+      console.log('[AuthService] 检查登录状态:', hasToken, { token: token ? 'exists' : 'null', importCode: importCode ? 'exists' : 'null' })
+      return hasToken
     } catch (error) {
       console.error('检查登录状态失败:', error)
       return false

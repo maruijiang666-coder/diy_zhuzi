@@ -31,6 +31,36 @@ export default function OrderDetailPage() {
   const router = useRouter()
   const orderId = router.params.orderId as string
 
+  // 页面显示时检查登录状态
+  Taro.useDidShow(() => {
+    // 检查登录状态
+    const { authService } = require('../../../services/authService')
+    const isLoggedIn = authService.isLoggedIn()
+    
+    if (!isLoggedIn) {
+      console.log('订单详情页面需要登录')
+      Taro.showModal({
+        title: '需要登录',
+        content: '访问此页面需要先登录，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            Taro.switchTab({
+              url: '/pages/profile/index'
+            })
+          } else {
+            Taro.navigateBack().catch(() => {
+              Taro.switchTab({
+                url: '/pages/profile/index'
+              })
+            })
+          }
+        }
+      })
+    }
+  })
+
   // 添加orderId空值检查
   if (!orderId || orderId === 'undefined') {
     Taro.showToast({
@@ -334,6 +364,12 @@ export default function OrderDetailPage() {
             <Text className='info-label'>创建时间</Text>
             <Text className='info-value'>{formatTime(order.createdAt)}</Text>
           </View>
+          {order.status === OrderStatus.PAID && (
+            <View className='info-row'>
+              <Text className='info-label'>物流状态</Text>
+              <Text className='info-value'>商家备货中...</Text>
+            </View>
+          )}
           {order.paidAt && (
             <View className='info-row'>
               <Text className='info-label'>支付时间</Text>

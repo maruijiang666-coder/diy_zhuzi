@@ -14,15 +14,42 @@ export default function DesignsPage() {
   const { clearBracelet, addBead } = useDiyStore()
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
+  // 页面显示时检查登录状态并刷新设计列表
+  Taro.useDidShow(() => {
+    // 检查登录状态
+    const { authService } = require('../../services/authService')
+    const isLoggedIn = authService.isLoggedIn()
+    
+    if (!isLoggedIn) {
+      console.log('我的设计页面需要登录')
+      Taro.showModal({
+        title: '需要登录',
+        content: '访问此页面需要先登录，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            Taro.switchTab({
+              url: '/pages/profile/index'
+            })
+          } else {
+            Taro.switchTab({
+              url: '/pages/profile/index'
+            })
+          }
+        }
+      })
+      return
+    }
+    
+    // 已登录，刷新设计列表
+    loadDesigns()
+  })
+
   // 页面加载时获取设计列表
   useEffect(() => {
     loadDesigns()
   }, [loadDesigns])
-
-  // 页面显示时刷新设计列表
-  Taro.useDidShow(() => {
-    loadDesigns()
-  })
 
   // 加载设计到DIY页面
   const handleLoadDesign = async (design: SavedDesign) => {

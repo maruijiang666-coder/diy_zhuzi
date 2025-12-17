@@ -28,6 +28,41 @@ const ORDER_STATUS_COLOR: Record<OrderStatus, string> = {
 
 export default function OrderListPage() {
   const { orders, loading, error, loadOrders } = useOrderStore()
+  
+  // 页面显示时检查登录状态
+  Taro.useDidShow(() => {
+    // 检查登录状态
+    const { authService } = require('../../../services/authService')
+    const isLoggedIn = authService.isLoggedIn()
+    
+    if (!isLoggedIn) {
+      console.log('订单列表页面需要登录')
+      Taro.showModal({
+        title: '需要登录',
+        content: '访问此页面需要先登录，是否前往登录？',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            Taro.switchTab({
+              url: '/pages/profile/index'
+            })
+          } else {
+            Taro.navigateBack().catch(() => {
+              Taro.switchTab({
+                url: '/pages/profile/index'
+              })
+            })
+          }
+        }
+      })
+      return
+    }
+    
+    // 已登录，加载订单列表
+    loadOrders()
+  })
+  
   // 页面加载时获取订单列表
   useEffect(() => {
     // 添加调试日志，验证Token和加载状态
