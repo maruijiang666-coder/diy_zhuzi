@@ -87,10 +87,15 @@ export default function CartPage() {
   // 处理删除购物车项
   const handleDelete = async (itemId: string) => {
     try {
-      await Taro.showModal({
+      const result = await Taro.showModal({
         title: '确认删除',
         content: '确定要删除这个设计吗？',
       })
+
+      // 检查用户是否点击了取消
+      if (!result.confirm) {
+        return
+      }
 
       setDeletingItemId(itemId)
       await removeFromCart(itemId)
@@ -101,11 +106,6 @@ export default function CartPage() {
         duration: 2000,
       })
     } catch (err: any) {
-      // 用户取消删除
-      if (err.errMsg && err.errMsg.includes('cancel')) {
-        return
-      }
-      
       Taro.showToast({
         title: err.message || '删除失败',
         icon: 'none',

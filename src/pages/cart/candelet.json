@@ -1,0 +1,43 @@
+{
+    "count": 1,
+    "next": null,
+    "previous": null,
+    "results": [
+        {
+            "id": 76,
+            "user": 12,
+            "bracelet": {
+                "id": 134,
+                "user": 12,
+                "name": null,
+                "bracelet_beads": [
+                    {
+                        "id": 805,
+                        "bead": {
+                            "id": 7,
+                            "name": "测试珠",
+                            "category": "测试",
+                            "image_url": "https://tse4.mm.bing.net/th/id/OIP.H9kCk8AhTUcgE6txv72o1wAAAA?rs=1&pid=ImgDetMain&o=7&rm=3",
+                            "price": "0.01",
+                            "weight": "10.00",
+                            "diameter": "6.00",
+                            "stock": 200,
+                            "description": "测试珠子，几乎免费",
+                            "created_at": "2025-12-09T15:11:42",
+                            "updated_at": "2025-12-09T15:13:49.699656"
+                        },
+                        "position": 0
+                    }
+                ],
+                "created_at": "2025-12-17T17:58:09.961041",
+                "updated_at": "2025-12-17T17:58:09.961422"
+            },
+            "properties": {
+                "totalPrice": "0.01",
+                "totalLength": "0.6",
+                "totalWeight": "10"
+            },
+            "added_at": "2025-12-17T17:58:10.132471"
+        }
+    ]
+}

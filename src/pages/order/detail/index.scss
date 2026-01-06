@@ -105,6 +105,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 20rpx;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
 
       .info-label {
         font-size: 28rpx;
@@ -114,6 +119,36 @@
       .info-value {
         font-size: 28rpx;
         color: #333;
+      }
+
+      // 物流图片特殊样式
+      &.shipping-imgs-row {
+        flex-direction: column;
+        align-items: flex-start;
+
+        .info-label {
+          margin-bottom: 16rpx;
+        }
+
+        .shipping-imgs {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 16rpx;
+          width: 100%;
+
+          .shipping-img {
+            width: 200rpx;
+            height: 200rpx;
+            border-radius: 12rpx;
+            border: 2rpx solid #e2e8f0;
+            box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+
+            &:active {
+              transform: scale(0.95);
+            }
+          }
+        }
       }
     }
   }

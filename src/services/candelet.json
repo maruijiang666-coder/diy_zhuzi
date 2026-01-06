@@ -1,0 +1,139 @@
+	
+Response body
+Download
+{
+  "count": 4,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 102,
+      "user": 12,
+      "total_price": "0.01",
+      "status": "paid",
+      "shipping_address": {
+        "city": "北京市",
+        "name": "购物车不清空",
+        "phone": "13255555555",
+        "detail": "反反复复付",
+        "district": "朝阳区",
+        "province": "北京市"
+      },
+      "order_items": [
+        {
+          "id": 149,
+          "cart_item": {
+            "id": 76,
+            "user": 12,
+            "bracelet": {
+              "id": 134,
+              "user": 12,
+              "name": null,
+              "bracelet_beads": [
+                {
+                  "id": 805,
+                  "bead": {
+                    "id": 7,
+                    "name": "测试珠",
+                    "category": "测试",
+                    "image_url": "https://tse4.mm.bing.net/th/id/OIP.H9kCk8AhTUcgE6txv72o1wAAAA?rs=1&pid=ImgDetMain&o=7&rm=3",
+                    "price": "0.01",
+                    "weight": "10.00",
+                    "diameter": "6.00",
+                    "stock": 200,
+                    "description": "测试珠子，几乎免费",
+                    "created_at": "2025-12-09T15:11:42",
+                    "updated_at": "2025-12-09T15:13:49.699656"
+                  },
+                  "position": 0
+                }
+              ],
+              "created_at": "2025-12-17T17:58:09.961041",
+              "updated_at": "2025-12-17T17:58:09.961422"
+            },
+            "properties": {
+              "totalPrice": "0.01",
+              "totalLength": "0.6",
+              "totalWeight": "10"
+            },
+            "added_at": "2025-12-17T17:58:10.132471"
+          },
+          "price": "0.01"
+        }
+      ],
+      "created_at": "2025-12-17T17:59:07.310953",
+      "paid_at": null,
+      "shipped_at": null,
+      "tracking_number": null,
+      "logistics_company": null,
+      "logistics_info": null,
+      "shipping_imgs": null
+    },
+    {
+      "id": 101,
+      "user": 12,
+      "total_price": "0.01",
+      "status": "paid",
+      "shipping_address": {
+        "city": "北京市",
+        "name": "1122",
+        "phone": "13255555555",
+        "detail": "辅导费啊",
+        "district": "东城区",
+        "province": "北京市"
+      },
+      "order_items": [],
+      "created_at": "2025-12-17T17:52:54.899282",
+      "paid_at": null,
+      "shipped_at": null,
+      "tracking_number": null,
+      "logistics_company": null,
+      "logistics_info": null,
+      "shipping_imgs": null
+    },
+    {
+      "id": 100,
+      "user": 12,
+      "total_price": "0.01",
+      "status": "pending",
+      "shipping_address": {
+        "city": "北京市",
+        "name": "房价来",
+        "phone": "13555555555",
+        "detail": "发",
+        "district": "东城区",
+        "province": "北京市"
+      },
+      "order_items": [],
+      "created_at": "2025-12-17T17:52:06.935220",
+      "paid_at": null,
+      "shipped_at": null,
+      "tracking_number": null,
+      "logistics_company": null,
+      "logistics_info": null,
+      "shipping_imgs": null
+    },
+    {
+      "id": 99,
+      "user": 12,
+      "total_price": "16.01",
+      "status": "pending",
+      "shipping_address": {
+        "city": "北京市",
+        "name": "16克服克服",
+        "phone": "13255555555",
+        "detail": "放假啊实际付款",
+        "district": "东城区",
+        "province": "北京市"
+      },
+      "order_items": [],
+      "created_at": "2025-12-17T17:50:03.868844",
+      "paid_at": null,
+      "shipped_at": null,
+      "tracking_number": null,
+      "logistics_company": null,
+      "logistics_info": null,
+      "shipping_imgs": null
+    }
+  ]
+}

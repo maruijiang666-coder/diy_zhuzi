@@ -59,6 +59,9 @@ export interface Order {
   paidAt?: number
   shippedAt?: number
   trackingNumber?: string
+  logisticsCompany?: string
+  logisticsInfo?: string
+  shippingImgs?: Record<string, string> // 物流图片对象，如 {"one": "url1", "two": "url2"}
   paymentInfo?: PaymentInfo
   externalPaymentInfo?: ExternalPaymentInfo
 }

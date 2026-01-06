@@ -1,5 +1,5 @@
 import { View, Input, ScrollView } from '@tarojs/components'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Taro from '@tarojs/taro'
 import type { Bead } from '../../types/bead'
 import type { Category } from '../../types/common'
@@ -18,6 +18,8 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
   const [categories, setCategories] = useState<Category[]>([])
   const [currentCategory, setCurrentCategory] = useState<string | undefined>(selectedCategory)
   const [searchKeyword, setSearchKeyword] = useState('')
+  const [debouncedKeyword, setDebouncedKeyword] = useState('')
+  const searchTimeoutRef = useRef<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
@@ -53,25 +55,39 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
         setLoading(true)
         setError(null)
 
-        console.log('BeadSelector: 开始加载珠子数据...', { currentCategory, searchKeyword })
+        console.log('BeadSelector: 开始加载珠子数据...', { currentCategory, searchKeyword: debouncedKeyword })
         
         const result = await beadService.getBeads(
           currentCategory,   // 分类筛选参数
-          searchKeyword,     // 搜索关键词
+          debouncedKeyword,     // 搜索关键词
           1,   //第一页
           20   //每页20个
         )
 
+        // FIXME: 后端 API 似乎没有正确实现 search 过滤，这里添加前端过滤作为临时兜底
+        // 注意：这种方式在分页场景下有局限性，仅适用于数据量较小的情况
+        let finalBeads = result.beads
+        if (debouncedKeyword && debouncedKeyword.trim()) {
+          const lowerKeyword = debouncedKeyword.trim().toLowerCase()
+          finalBeads = result.beads.filter(bead => 
+            bead.name.toLowerCase().includes(lowerKeyword) || 
+            (bead.category && bead.category.toLowerCase().includes(lowerKeyword))
+          )
+          console.log(`BeadSelector: 执行前端过滤 ${result.beads.length} -> ${finalBeads.length}`)
+        }
+
         console.log('BeadSelector: 珠子数据加载成功:', result)
-        console.log('BeadSelector: beads数组长度:', result.beads.length)
-        console.log('BeadSelector: 第一个珠子:', result.beads[0])
+        console.log('BeadSelector: beads数组长度(过滤后):', finalBeads.length)
+        if (finalBeads.length > 0) {
+            console.log('BeadSelector: 第一个珠子:', finalBeads[0])
+        }
         
         if (isMounted) {
           // 存储珠子的信息
-          setBeads(result.beads)
+          setBeads(finalBeads)
           setHasMore(result.beads.length === result.pageSize)
           setPage(1)
-          console.log('BeadSelector: 状态已更新，beads.length =', result.beads.length)
+          console.log('BeadSelector: 状态已更新，beads.length =', finalBeads.length)
         }
       } catch (err: any) {
         console.error('BeadSelector: 加载珠子失败:', err)
@@ -95,7 +111,7 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
     return () => {
       isMounted = false
     }
-  }, [currentCategory, searchKeyword])
+  }, [currentCategory, debouncedKeyword])
 
   // 加载更多珠子
   const loadMoreBeads = useCallback(async () => {
@@ -106,12 +122,22 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
 
       const result = await beadService.getBeads(
         currentCategory,
-        searchKeyword,
+        debouncedKeyword,
         page + 1,    // 页码递增
         20  
       )
 
-      setBeads((prev) => [...prev, ...result.beads])
+      // FIXME: 前端过滤逻辑，同 loadBeads
+      let finalNewBeads = result.beads
+      if (debouncedKeyword && debouncedKeyword.trim()) {
+        const lowerKeyword = debouncedKeyword.trim().toLowerCase()
+        finalNewBeads = result.beads.filter(bead => 
+          bead.name.toLowerCase().includes(lowerKeyword) || 
+          (bead.category && bead.category.toLowerCase().includes(lowerKeyword))
+        )
+      }
+
+      setBeads((prev) => [...prev, ...finalNewBeads])
       setHasMore(result.beads.length === result.pageSize)
       setPage((prev) => prev + 1)
     } catch (err: any) {
@@ -123,17 +149,40 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
     } finally {
       setLoading(false)
     }
-  }, [loading, hasMore, currentCategory, searchKeyword, page])
+  }, [loading, hasMore, currentCategory, debouncedKeyword, page])
 
   // 处理分类切换
   const handleCategoryChange = (categoryId: string | undefined) => {
     setCurrentCategory(categoryId)
     setSearchKeyword('')
+    setDebouncedKeyword('')
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
   }
 
   // 处理搜索输入
   const handleSearchInput = (e: any) => {
-    setSearchKeyword(e.detail.value)
+    const value = e.detail.value
+    setSearchKeyword(value)
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedKeyword(value)
+    }, 500)
+  }
+
+  // 处理搜索确认
+  const handleSearchConfirm = (e: any) => {
+    const value = e.detail.value
+    setSearchKeyword(value)
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+    setDebouncedKeyword(value)
   }
 
   // 处理珠子点击 - 使用useCallback缓存
@@ -150,6 +199,10 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
   const handleRetry = useCallback(() => {
     setCurrentCategory(undefined)
     setSearchKeyword('')
+    setDebouncedKeyword('')
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
     setError(null)
   }, [])
 
@@ -183,6 +236,8 @@ const BeadSelector: React.FC<BeadSelectorProps> = ({ onBeadClick, selectedCatego
           placeholder='搜索珠子名称'
           value={searchKeyword}
           onInput={handleSearchInput}
+          onConfirm={handleSearchConfirm}
+          confirmType='search'
         />
       </View>
 

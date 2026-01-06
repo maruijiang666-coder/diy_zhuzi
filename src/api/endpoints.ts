@@ -689,6 +689,9 @@ export const orderApi = {
       paidAt: item.paid_at ? new Date(item.paid_at).getTime() : undefined,
       shippedAt: item.shipped_at ? new Date(item.shipped_at).getTime() : undefined,
       trackingNumber: item.tracking_number || undefined,
+      logisticsCompany: item.logistics_company || undefined,
+      logisticsInfo: item.logistics_info || undefined,
+      shippingImgs: item.shipping_imgs || undefined,
     }
   },
 

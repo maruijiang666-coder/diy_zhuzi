@@ -78,10 +78,15 @@ export default function DesignsPage() {
   // 删除设计
   const handleDelete = async (designId: string) => {
     try {
-      await Taro.showModal({
+      const result = await Taro.showModal({
         title: '确认删除',
         content: '确定要删除这个设计吗？',
       })
+
+      // 用户点击取消，不执行删除操作
+      if (!result.confirm) {
+        return
+      }
 
       setDeletingId(designId)
       await deleteDesign(designId)
@@ -92,11 +97,6 @@ export default function DesignsPage() {
         duration: 2000,
       })
     } catch (err: any) {
-      // 用户取消删除
-      if (err.errMsg && err.errMsg.includes('cancel')) {
-        return
-      }
-
       Taro.showToast({
         title: err.message || '删除失败',
         icon: 'none',

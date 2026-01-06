@@ -253,7 +253,7 @@ export default function DiyPage() {
         beadCount: properties.beadCount,
         totalPrice: properties.totalPrice,
         totalWeight: properties.totalWeight,
-        totalLength: properties.totalLength,
+        totalLength: properties.totalLength
       }
       
       console.log("添加到购物车 - 手串名称:", braceletName)

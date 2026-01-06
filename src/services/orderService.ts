@@ -211,35 +211,18 @@ class OrderService {
                     success: function(updateRes) {
                       console.log('✅ 订单状态更新成功:', updateRes.data)
                       
-                      // 订单状态更新成功后，清空购物车
-                      console.log('🗑️ 正在清空购物车...')
-                      wx.request({
-                        url: 'https://crystal.quant-speed.com/api/diy/cart/items/clear/',
-                        method: 'DELETE',
-                        header: {
-                          'accept': 'application/json',
-                          'X-Login-Token': Taro.getStorageSync('Import_code'),
-                          'X-CSRFTOKEN': 'WyAhBHRewvQOg4IYB4AosFpNEpfUYmtPLDJHpFbaQWTWh8Skt562hm8MNJ5h701y'
-                        },
-                        success: function(clearRes) {
-                          console.log('✅ 购物车清空成功:', clearRes.data)
-                          // 清空购物车成功，跳转到订单详情页
-                          setTimeout(() => {
-                            Taro.redirectTo({
-                              url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
-                            })
-                          }, 2000)
-                        },
-                        fail: function(clearErr) {
-                          console.error('❌ 购物车清空失败:', clearErr)
-                          // 即使购物车清空失败也跳转到订单详情页（订单已支付成功）
-                          setTimeout(() => {
-                            Taro.redirectTo({
-                              url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
-                            })
-                          }, 2000)
-                        }
+                      Taro.showToast({
+                        title: '支付成功',
+                        icon: 'success',
+                        duration: 2000,
                       })
+                      
+                      // 跳转到订单详情页
+                      setTimeout(() => {
+                        Taro.redirectTo({
+                          url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
+                        })
+                      }, 2000)
                     },
                     fail: function(updateErr) {
                       console.error('❌ 订单状态更新失败:', updateErr)
@@ -277,35 +260,18 @@ class OrderService {
                     success: function(updateRes) {
                       console.log('✅ 订单状态更新成功:', updateRes.data)
                       
-                      // 订单状态更新成功后，清空购物车
-                      console.log('🗑️ 正在清空购物车...')
-                      wx.request({
-                        url: 'https://crystal.quant-speed.com/api/diy/cart/items/clear/',
-                        method: 'DELETE',
-                        header: {
-                          'accept': 'application/json',
-                          'X-Login-Token': Taro.getStorageSync('Import_code'),
-                          'X-CSRFTOKEN': 'WyAhBHRewvQOg4IYB4AosFpNEpfUYmtPLDJHpFbaQWTWh8Skt562hm8MNJ5h701y'
-                        },
-                        success: function(clearRes) {
-                          console.log('✅ 购物车清空成功:', clearRes.data)
-                          // 清空购物车成功，跳转到订单详情页
-                          setTimeout(() => {
-                            Taro.redirectTo({
-                              url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
-                            })
-                          }, 2000)
-                        },
-                        fail: function(clearErr) {
-                          console.error('❌ 购物车清空失败:', clearErr)
-                          // 即使购物车清空失败也跳转到订单详情页（订单已支付成功）
-                          setTimeout(() => {
-                            Taro.redirectTo({
-                              url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
-                            })
-                          }, 2000)
-                        }
+                      Taro.showToast({
+                        title: '支付成功',
+                        icon: 'success',
+                        duration: 2000,
                       })
+                      
+                      // 跳转到订单详情页
+                      setTimeout(() => {
+                        Taro.redirectTo({
+                          url: `/pages/order/detail/index?orderId=${orderResult.orderId}`,
+                        })
+                      }, 2000)
                     },
                     fail: function(updateErr) {
                       console.error('❌ 订单状态更新失败:', updateErr)

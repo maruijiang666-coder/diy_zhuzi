@@ -156,20 +156,20 @@ export default function OrderDetailPage() {
           package: externalPaymentResponse.data.package,
           signType: 'RSA',
           paySign: externalPaymentResponse.data.paySign,
-          success: function (res) {
-            console.log('🎉 支付成功:', res)
+          success: function (_res: any) {
+            console.log('🎉 支付成功:', _res)
             
             // 支付成功后查询外部支付接口状态
             wx.request({
               url: `https://crystalpay.quant-speed.com/api/payment/query/${externalOrderId}`,
               method: 'GET',
-              success: function(queryRes) {
+              success: function(queryRes: any) {
                 console.log('📋 支付查询结果:', queryRes.data)
                 
                 if (queryRes.data && queryRes.data.code === 'SUCCESS' && 
                     queryRes.data.data && queryRes.data.data.trade_state === 'SUCCESS') {         
                   // 更新订单状态
-                  updateOrderStatusAfterPayment(currentOrder.id, externalOrderId)
+                  updateOrderStatusAfterPayment(currentOrder.id)
                 } else {
                   Taro.showToast({
                     title: '支付处理中，请稍后查看订单状态',
@@ -177,18 +177,18 @@ export default function OrderDetailPage() {
                     duration: 2000,
                   })
                   // 即使查询失败也尝试更新订单状态
-                  updateOrderStatusAfterPayment(currentOrder.id, externalOrderId)
+                  updateOrderStatusAfterPayment(currentOrder.id)
                 }
               },
-              fail: function(queryErr) {
-                console.error('查询支付状态失败:', queryErr)
+              fail: function(_queryErr: any) {
+                console.error('查询支付状态失败:', _queryErr)
                 // 查询失败但支付成功，也更新订单状态
-                updateOrderStatusAfterPayment(currentOrder.id, externalOrderId)
+                updateOrderStatusAfterPayment(currentOrder.id)
               }
             })
           },
-          fail: function (res) {
-            console.error('💸 支付失败:', res)
+          fail: function (_res: any) {
+            console.error('💸 支付失败:', _res)
             Taro.showToast({
               title: '支付失败',
               icon: 'none',
@@ -216,10 +216,11 @@ export default function OrderDetailPage() {
     }
   }
 
-  // 支付成功后更新订单状态和清空购物车
-  const updateOrderStatusAfterPayment = (orderId: string, externalOrderId: string) => {
+  // 支付成功后更新订单状态
+  const updateOrderStatusAfterPayment = (orderId: string) => {
     console.log('🔄 正在更新订单状态...')
     
+
     // 更新数据库订单状态
     wx.request({
       url: `https://crystal.quant-speed.com/api/diy/orders/${orderId}/`,
@@ -233,46 +234,20 @@ export default function OrderDetailPage() {
       data: {
         status: 'paid'
       },
-      success: function(updateRes) {
+      success: function(updateRes: any) {
         console.log('✅ 订单状态更新成功:', updateRes.data)
         
-        // 订单状态更新成功后，清空购物车
-        console.log('🗑️ 正在清空购物车...')
-        wx.request({
-          url: 'https://crystal.quant-speed.com/api/diy/cart/items/clear/',
-          method: 'DELETE',
-          header: {
-            'accept': 'application/json',
-            'X-Login-Token': Taro.getStorageSync('Import_code'),
-            'X-CSRFTOKEN': 'WyAhBHRewvQOg4IYB4AosFpNEpfUYmt562hm8MNJ5h701y'
-          },
-          success: function(clearRes) {
-            console.log('✅ 购物车清空成功:', clearRes.data)
-            Taro.showToast({
-              title: '支付成功',
-              icon: 'success',
-              duration: 2000,
-            })
-            // 重新加载订单详情
-            setTimeout(() => {
-              loadOrderDetail(orderId)
-            }, 2000)
-          },
-          fail: function(clearErr) {
-            console.error('❌ 购物车清空失败:', clearErr)
-            // 即使购物车清空失败也显示支付成功
-            Taro.showToast({
-              title: '支付成功',
-              icon: 'success',
-              duration: 2000,
-            })
-            setTimeout(() => {
-              loadOrderDetail(orderId)
-            }, 2000)
-          }
+        Taro.showToast({
+          title: '支付成功',
+          icon: 'success',
+          duration: 2000,
         })
+        // 重新加载订单详情
+        setTimeout(() => {
+          loadOrderDetail(orderId)
+        }, 2000)
       },
-      fail: function(updateErr) {
+      fail: function(updateErr: any) {
         console.error('❌ 订单状态更新失败:', updateErr)
         // 即使更新失败也显示支付成功
         Taro.showToast({
@@ -402,7 +377,7 @@ export default function OrderDetailPage() {
         </View>
 
         {/* 物流信息 */}
-        {order.status === OrderStatus.SHIPPED && order.trackingNumber && (
+        {(order.status === OrderStatus.SHIPPED || order.status === OrderStatus.COMPLETED) && order.trackingNumber && (
           <View className='section logistics-section'>
             <View className='section-title'>
               <Text>物流信息</Text>
@@ -411,6 +386,39 @@ export default function OrderDetailPage() {
               <Text className='info-label'>物流单号</Text>
               <Text className='info-value'>{order.trackingNumber}</Text>
             </View>
+
+            <View className='info-row'>
+              <Text className='info-label'>物流公司</Text>
+              <Text className='info-value'>{order.logisticsCompany}</Text>
+            </View>
+
+            <View className='info-row'>
+              <Text className='info-label'>物流详细</Text>
+              <Text className='info-value'>{order.logisticsInfo}</Text>
+            </View>
+
+            {order.shippingImgs && Object.keys(order.shippingImgs).length > 0 && (
+              <View className='info-row shipping-imgs-row'>
+                <Text className='info-label'>物流图片</Text>
+                <View className='shipping-imgs'>
+                  {Object.values(order.shippingImgs).map((imgUrl, idx) => (
+                    <Image
+                      key={idx}
+                      className='shipping-img'
+                      src={imgUrl as string}
+                      mode='aspectFill'
+                      onClick={() => {
+                        Taro.previewImage({
+                          urls: Object.values(order.shippingImgs) as string[],
+                          current: imgUrl as string,
+                        })
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
           </View>
         )}
 
