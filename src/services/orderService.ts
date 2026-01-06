@@ -378,6 +378,31 @@ class OrderService {
   }
 
   /**
+   * 取消订单
+   * @param order 订单对象
+   */
+  async cancelOrder(order: Order): Promise<void> {
+    if (!order || !order.id) {
+      throw new Error('订单无效')
+    }
+
+    console.log(`=== 取消订单 - 订单ID: ${order.id} ===`)
+    
+    // 构建请求数据
+    // 必须包含 total_price, status, shipping_address
+    const requestData = {
+      total_price: order.totalPrice.toString(),
+      status: 'cancelled',
+      shipping_address: order.shippingAddress
+    }
+    
+    console.log('取消订单请求数据:', JSON.stringify(requestData, null, 2))
+    
+    await orderApi.updateOrder(order.id, requestData)
+    console.log(`=== 取消订单成功 ===`)
+  }
+
+  /**
    * 获取订单列表
    * @param status 订单状态筛选（可选）
    * @param page 页码，默认1

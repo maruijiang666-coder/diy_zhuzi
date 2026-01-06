@@ -537,10 +537,9 @@ export default function DiyPage() {
       </View>
 
       {/* 命名对话框 */}
-      {/* 保存设计这个框 */}
       <NameInputModal
         visible={showNameModal}
-        defaultName={`设计 ${new Date().toLocaleDateString()}`}
+        defaultName={`手串设计${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`}
         onConfirm={handleConfirmSave}
         onCancel={handleCancelSave}
       />

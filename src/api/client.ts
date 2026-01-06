@@ -266,6 +266,10 @@ export const httpClient = {
     return request<T>({ url, method: 'PUT', data, headers })
   },
 
+  patch: <T>(url: string, data?: any, headers?: Record<string, string>): Promise<T> => {
+    return request<T>({ url, method: 'PATCH', data, headers })
+  },
+
   delete: <T>(url: string, params?: Record<string, any>, headers?: Record<string, string>): Promise<T> => {
     return request<T>({ url, method: 'DELETE', params, headers })
   },

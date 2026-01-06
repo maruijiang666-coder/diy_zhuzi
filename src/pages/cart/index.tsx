@@ -264,8 +264,8 @@ export default function CartPage() {
       <View className='cart-footer'>
         <View className='footer-info'>
           <View className='total-info'>
-            <Text className='total-label'>共{loading ? 0 : getItemCount()}件</Text>
-            <Text className='total-price'>合计：{formatPrice(loading ? 0 : getTotalPrice())}</Text>
+            <Text className='total-label'>共{getItemCount()}件</Text>
+            <Text className='total-price'>合计：{formatPrice(getTotalPrice())}</Text>
           </View>
         </View>
         <Button

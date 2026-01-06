@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, Button } from '@tarojs/components'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { useOrderStore } from '../../../stores/useOrderStore'
 import { Loading, Empty } from '../../../components/common'
@@ -26,8 +26,19 @@ const ORDER_STATUS_COLOR: Record<OrderStatus, string> = {
   [OrderStatus.CANCELLED]: '#f44336',
 }
 
+// 标签页配置
+const TABS = [
+  { title: '全部', status: undefined },
+  { title: '待支付', status: OrderStatus.PENDING },
+  { title: '已支付', status: OrderStatus.PAID },
+  { title: '已发货', status: OrderStatus.SHIPPED },
+  { title: '已完成', status: OrderStatus.COMPLETED },
+  { title: '已取消', status: OrderStatus.CANCELLED },
+]
+
 export default function OrderListPage() {
-  const { orders, loading, error, loadOrders } = useOrderStore()
+  const { orders, loading, error, loadOrders, cancelOrder } = useOrderStore()
+  const [activeTab, setActiveTab] = useState<number>(0)
   
   // 页面显示时检查登录状态
   Taro.useDidShow(() => {
@@ -60,7 +71,7 @@ export default function OrderListPage() {
     }
     
     // 已登录，加载订单列表
-    loadOrders()
+    loadOrders(TABS[activeTab].status)
   })
   
   // 页面加载时获取订单列表
@@ -70,8 +81,14 @@ export default function OrderListPage() {
     console.log(`[OrderListPage] 加载订单列表 - Token前10位: ${token ? token.substring(0, 10) + '...' : '无Token'}`)
     console.log(`[OrderListPage] 当前订单数量: ${orders.length}`)
     
-    loadOrders()
+    // 这里的 loadOrders 不需要调用，useDidShow 会处理
   }, [])
+
+  // 处理标签切换
+  const handleTabChange = (index: number) => {
+    setActiveTab(index)
+    loadOrders(TABS[index].status)
+  }
 
   // 处理点击订单，跳转到订单详情
   const handleOrderClick = (order: Order) => {
@@ -130,6 +147,35 @@ export default function OrderListPage() {
         })
         
         console.error('删除订单失败:', error)
+      }
+    }
+  }
+
+  // 处理取消订单
+  const handleCancelOrder = async (order: Order, event: any) => {
+    // 阻止事件冒泡
+    event.stopPropagation()
+    
+    const res = await Taro.showModal({
+      title: '确认取消',
+      content: '确定要取消这个订单吗？',
+      confirmText: '取消订单',
+      confirmColor: '#f44336',
+      cancelText: '暂不取消'
+    })
+    
+    if (res.confirm) {
+      try {
+        Taro.showLoading({ title: '取消中...', mask: true })
+        await cancelOrder(order)
+        Taro.hideLoading()
+        Taro.showToast({ title: '订单已取消', icon: 'success' })
+        
+        // 重新加载订单列表
+        loadOrders(TABS[activeTab].status)
+      } catch (error: any) {
+        Taro.hideLoading()
+        Taro.showToast({ title: error.message || '取消失败', icon: 'none' })
       }
     }
   }
@@ -197,12 +243,22 @@ export default function OrderListPage() {
 
         {/* 订单底部 */}
         <View className='order-footer'>
-          <Button 
-            className='delete-button'
-            onClick={(e) => handleDeleteOrder(order.id, e)}
-          >
-            删除
-          </Button>
+          <View className='action-buttons'>
+            <Button 
+              className='delete-button'
+              onClick={(e) => handleDeleteOrder(order.id, e)}
+            >
+              删除
+            </Button>
+            {order.status === OrderStatus.PAID && (
+              <Button 
+                className='cancel-button'
+                onClick={(e) => handleCancelOrder(order, e)}
+              >
+                取消订单
+              </Button>
+            )}
+          </View>
           <View className='total-section'>
             <Text className='total-label'>合计：</Text>
             <Text className='total-price'>{formatPrice(order.totalPrice || 0)}</Text>
@@ -212,33 +268,48 @@ export default function OrderListPage() {
     )
   }
 
-  // 加载状态
-  if (loading && orders.length === 0) {
-    return <Loading />
-  }
-
-  // 空状态
-  if (!loading && orders.length === 0) {
-    return (
-      <View className='order-list-page'>
-        <Empty text='暂无订单' description='快去设计你的专属手串吧' />
-      </View>
-    )
-  }
-
   return (
     <View className='order-list-page'>
-      {/* 错误提示 */}
-      {error && (
-        <View className='error-banner'>
-          <Text className='error-text'>{error}</Text>
-        </View>
-      )}
+      {/* 标签页导航 */}
+      <View className='tabs'>
+        <ScrollView scrollX className='tabs-scroll' scrollWithAnimation>
+          <View className='tabs-container'>
+            {TABS.map((tab, index) => (
+              <View
+                key={index}
+                className={`tab-item ${activeTab === index ? 'active' : ''}`}
+                onClick={() => handleTabChange(index)}
+              >
+                <Text className='tab-text'>{tab.title}</Text>
+                {activeTab === index && <View className='tab-indicator' />}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
 
-      {/* 订单列表 */}
-      <ScrollView className='order-list' scrollY>
-        {orders && Array.isArray(orders) ? orders.map((order) => renderOrderItem(order)).filter(Boolean) : []}
-      </ScrollView>
+      {/* 内容区域 */}
+      {loading && orders.length === 0 ? (
+        <Loading />
+      ) : !loading && orders.length === 0 ? (
+        <View className='empty-container' style={{ flex: 1 }}>
+          <Empty text='暂无订单' description='快去设计你的专属手串吧' />
+        </View>
+      ) : (
+        <>
+          {/* 错误提示 */}
+          {error && (
+            <View className='error-banner'>
+              <Text className='error-text'>{error}</Text>
+            </View>
+          )}
+
+          {/* 订单列表 */}
+          <ScrollView className='order-list' scrollY>
+            {orders && Array.isArray(orders) ? orders.map((order) => renderOrderItem(order)).filter(Boolean) : []}
+          </ScrollView>
+        </>
+      )}
     </View>
   )
 }

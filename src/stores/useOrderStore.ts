@@ -14,6 +14,7 @@ interface OrderStore {
   loadOrders: (status?: OrderStatus, page?: number, pageSize?: number) => Promise<void>
   loadOrderDetail: (orderId: string) => Promise<void>
   updateOrderStatus: (orderId: string, status: OrderStatus) => void
+  cancelOrder: (order: Order) => Promise<void>
 
   // 辅助方法
   clearError: () => void
@@ -70,7 +71,7 @@ export const useOrderStore = create<OrderStore>((set) => ({
 
   // 加载订单列表
   loadOrders: async (status?: OrderStatus, page: number = 1, pageSize: number = 20) => {
-    set({ loading: true, error: null })
+    set({ loading: true, error: null, orders: [] })
 
     try {
       console.log(`[useOrderStore] 开始加载订单列表 - 状态: ${status || '全部'}, 页码: ${page}`)
@@ -160,6 +161,35 @@ export const useOrderStore = create<OrderStore>((set) => ({
         currentOrder: updatedCurrentOrder,
       }
     })
+  },
+
+  // 取消订单
+  cancelOrder: async (order: Order) => {
+    set({ loading: true, error: null })
+    try {
+      await orderService.cancelOrder(order)
+      
+      // 更新本地状态
+      set((state) => {
+        const updatedOrders = state.orders.map((o) =>
+          o.id === order.id ? { ...o, status: OrderStatus.CANCELLED } : o
+        )
+        const updatedCurrentOrder =
+          state.currentOrder && state.currentOrder.id === order.id
+            ? { ...state.currentOrder, status: OrderStatus.CANCELLED }
+            : state.currentOrder
+            
+        return {
+          orders: updatedOrders,
+          currentOrder: updatedCurrentOrder,
+          loading: false
+        }
+      })
+    } catch (error: any) {
+      const errorMessage = error.message || '取消订单失败'
+      set({ loading: false, error: errorMessage })
+      throw error
+    }
   },
 
   // 清除错误信息

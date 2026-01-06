@@ -102,7 +102,7 @@ export default function ProfilePage() {
   }
 
   // 处理微信登录
-  const handleWechatLogin = async () => {
+  const handleWechatLogin = async (phoneNumberOverride?: string) => {
     try {
       clearError()
       
@@ -128,7 +128,7 @@ export default function ProfilePage() {
         nickname: nickname || '微信用户', // 使用已获取的昵称
         avatar: finalAvatar, // 使用验证后的头像
         gender: 0, // 默认未知
-        phone_number: phone || '13800138000', // 使用已获取的手机号，如果没有则使用默认手机号
+        phone_number: phoneNumberOverride || phone || '13800138000', // 使用已获取的手机号，如果没有则使用默认手机号
         country: 'china', // 默认值
         province: 'yunnan', // 默认值
         city: 'kunming', // 默认值
@@ -652,16 +652,8 @@ export default function ProfilePage() {
           } catch (error) {
             console.error('保存手机号到缓存失败:', error)
           }
-          Taro.showToast({
-            title: '手机号获取成功',
-            icon: 'success',
-            duration: 2000
-          })
-          
-          // 获取手机号成功后，等弹窗显示完毕执行微信登录
-          setTimeout(() => {
-            handleWechatLogin()
-          }, 2000)
+          // 获取手机号成功后，立即执行微信登录
+          handleWechatLogin(phoneNumber)
 
         } else {
           console.error('获取手机号失败:', result)

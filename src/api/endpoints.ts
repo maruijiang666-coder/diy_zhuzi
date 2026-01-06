@@ -705,6 +705,11 @@ export const orderApi = {
     return httpClient.get<PaymentStatusResponse>(API_ENDPOINTS.ORDER_PAYMENT_STATUS(orderId))
   },
 
+  // 更新订单
+  updateOrder: (orderId: string, data: any): Promise<Order> => {
+    return httpClient.patch<Order>(API_ENDPOINTS.ORDER_DETAIL(orderId), data)
+  },
+
   // 删除订单
   deleteOrder: (orderId: string): Promise<void> => {
     return httpClient.delete<void>(API_ENDPOINTS.ORDER_DETAIL(orderId))

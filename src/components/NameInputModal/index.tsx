@@ -1,5 +1,5 @@
 import { View, Text, Input, Button } from '@tarojs/components'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './index.scss'
 
 interface NameInputModalProps {
@@ -16,6 +16,13 @@ const NameInputModal: React.FC<NameInputModalProps> = ({
   onCancel,
 }) => {
   const [name, setName] = useState(defaultName)
+
+  // 每次显示弹窗时，重置输入框的值
+  useEffect(() => {
+    if (visible) {
+      setName(defaultName)
+    }
+  }, [visible, defaultName])
 
   if (!visible) {
     return null
