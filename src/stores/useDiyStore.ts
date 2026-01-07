@@ -9,6 +9,8 @@ interface DiyStore {
   bracelet: Bracelet
   selectedBeadIndex: number | null
   properties: BraceletProperties // 新增：实时保存的计算属性
+  wristSize: number | null
+  wearingStyle: 'single' | 'double'
 
   // 操作
   addBead: (bead: Bead) => void
@@ -16,10 +18,12 @@ interface DiyStore {
   moveBead: (fromIndex: number, toIndex: number) => void
   clearBracelet: () => void
   selectBead: (index: number | null) => void
+  setWristSize: (size: number | null) => void
+  setWearingStyle: (style: 'single' | 'double') => void
 
   // 计算属性
   getProperties: () => BraceletProperties
-  canAddBead: () => boolean
+  canAddBead: (bead?: Bead) => boolean
 }
 
 export const useDiyStore = create<DiyStore>((set, get) => ({
@@ -34,14 +38,22 @@ export const useDiyStore = create<DiyStore>((set, get) => ({
     totalWeight: 0,
     totalLength: 0,
   },
+  wristSize: null,
+  wearingStyle: 'single',
+
+  // 设置手腕尺寸
+  setWristSize: (size: number | null) => set({ wristSize: size }),
+
+  // 设置佩戴方式
+  setWearingStyle: (style: 'single' | 'double') => set({ wearingStyle: style }),
 
   // 添加珠子到手串末尾
   addBead: (bead: Bead) => {
     const currentState = get()
     
     // 检查是否可以继续添加珠子
-    if (!currentState.canAddBead()) {
-      console.warn(`已达到最大珠子数量限制: ${MAX_BEADS}`)
+    if (!currentState.canAddBead(bead)) {
+      console.warn(`无法添加珠子：超出最大周长限制`)
       return
     }
 
@@ -203,8 +215,24 @@ export const useDiyStore = create<DiyStore>((set, get) => ({
   },
 
   // 检查是否可以继续添加珠子
-  canAddBead: () => {
+  canAddBead: (bead?: Bead) => {
     const state = get()
-    return state.bracelet.beads.length < MAX_BEADS
+    
+    // 如果没有设置手腕尺寸，暂时允许添加（或者应该禁止？根据需求这里假设已设置）
+    // 但如果必须设置，这里可以返回 false。不过为了健壮性，若未设置则不限制（或限制为默认值）
+    if (state.wristSize === null) return true 
+
+    const currentSize = state.wristSize
+    const increment = 1.6 + (currentSize - 14) * 0.1
+    const baseCircumference = currentSize + increment
+    const maxCircumference = state.wearingStyle === 'double' ? baseCircumference * 2 : baseCircumference
+
+    // 当前总长度 (cm)
+    const currentTotalLength = state.properties.totalLength
+    
+    // 预估增加的长度 (cm)
+    const beadLength = bead ? bead.diameter / 10 : 0
+    
+    return (currentTotalLength + beadLength) <= maxCircumference
   },
 }))

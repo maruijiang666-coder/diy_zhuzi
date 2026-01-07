@@ -2,6 +2,7 @@ import { View, Text } from '@tarojs/components'
 import React, { useMemo } from 'react'
 import type { BraceletProperties } from '../../types/bracelet'
 import { formatPrice, formatWeight, formatLength } from '../../utils/formatter'
+import { useDiyStore } from '../../stores/useDiyStore'
 import './index.scss'
 
 interface PropertyPanelProps {
@@ -10,11 +11,24 @@ interface PropertyPanelProps {
 
 const PropertyPanel: React.FC<PropertyPanelProps> = ({ properties }) => {
   const { beadCount, totalPrice, totalWeight, totalLength } = properties
+  const { wristSize, wearingStyle } = useDiyStore()
 
   // 使用useMemo缓存格式化结果，避免每次渲染都重新计算
   const formattedPrice = useMemo(() => formatPrice(totalPrice), [totalPrice])
   const formattedWeight = useMemo(() => formatWeight(totalWeight), [totalWeight])
   const formattedLength = useMemo(() => formatLength(totalLength), [totalLength])
+
+  // 计算最大周长
+  const maxCircumference = useMemo(() => {
+    if (wristSize === null) return '未设置'
+    
+    const currentSize = wristSize
+    const increment = 1.6 + (currentSize - 14) * 0.1
+    const baseCircumference = currentSize + increment
+    const max = wearingStyle === 'double' ? baseCircumference * 2 : baseCircumference
+    
+    return `${max.toFixed(1)}cm`
+  }, [wristSize, wearingStyle])
 
   return (
     <View className='property-panel'>
@@ -43,6 +57,16 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ properties }) => {
           {formattedLength}
         </Text>
       </View>
+
+
+      <View className='property-panel__item'>
+        <Text className='property-panel__label'>最大周长</Text>
+        <Text className='property-panel__value'>
+          {maxCircumference}
+        </Text>
+      </View>
+
+
     </View>
   )
 }

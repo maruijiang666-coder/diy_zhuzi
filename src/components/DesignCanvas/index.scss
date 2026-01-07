@@ -7,6 +7,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative; // 为绝对定位的设置按钮提供参照
+
+  &__setting-btn {
+    position: absolute;
+    top: 24rpx;
+    right: 24rpx;
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    padding: 12rpx 20rpx;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 32rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+    z-index: 10;
+    font-size: 24rpx;
+    color: #666;
+    border: 1rpx solid rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    
+    &:active {
+      transform: scale(0.95);
+      background: #f5f5f5;
+    }
+    
+    .setting-icon {
+      font-size: 28rpx;
+    }
+    
+    .setting-text {
+      font-weight: 500;
+    }
+  }
 
   &--empty {
     display: flex;
@@ -50,9 +82,9 @@
         position: absolute;
         top: 50rpx; // padding
         left: 50rpx; // padding
-        // 线的直径 = 半径 * 2 = 180 * 2 = 360rpx
-        width: 360rpx;
-        height: 360rpx;
+        // 线的直径 = 半径 * 2 = 150 * 2 = 300rpx
+        width: 300rpx;
+        height: 300rpx;
         border-radius: 50%;
         border: 2rpx solid rgba(139, 69, 19, 0.5); // 棕色半透明的线
         pointer-events: none;

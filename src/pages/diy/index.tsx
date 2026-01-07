@@ -8,6 +8,7 @@ import BeadSelector from '../../components/BeadSelector'
 import DesignCanvas from '../../components/DesignCanvas'
 import PropertyPanel from '../../components/PropertyPanel'
 import NameInputModal from '../../components/NameInputModal'
+import WristSizeModal from '../../components/WristSizeModal'
 import { validateBracelet } from '../../utils/validator'
 import { MAX_BEADS } from '../../constants/limits'
 import type { Bead } from '../../types/bead'
@@ -28,6 +29,10 @@ export default function DiyPage() {
     clearBracelet,
     properties,
     canAddBead,
+    wristSize,
+    wearingStyle,
+    setWristSize,
+    setWearingStyle,
   } = useDiyStore()
 
   const { addToCart, items } = useCartStore()
@@ -36,6 +41,7 @@ export default function DiyPage() {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isSavingDesign, setIsSavingDesign] = useState(false)
   const [showNameModal, setShowNameModal] = useState(false)
+  const [showWristModal, setShowWristModal] = useState(false)
   const [previousBeadCount, setPreviousBeadCount] = useState(0)
 
   // 页面显示时检查登录状态
@@ -44,6 +50,11 @@ export default function DiyPage() {
     if (!isLoggedIn) {
       // 未登录，显示提示并跳转
       return
+    }
+    
+    // 检查手腕尺寸是否设置
+    if (wristSize === null) {
+      setShowWristModal(true)
     }
   })
 
@@ -184,9 +195,9 @@ export default function DiyPage() {
   // 处理珠子点击添加
   const handleBeadClick = (bead: Bead) => {
     // 检查是否可以继续添加珠子
-    if (!canAddBead()) {
+    if (!canAddBead(bead)) {
       Taro.showToast({
-        title: `最多只能添加${MAX_BEADS}个珠子`,
+        title: '超出最大周长限制，无法继续添加',
         icon: 'none',
         duration: 2000,
       })
@@ -419,6 +430,19 @@ export default function DiyPage() {
       },
     })
   }
+  
+  // 处理手腕尺寸确认
+  const handleWristSizeConfirm = (size: number, style: 'single' | 'double') => {
+    setWristSize(size)
+    setWearingStyle(style)
+    setShowWristModal(false)
+    
+    Taro.showToast({
+      title: '设置成功',
+      icon: 'success',
+      duration: 1500
+    })
+  }
 
   // 分享给好友
   useShareAppMessage(() => {
@@ -488,6 +512,7 @@ export default function DiyPage() {
           onBeadSelect={handleBeadSelect}
           onBeadDelete={handleBeadDelete}
           onBeadMove={handleBeadMove}
+          onSettingClick={() => setShowWristModal(true)}
         />
       </View>
 
@@ -542,6 +567,15 @@ export default function DiyPage() {
         defaultName={`手串设计${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`}
         onConfirm={handleConfirmSave}
         onCancel={handleCancelSave}
+      />
+      
+      {/* 手腕尺寸设置对话框 */}
+      <WristSizeModal
+        visible={showWristModal}
+        initialSize={wristSize}
+        initialStyle={wearingStyle}
+        onConfirm={handleWristSizeConfirm}
+        onClose={() => wristSize !== null && setShowWristModal(false)}
       />
     </View>
   )

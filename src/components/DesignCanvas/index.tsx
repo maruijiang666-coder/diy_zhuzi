@@ -13,6 +13,7 @@ interface DesignCanvasProps {
   onBeadSelect: (index: number) => void
   onBeadDelete: (index: number) => void
   onBeadMove: (fromIndex: number, toIndex: number) => void
+  onSettingClick?: () => void
 }
 
 const DesignCanvas: React.FC<DesignCanvasProps> = ({
@@ -21,6 +22,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   onBeadSelect,
   onBeadDelete,
   onBeadMove,
+  onSettingClick,
 }) => {
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null)
@@ -169,11 +171,11 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
 
   // 计算画布尺寸和半径 - 扩大尺寸作为核心功能
   const { canvasSize, circleRadius, centerOffset } = useMemo(() => {
-    // 扩大半径，让画布更突出
-    const radius = 180 // 扩大半径到 180rpx
+    // 调整半径为150rpx，让缩放更早触发
+    const radius = 150 
     const padding = 50 // 边距
-    const size = radius * 2 + padding * 2 // 画布总尺寸 = 460rpx
-    const center = size / 2 // 画布中心点 = 230rpx
+    const size = radius * 2 + padding * 2 // 画布总尺寸 = 400rpx
+    const center = size / 2 // 画布中心点 = 200rpx
     return { canvasSize: size, circleRadius: radius, centerOffset: center }
   }, [])
 
@@ -287,6 +289,12 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   if (!bracelet.beads || bracelet.beads.length === 0) {
     return (
       <View className='design-canvas design-canvas--empty'>
+        {/* 设置按钮 */}
+        <View className='design-canvas__setting-btn' onClick={onSettingClick}>
+          <Text className='setting-icon'>⚙️</Text>
+          <Text className='setting-text'>手围设置</Text>
+        </View>
+
         <View className='design-canvas__empty-content'>
           <View className='design-canvas__empty-icon'>📿</View>
           <Text className='design-canvas__empty-text'>还没有添加珠子哦</Text>
@@ -299,6 +307,12 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   return (
     <>
       <View className='design-canvas'>
+        {/* 设置按钮 */}
+        <View className='design-canvas__setting-btn' onClick={onSettingClick}>
+          <Text className='setting-icon'>⚙️</Text>
+          <Text className='setting-text'>手围设置</Text>
+        </View>
+
         <View className='design-canvas__container'>
         {/* 圆形布局显示珠子 */}
         <View 
@@ -338,6 +352,7 @@ export default React.memo(DesignCanvas, (prevProps, nextProps) => {
          prevProps.onBeadSelect === nextProps.onBeadSelect &&
          prevProps.onBeadDelete === nextProps.onBeadDelete &&
          prevProps.onBeadMove === nextProps.onBeadMove &&
+         prevProps.onSettingClick === nextProps.onSettingClick &&
          // 深度比较beads数组
          prevProps.bracelet.beads.every((bead, index) => {
            const nextBead = nextProps.bracelet.beads[index]
