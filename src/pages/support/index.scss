@@ -1,0 +1,92 @@
+.support-page {
+  min-height: 100vh;
+  background-color: #F5F6FA;
+  display: flex;
+  flex-direction: column;
+
+  .banner-section {
+    background: linear-gradient(180deg, #FFE4E1 0%, #FFF0F5 100%);
+    padding: 40rpx 32rpx 80rpx;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    .banner-content {
+      flex: 1;
+      padding-right: 20rpx;
+
+      .banner-title {
+        font-size: 40rpx;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 16rpx;
+        display: block;
+      }
+
+      .banner-desc {
+        font-size: 26rpx;
+        color: #666;
+        line-height: 1.5;
+        display: block;
+      }
+    }
+
+    .banner-icon {
+      width: 160rpx;
+      height: 160rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 100rpx;
+      // Use a placeholder if no image is available, or style it to look like the 3D icon
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      box-shadow: 0 4rpx 12rpx rgba(255, 182, 193, 0.3);
+    }
+  }
+
+  .action-section {
+    margin-top: -40rpx;
+    padding: 0 32rpx;
+    z-index: 1;
+
+    .action-card {
+      background: #FFFFFF;
+      border-radius: 24rpx;
+      padding: 40rpx;
+      box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #FFFFFF;
+        border: none;
+        padding: 20rpx 60rpx;
+        border-radius: 40rpx;
+        font-size: 30rpx;
+        color: #333;
+        font-weight: 500;
+        box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+        
+        &::after {
+          border: none;
+        }
+
+        &:active {
+          opacity: 0.8;
+          transform: scale(0.98);
+        }
+
+        .btn-icon {
+          margin-right: 12rpx;
+          font-size: 36rpx;
+        }
+      }
+    }
+  }
+}

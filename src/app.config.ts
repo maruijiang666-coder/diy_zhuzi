@@ -7,6 +7,7 @@ export default defineAppConfig({
     'pages/order/list/index',
     'pages/order/detail/index',
     'pages/order/confirm/index',
+    'pages/support/index',
     'pages/splash/index'
   ],
   window: {

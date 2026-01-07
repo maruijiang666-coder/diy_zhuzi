@@ -705,6 +705,13 @@ export default function ProfilePage() {
     })
   }
 
+  // 跳转到客服支持
+  const handleGoToSupport = () => {
+    Taro.navigateTo({
+      url: '/pages/support/index',
+    })
+  }
+
   // 加载中状态
   if (loading) {
     return <Loading fullscreen />
@@ -817,6 +824,15 @@ export default function ProfilePage() {
           <View className='menu-item-left'>
             <Text className='menu-icon'>📦</Text>
             <Text className='menu-text'>我的订单</Text>
+          </View>
+          <Text className='menu-arrow'>›</Text>
+        </View>
+
+
+        <View className='menu-item' onClick={handleGoToSupport}>
+          <View className='menu-item-left'>
+            <Text className='menu-icon'>🎧</Text>
+            <Text className='menu-text'>联系我们</Text>
           </View>
           <Text className='menu-arrow'>›</Text>
         </View>
