@@ -75,6 +75,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      // 允许子元素溢出，实现珠子脱离圆环自由拖拽
+      overflow: visible;
       
       // 手串的线由独立的元素 .design-canvas__string 渲染，以便动态控制大小
 
