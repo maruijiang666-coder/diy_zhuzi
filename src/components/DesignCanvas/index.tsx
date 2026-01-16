@@ -131,12 +131,14 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   // 计算珠子渲染尺寸（基于直径比例）- 使用useCallback缓存
   const getBeadSize = useCallback((bead: Bead) => {
     // 固定尺寸，不随珠子数量变化
-    // 基准尺寸：8mm直径对应45rpx
-    const baseSize = 45
+    // 基准尺寸：8mm直径对应25rpx (这样16mm对应50rpx)
+    const baseSize = 25
     const baseDiameter = 8
     const size = (bead.diameter / baseDiameter) * baseSize
-    // 限制最小和最大尺寸
-    return Math.max(40, Math.min(60, size))
+    
+    // 移除最大尺寸限制，确保大珠子（>10mm）能显示出区别
+    // 仅保留一个极小的底限，防止数据异常导致不可见
+    return Math.max(10, size)
   }, [])
 
   // 计算圆形布局的珠子位置（基于累积角度，珠子紧密排列）
@@ -170,41 +172,54 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   }, [])
 
   // 计算画布尺寸和半径 - 扩大尺寸作为核心功能
-  const { canvasSize, circleRadius, centerOffset } = useMemo(() => {
+  const { canvasSize, centerOffset } = useMemo(() => {
     // 调整半径为150rpx，让缩放更早触发
     const radius = 150 
     const padding = 50 // 边距
     const size = radius * 2 + padding * 2 // 画布总尺寸 = 400rpx
     const center = size / 2 // 画布中心点 = 200rpx
-    return { canvasSize: size, circleRadius: radius, centerOffset: center }
+    return { canvasSize: size, centerOffset: center }
   }, [])
 
-  // 使用useMemo缓存渲染的珠子列表，避免每次都重新计算
-  const renderedBeads = useMemo(() => {
-    // 计算所有珠子的总周长
+  // 计算布局指标：有效半径和缩放系数
+  const { effectiveRadius, scaleFactor } = useMemo(() => {
+    // 调整半径为150rpx (对应300rpx直径)
+    const FIXED_RADIUS = 150;
+    
+    // 如果没有珠子，返回默认值
+    if (bracelet.beads.length === 0) {
+      return { effectiveRadius: FIXED_RADIUS, scaleFactor: 1 };
+    }
+
+    // 计算所有珠子的总周长（基于基准尺寸）
     const beadSizes = bracelet.beads.map(bead => getBeadSize(bead))
     const totalBeadCircumference = beadSizes.reduce((sum, size) => sum + size, 0)
     
-    // 圆的周长
-    const circleCircumference = 2 * Math.PI * circleRadius
+    // 目标圆周长 (完全闭合，不留间隙)
+    const targetCircumference = 2 * Math.PI * FIXED_RADIUS;
+
+    // 计算理想缩放比例
+    let scale = targetCircumference / totalBeadCircumference;
+
+    // 限制最大放大倍数，防止珠子过少时变得巨大
+    // 设定为 2.2 倍，适配 300rpx 直径的圆环，确保 9 颗大珠子 (16mm) 能填满
+    const MAX_SCALE = 2.2;
     
-    // 计算缩放系数：只有当珠子总周长超过圆周长（闭合）时才开始缩放
-    // 使用 98% 而不是 95%，让珠子更接近闭合
-    const scaleFactor = totalBeadCircumference > circleCircumference
-      ? (circleCircumference * 0.98) / totalBeadCircumference  // 留2%的间隙
-      : 1
+    // 限制最小缩放倍数，防止珠子过多时变得过小看不清（虽然一般不会发生，作为兜底）
+    const MIN_SCALE = 0.5;
+
+    scale = Math.min(Math.max(scale, MIN_SCALE), MAX_SCALE);
     
+    return { effectiveRadius: FIXED_RADIUS, scaleFactor: scale };
+  }, [bracelet.beads, getBeadSize]);
+
+  // 使用useMemo缓存渲染的珠子列表，避免每次都重新计算
+  const renderedBeads = useMemo(() => {
     // 调试信息
-    const isCircleClosed = totalBeadCircumference >= circleCircumference
     console.log('DesignCanvas 渲染信息:', {
       珠子数量: bracelet.beads.length,
-      珠子总周长: totalBeadCircumference.toFixed(2) + ' rpx',
-      圆周长: circleCircumference.toFixed(2) + ' rpx',
-      圆环是否闭合: isCircleClosed,
+      有效半径: effectiveRadius.toFixed(2) + ' rpx',
       缩放系数: scaleFactor.toFixed(3),
-      占用百分比: ((totalBeadCircumference / circleCircumference) * 100).toFixed(1) + '%',
-      缩放后总周长: (totalBeadCircumference * scaleFactor).toFixed(2) + ' rpx',
-      圆半径: circleRadius + ' rpx',
       画布中心: centerOffset + ' rpx',
     })
     
@@ -224,7 +239,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
       const { x, y, angle } = calculateCirclePosition(
         bracelet.beads, 
         index, 
-        circleRadius, 
+        effectiveRadius, 
         centerOffset,
         getScaledBeadSize
       )
@@ -283,7 +298,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
         </View>
       )
     })
-  }, [bracelet.beads, selectedBeadIndex, dragFromIndex, imageErrors, webpSupported, circleRadius, centerOffset, getBeadSize, calculateCirclePosition, handleBeadClick, handleBeadLongPress, handleTouchStart, handleTouchEnd, handleImageError])
+  }, [bracelet.beads, selectedBeadIndex, dragFromIndex, imageErrors, webpSupported, effectiveRadius, scaleFactor, centerOffset, getBeadSize, calculateCirclePosition, handleBeadClick, handleBeadLongPress, handleTouchStart, handleTouchEnd, handleImageError])
 
   // 如果手串为空，显示引导提示
   if (!bracelet.beads || bracelet.beads.length === 0) {
@@ -322,6 +337,8 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
             height: `${canvasSize}rpx` 
           }}
         >
+          {/* 静态渲染手串的线 (固定大小，样式在SCSS中定义) */}
+          <View className='design-canvas__string' />
           {renderedBeads}
         </View>
 
