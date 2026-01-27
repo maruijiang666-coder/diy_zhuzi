@@ -58,7 +58,16 @@ export const useDiyStore = create<DiyStore>((set, get) => ({
     }
 
     set((state) => {
-      const newBeads = [...state.bracelet.beads, bead]
+      // 为新珠子生成唯一 ID，确保 React Key 唯一性
+      // 使用时间戳 + 随机数，避免同型号珠子 ID 重复导致渲染闪烁
+      const uniqueBead = {
+        ...bead,
+        id: bead.id && !bead.id.startsWith('temp_') 
+            ? `${bead.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` 
+            : bead.id || `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      }
+      
+      const newBeads = [...state.bracelet.beads, uniqueBead]
       return {
         bracelet: {
           ...state.bracelet,
