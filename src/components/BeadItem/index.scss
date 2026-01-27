@@ -1,20 +1,23 @@
+@import "../../styles/variables.scss";
+
 .bead-item {
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border-radius: 12rpx;
+  background: $bg-primary;
+  border-radius: $radius-md;
   overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
-  transition: all 0.2s;
+  box-shadow: $shadow-card;
+  transition: all $transition-fast;
+  height: 100%;
 
   &:active {
     transform: scale(0.96);
-    box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.12);
+    box-shadow: $shadow-sm;
   }
 
   &__image-wrapper {
     width: 100%;
-    height: 140rpx; // 从 200rpx 缩小到 140rpx
+    height: 160rpx;
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -32,41 +35,59 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f0f0f0;
+    background: transparent;
   }
 
   &__placeholder-text {
-    font-size: 20rpx;
-    color: #999;
+    font-size: $font-size-xs;
+    color: $text-tertiary;
   }
 
   &__info {
-    padding: 12rpx; // 从 16rpx 缩小到 12rpx
+    padding: $spacing-sm;
     display: flex;
     flex-direction: column;
-    gap: 4rpx; // 从 8rpx 缩小到 4rpx
+    gap: $spacing-xs;
+    flex: 1;
+    justify-content: space-between;
   }
 
   &__name {
-    font-size: 24rpx; // 从 28rpx 缩小到 24rpx
-    font-weight: 500;
-    color: #333;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $text-primary;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+    height: 68rpx;
+  }
+
+  &__price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-top: auto;
   }
 
   &__price {
-    font-size: 28rpx; // 从 32rpx 缩小到 28rpx
-    font-weight: 600;
-    color: #ff6b6b;
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+    color: $primary-color;
     line-height: 1.2;
+
+    &::before {
+      content: '￥';
+      font-size: $font-size-xs;
+      font-weight: $font-weight-normal;
+    }
   }
 
   &__size {
-    font-size: 22rpx; // 从 24rpx 缩小到 22rpx
-    color: #999;
+    font-size: $font-size-xs;
+    color: $text-tertiary;
     line-height: 1.2;
   }
 }

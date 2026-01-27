@@ -4,9 +4,8 @@
 .diy-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   background: linear-gradient(180deg, #F8F6FF 0%, #FAFAFA 100%);
-  overflow: hidden;
 
   // 设计画布区域 - 扩大尺寸作为核心功能
   &__canvas {
@@ -16,9 +15,8 @@
     border-radius: $radius-lg;
     box-shadow: $shadow-card;
     overflow: hidden;
-    // 扩大画布，占据屏幕高度的45%
-    height: 45vh;
-    max-height: 600rpx;
+    // 扩大画布
+    height: 500rpx;
     min-height: 400rpx;
   }
 

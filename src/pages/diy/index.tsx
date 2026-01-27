@@ -1,10 +1,10 @@
 import { View, Button } from '@tarojs/components'
-import { useState, useEffect } from 'react'
-import Taro, { useRouter, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
+import { useState, useEffect, useRef } from 'react'
+import Taro, { useRouter, useShareAppMessage, useShareTimeline, useReachBottom } from '@tarojs/taro'
 import { useDiyStore } from '../../stores/useDiyStore'
 import { useCartStore } from '../../stores/useCartStore'
 import { useDesignStore } from '../../stores/useDesignStore'
-import BeadSelector from '../../components/BeadSelector'
+import BeadSelector, { BeadSelectorRef } from '../../components/BeadSelector'
 import DesignCanvas from '../../components/DesignCanvas'
 import PropertyPanel from '../../components/PropertyPanel'
 import NameInputModal from '../../components/NameInputModal'
@@ -18,6 +18,7 @@ import './index.scss'
 
 export default function DiyPage() {
   const router = useRouter()
+  const beadSelectorRef = useRef<BeadSelectorRef>(null)
   
   const {
     bracelet,
@@ -43,6 +44,13 @@ export default function DiyPage() {
   const [showNameModal, setShowNameModal] = useState(false)
   const [showWristModal, setShowWristModal] = useState(false)
   const [previousBeadCount, setPreviousBeadCount] = useState(0)
+
+  // 页面触底加载更多
+  useReachBottom(() => {
+    if (beadSelectorRef.current) {
+      beadSelectorRef.current.loadMore()
+    }
+  })
 
   // 页面显示时检查登录状态
   Taro.useDidShow(() => {
@@ -558,7 +566,7 @@ export default function DiyPage() {
 
       {/* 珠子选择器 - 下方 */}
       <View className='diy-page__selector'>
-        <BeadSelector onBeadClick={handleBeadClick} />
+        <BeadSelector ref={beadSelectorRef} onBeadClick={handleBeadClick} />
       </View>
 
       {/* 命名对话框 */}

@@ -35,7 +35,7 @@ const BeadItem: React.FC<BeadItemProps> = ({ bead, onClick, lazyLoad = false }) 
   }, [bead.imageUrl, webpSupported])
 
   return (
-    <View className='bead-item' onClick={handleClick}>
+    <View className={`bead-item bead-item--${bead.shape || 'circle'}`} onClick={handleClick}>
       <View className='bead-item__image-wrapper'>
         {imageError ? (
           <View className='bead-item__placeholder'>
@@ -54,8 +54,10 @@ const BeadItem: React.FC<BeadItemProps> = ({ bead, onClick, lazyLoad = false }) 
       </View>
       <View className='bead-item__info'>
         <Text className='bead-item__name'>{bead.name}</Text>
-        <Text className='bead-item__price'>¥{bead.price.toFixed(2)}</Text>
-        <Text className='bead-item__size'>{bead.diameter}mm</Text>
+        <View className='bead-item__price-row'>
+          <Text className='bead-item__price'>{bead.price.toFixed(2)}</Text>
+          <Text className='bead-item__size'>{bead.diameter}mm</Text>
+        </View>
       </View>
     </View>
   )

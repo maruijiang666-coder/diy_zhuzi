@@ -1,3 +1,5 @@
+export type BeadShape = 'circle' | 'square' | 'irregular'
+
 export interface Bead {
   id: string
   name: string
@@ -8,4 +10,5 @@ export interface Bead {
   diameter: number // 直径（毫米）
   stock: number // 库存数量
   description?: string
+  shape?: BeadShape // 形状，默认为 circle
 }

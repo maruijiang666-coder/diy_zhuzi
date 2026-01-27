@@ -1189,7 +1189,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
                 return (
                     <View
                         key={visualKey}
-                        className='design-canvas__bead'
+                        className={`design-canvas__bead design-canvas__bead--${bead.shape || 'circle'}`}
                         style={{
                             width: `${size}rpx`,
                             height: `${size}rpx`,

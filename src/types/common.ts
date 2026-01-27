@@ -4,6 +4,7 @@ export interface Category {
   id: string
   name: string
   icon?: string
+  children?: Category[]
 }
 
 export interface CartItem {
