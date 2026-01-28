@@ -52,48 +52,13 @@ export default function DiyPage() {
     }
   })
 
-  // 页面显示时检查登录状态
+  // 页面显示时
   Taro.useDidShow(() => {
-    const isLoggedIn = checkLoginForPage()
-    if (!isLoggedIn) {
-      // 未登录，显示提示并跳转
-      return
-    }
-    
     // 检查手腕尺寸是否设置
     if (wristSize === null) {
       setShowWristModal(true)
     }
   })
-
-  // 检查登录状态的辅助函数
-  const checkLoginForPage = () => {
-    const { authService } = require('../../services/authService')
-    const isLoggedIn = authService.isLoggedIn()
-    
-    if (!isLoggedIn) {
-      console.log('DIY 页面需要登录')
-      Taro.showModal({
-        title: '需要登录',
-        content: '访问此页面需要先登录，是否前往登录？',
-        confirmText: '去登录',
-        cancelText: '取消',
-        success: (res) => {
-          if (res.confirm) {
-            Taro.switchTab({
-              url: '/pages/profile/index'
-            })
-          } else {
-            Taro.switchTab({
-              url: '/pages/profile/index'
-            })
-          }
-        }
-      })
-      return false
-    }
-    return true
-  }
 
   // 页面加载时检查是否需要加载购物车项
   useEffect(() => {

@@ -2,6 +2,7 @@ export type BeadShape = 'circle' | 'square' | 'irregular'
 
 export interface Bead {
   id: string
+  originalId?: string // 原始 ID，用于向接口发送数据
   name: string
   category: string
   imageUrl: string

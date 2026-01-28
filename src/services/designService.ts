@@ -34,8 +34,8 @@ class DesignService {
       return await mockDesignService.saveDesign(bracelet, name, thumbnail)
     }
 
-    // 提取珠子 ID 数组（字符串格式）
-    const beadsData = bracelet.beads.map((bead) => bead.id)
+    // 提取珠子 ID 数组（优先使用 originalId，即数据库中的真实 ID）
+    const beadsData = bracelet.beads.map((bead) => bead.originalId || bead.id)
 
     // 真实API调用
     const requestData: SaveDesignRequest = {
@@ -124,7 +124,7 @@ class DesignService {
     }
 
     if (bracelet) {
-      requestData.beads = bracelet.beads.map((bead) => bead.id)
+      requestData.beads = bracelet.beads.map((bead) => bead.originalId || bead.id)
     }
 
     const response = await designApi.updateDesign(designId, requestData)
@@ -158,6 +158,7 @@ class DesignService {
       .sort((a: any, b: any) => a.position - b.position)
       .map((beadItem: any) => ({
         id: String(beadItem.bead.id),
+        originalId: String(beadItem.bead.id),
         name: beadItem.bead.name,
         category: beadItem.bead.category,
         imageUrl: beadItem.bead.image_url,

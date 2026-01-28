@@ -114,6 +114,52 @@
       font-size: $font-size-base;
       font-weight: $font-weight-medium;
       margin-top: $spacing-md;
+
+      &.disabled {
+        opacity: 0.6;
+      }
+    }
+
+    .agreement-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: $spacing-sm;
+      margin-top: $spacing-md;
+      padding: 0 $spacing-lg;
+
+      .checkbox {
+        width: 32rpx;
+        height: 32rpx;
+        border: 2rpx solid $border-color;
+        border-radius: 4rpx;
+        @include flex-center;
+        transition: all $transition-fast;
+        flex-shrink: 0;
+
+        &.checked {
+          background-color: $primary-color;
+          border-color: $primary-color;
+        }
+
+        .check-icon {
+          color: white;
+          font-size: 20rpx;
+          font-weight: bold;
+        }
+      }
+
+      .agreement-text {
+        font-size: 24rpx;
+        color: $text-secondary;
+        line-height: 1.4;
+
+        .link {
+          color: $primary-color;
+          display: inline;
+          padding: 0 4rpx;
+        }
+      }
     }
 
     .empty-state {

@@ -30,8 +30,8 @@ function App({ children }: PropsWithChildren<any>) {
         })
       }, 100)
     }
-    // 如果未登录且当前不在 profile 页面，跳转到 profile 页面
-    else if (!isLoggedIn && currentRoute !== 'pages/profile/index') {
+    // 如果未登录且当前不在 profile 页面且不在 diy 页面，跳转到 profile 页面
+    else if (!isLoggedIn && currentRoute !== 'pages/profile/index' && currentRoute !== 'pages/diy/index') {
       console.log('用户未登录，跳转到个人中心页面')
       setTimeout(() => {
         Taro.switchTab({
@@ -53,7 +53,6 @@ function App({ children }: PropsWithChildren<any>) {
     
     // 需要登录才能访问的页面列表
     const protectedPages = [
-      'pages/diy/index',
       'pages/cart/index',
       'pages/designs/index',
       'pages/order/list/index',

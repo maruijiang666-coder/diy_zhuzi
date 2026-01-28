@@ -13,6 +13,7 @@ export default function ProfilePage() {
   const [avatar, setAvatar] = useState<string>('')
   const [nickname, setNickname] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
+  const [isAgreed, setIsAgreed] = useState<boolean>(false)
 
   useEffect(() => {
     // 页面加载时检查登录状态
@@ -614,6 +615,16 @@ export default function ProfilePage() {
   const handleGetPhoneNumber = async (e: any) => {
     console.log('获取手机号事件:', e)
     
+    // 检查是否同意协议
+    if (!isAgreed) {
+      Taro.showToast({
+        title: '请先阅读并同意用户协议和隐私政策',
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+    
     if (e.detail.errMsg === 'getPhoneNumber:ok') {
       const code = e.detail.code
       console.log('获取手机号成功的code:', code)
@@ -712,6 +723,22 @@ export default function ProfilePage() {
     })
   }
 
+  // 查看用户协议
+  const handleShowAgreement = (e: any) => {
+    e.stopPropagation()
+    Taro.navigateTo({
+      url: '/pages/agreement/index?type=user'
+    })
+  }
+
+  // 查看隐私政策
+  const handleShowPrivacy = (e: any) => {
+    e.stopPropagation()
+    Taro.navigateTo({
+      url: '/pages/agreement/index?type=privacy'
+    })
+  }
+
   // 加载中状态
   if (loading) {
     return <Loading fullscreen />
@@ -763,11 +790,23 @@ export default function ProfilePage() {
           {/* 1. 获取头像 - 已移到上方图片区域 */}
           
           {/* 2. 获取昵称 */}
-          {/* 3. 获取用户手机号 */}
+          {/* 3. 获取用户手机号  获取手机号按钮*/}
+          <View className='agreement-container' onClick={() => setIsAgreed(!isAgreed)}>
+            <View className={`checkbox ${isAgreed ? 'checked' : ''}`}>
+              {isAgreed && <Text className='check-icon'>✓</Text>}
+            </View>
+            <View className='agreement-text'>
+              我已阅读并同意
+              <Text className='link' onClick={handleShowAgreement}>《用户协议》</Text>
+              和
+              <Text className='link' onClick={handleShowPrivacy}>《隐私政策》</Text>
+            </View>
+          </View>
+
           <Button 
             openType="getPhoneNumber" 
             onGetPhoneNumber={handleGetPhoneNumber}
-            className='phone-button'
+            className={`phone-button ${!isAgreed ? 'disabled' : ''}`}
             type='primary'
           >
             获取手机号

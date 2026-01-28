@@ -36,8 +36,8 @@ class CartService {
     // 生成手串名称（如果没有提供）
     const braceletName = bracelet.name || `手串设计 ${Date.now()}`
 
-    // 提取珠子 ID 数组（转换为数字格式）
-    const beadsData = bracelet.beads.map((bead) => parseInt(bead.id))
+    // 提取珠子 ID 数组（优先使用 originalId，并转换为数字格式）
+    const beadsData = bracelet.beads.map((bead) => parseInt(bead.originalId || bead.id))
 
     // 根据接口文档，直接调用 /cart/items/ 接口，包含完整的手串信息
     console.log('=== 添加到购物车 ===')
@@ -126,7 +126,7 @@ class CartService {
 
     // 构建珠子数据：需要包含 bead_id 和 position
     const beadsData = bracelet.beads.map((bead, index) => ({
-      bead_id: parseInt(bead.id),
+      bead_id: parseInt(bead.originalId || bead.id),
       position: index,
     }))
 

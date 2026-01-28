@@ -72,6 +72,7 @@ export const beadApi = {
     // 转换数据格式
     const beads: Bead[] = response.results.map((item) => ({
       id: String(item.id),
+      originalId: String(item.id),
       name: item.name,
       category: item.category,
       imageUrl: item.image_url,
@@ -101,6 +102,7 @@ export const beadApi = {
     
     return {
       id: String(item.id),
+      originalId: String(item.id),
       name: item.name,
       category: item.category,
       imageUrl: item.image_url,
@@ -235,6 +237,7 @@ export const cartApi = {
         .sort((a, b) => a.position - b.position)
         .map((beadItem) => ({
           id: String(beadItem.bead.id),
+          originalId: String(beadItem.bead.id),
           name: beadItem.bead.name,
           category: beadItem.bead.category,
           imageUrl: beadItem.bead.image_url,
@@ -512,6 +515,7 @@ export const orderApi = {
             const bead = beadItem.bead || {}
             return {
               id: String(bead.id || ''),
+              originalId: String(bead.id || ''),
               name: bead.name || '未知珠子',
               category: bead.category || '',
               imageUrl: bead.image_url || '',
@@ -659,6 +663,7 @@ export const orderApi = {
           const bead = beadItem.bead || {}
           return {
             id: String(bead.id || ''),
+            originalId: String(bead.id || ''),
             name: bead.name || '未知珠子',
             category: bead.category || '',
             imageUrl: bead.image_url || '',
