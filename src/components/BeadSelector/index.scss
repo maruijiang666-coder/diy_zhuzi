@@ -94,7 +94,6 @@
     background: $bg-primary;
     white-space: nowrap;
     border-bottom: 1px solid $border-light;
-    padding-bottom: $spacing-xs;
   }
 
   &__sub-category-list {
@@ -116,6 +115,41 @@
     &.active {
       color: $primary-color;
       background: $secondary-light;
+      font-weight: $font-weight-medium;
+    }
+
+    &:active {
+      opacity: 0.8;
+    }
+  }
+
+  &__third-categories {
+    background: $bg-primary;
+    white-space: nowrap;
+    border-bottom: 1px solid $border-light;
+  }
+
+  &__third-category-list {
+    display: inline-flex;
+    padding: 0 $spacing-md $spacing-sm $spacing-md;
+    gap: $spacing-xs;
+  }
+
+  &__third-category {
+    display: inline-block;
+    padding: 6rpx 20rpx;
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    white-space: nowrap;
+    transition: all $transition-fast;
+    border-radius: $radius-sm;
+    background: $bg-tertiary;
+    border: 1px solid $border-light;
+
+    &.active {
+      color: $primary-color;
+      background: #fff;
+      border-color: $primary-color;
       font-weight: $font-weight-medium;
     }
 
