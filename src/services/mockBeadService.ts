@@ -15,6 +15,30 @@ const crystalTestImg = 'https://tangledup-ai-staging.oss-cn-shanghai.aliyuncs.co
 // 测试珠子数据
 const mockBeads: Bead[] = [
   {
+    id: 'bead-017',
+    name: '紫随性',
+    category: '紫随性',
+    imageUrl: crystalTestImg,
+    price: 35.00,
+    weight: 3.5,
+    diameter: 10,
+    stock: 20,
+    description: '随性紫水晶（拼写修正项）',
+    shape: 'irregular',
+  },
+  {
+    id: 'bead-018',
+    name: '随性水晶',
+    category: '随性',
+    imageUrl: crystalTestImg,
+    price: 28.00,
+    weight: 3.0,
+    diameter: 9,
+    stock: 30,
+    description: '随性水晶（拼写修正项）',
+    shape: 'irregular',
+  },
+  {
     id: 'bead-001',
     name: '紫水晶',
     category: 'amethyst',
@@ -234,8 +258,10 @@ const mockCategories: Category[] = [
   { id: 'lapis-lazuli', name: '青金石' },
   { id: '紫随形', name: '紫随形' },
   { id: '紫随行', name: '紫随行' },
+  { id: '紫随性', name: '紫随性' },
   { id: '随形', name: '随形' },
   { id: '随行', name: '随行' },
+  { id: '随性', name: '随性' },
 ]
 
 /**

@@ -95,13 +95,33 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
     }
   }, [])
 
-  // 计算珠子渲染尺寸
+  // 计算珠子渲染尺寸 (rpx)
   const getBeadSize = useCallback((bead: Bead) => {
-    const baseSize = 25
-    const baseDiameter = 8
-    const size = (bead.diameter / baseDiameter) * baseSize
-    return Math.max(10, size)
+    // 调整比例逻辑：降低大珠子和小珠子的视觉差异
+    // 使用线性函数 y = 1.5x + 45 进行更平滑的压缩
+    // 5.5mm -> 53.25rpx
+    // 10mm -> 60rpx (保持不变)
+    // 20mm -> 75rpx (原来85，进一步缩小)
+    const size = bead.diameter * 1.5 + 45
+    return Math.max(20, size)
   }, [])
+  
+  // 获取珠子的排版宽度 (Layout Width)
+  const getBeadLayoutWidth = useCallback((bead: Bead) => {
+    const displaySize = getBeadSize(bead)
+    
+    // 针对“算盘”珠子的特殊处理
+    if (bead.name.includes('算盘') || (bead.category && bead.category.includes('算盘'))) {
+      return displaySize * 0.6 // 算盘珠厚度通常是直径的 30%-40%，这里设为 0.6 以避免过度重叠
+    }
+    
+    // 针对“隔片”等扁珠子
+    if (bead.name.includes('隔片') || bead.name.includes('垫片')) {
+      return displaySize * 0.2
+    }
+    
+    return displaySize
+  }, [getBeadSize])
 
   // 计算画布尺寸和半径
   const { canvasSize, centerOffset } = useMemo(() => {
@@ -118,15 +138,17 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
     if (bracelet.beads.length === 0) {
       return { effectiveRadius: FIXED_RADIUS, scaleFactor: 1 };
     }
-    const beadSizes = bracelet.beads.map(bead => getBeadSize(bead))
-    const totalBeadCircumference = beadSizes.reduce((sum, size) => sum + size, 0)
+    // 使用 LayoutWidth (排版宽度) 而不是 DisplaySize 来计算总周长
+    const beadLayoutWidths = bracelet.beads.map(bead => getBeadLayoutWidth(bead))
+    const totalBeadCircumference = beadLayoutWidths.reduce((sum, width) => sum + width, 0)
+    
     const targetCircumference = 2 * Math.PI * FIXED_RADIUS;
     let scale = targetCircumference / totalBeadCircumference;
     const MAX_SCALE = 2.2;
     const MIN_SCALE = 0.5;
     scale = Math.min(Math.max(scale, MIN_SCALE), MAX_SCALE);
     return { effectiveRadius: FIXED_RADIUS, scaleFactor: scale };
-  }, [bracelet.beads, getBeadSize]);
+  }, [bracelet.beads, getBeadLayoutWidth]);
 
   // 获取画布位置
   const updateCanvasRect = useCallback(() => {
@@ -150,8 +172,9 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
     let accumulatedAngle = -Math.PI / 2
     
     beads.forEach((bead) => {
-        const beadSize = getBeadSize(bead) * scaleFactor
-        const angleWidth = beadSize / effectiveRadius
+        // 使用 layoutWidth 计算角度占用
+        const beadLayoutWidth = getBeadLayoutWidth(bead) * scaleFactor
+        const angleWidth = beadLayoutWidth / effectiveRadius
         const currentBeadAngle = accumulatedAngle + angleWidth / 2
         
         const x = centerOffset + effectiveRadius * Math.cos(currentBeadAngle)
@@ -168,7 +191,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
         accumulatedAngle += angleWidth
     })
     return layout
-  }, [effectiveRadius, scaleFactor, centerOffset, getBeadSize])
+  }, [effectiveRadius, scaleFactor, centerOffset, getBeadLayoutWidth])
 
   // 初始化或同步视觉状态
   useEffect(() => {
@@ -1206,7 +1229,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
                         <Image
                           className='design-canvas__bead-image'
                           src={optimizedImageUrl}
-                          mode='aspectFill'
+                          mode={bead.shape === 'irregular' ? 'aspectFit' : 'aspectFill'}
                           webp={webpSupported}
                           onError={() => handleImageError(index)}
                         />

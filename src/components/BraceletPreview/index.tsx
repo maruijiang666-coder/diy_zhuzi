@@ -104,9 +104,9 @@ const BraceletPreview: React.FC<BraceletPreviewProps> = ({ bracelet, size = 180 
       return (
         <Image
           key={`${bead.id}-${index}`}
-          className='preview-bead'
+          className={`preview-bead preview-bead--${bead.shape || 'circle'}`}
           src={bead.imageUrl}
-          mode='aspectFill'
+          mode={bead.shape === 'irregular' ? 'aspectFit' : 'aspectFill'}
           style={{
             width: `${scaledSize}rpx`,
             height: `${scaledSize}rpx`,

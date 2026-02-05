@@ -93,12 +93,13 @@
   &__sub-categories {
     background: $bg-primary;
     white-space: nowrap;
-    border-bottom: 1px solid $border-light;
+    // 移除底部边框以减小与三级分类的视觉距离
+    border-bottom: none; 
   }
 
   &__sub-category-list {
     display: inline-flex;
-    padding: $spacing-xs $spacing-md;
+    padding: $spacing-xs $spacing-md 6rpx $spacing-md;
     gap: $spacing-xs;
   }
 

@@ -99,14 +99,14 @@
 
   &__bead {
     position: relative;
-    overflow: hidden;
     border: 3rpx solid transparent;
     transition: all 0.3s ease;
-    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
     z-index: 1; // 确保珠子在线的上方
 
     &--circle {
+      overflow: hidden;
       border-radius: 50%;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
       .design-canvas__bead-image,
       .design-canvas__bead-placeholder {
         border-radius: 50%;
@@ -114,7 +114,9 @@
     }
 
     &--square {
+      overflow: hidden;
       border-radius: 12rpx;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
       .design-canvas__bead-image,
       .design-canvas__bead-placeholder {
         border-radius: 12rpx;
@@ -122,11 +124,12 @@
     }
 
     &--irregular {
-      // 异形珠子通常保持图片原本形状，不强制圆角
-      border-radius: 8rpx;
-      .design-canvas__bead-image,
-      .design-canvas__bead-placeholder {
-        border-radius: 8rpx;
+      // 异形珠子通常保持图片原本形状，不强制圆角，也不设置裁剪
+      // 也不设置外框阴影，因为图片本身带透明度
+      overflow: visible;
+      .design-canvas__bead-image {
+        // 使用 drop-shadow 替代 box-shadow，使阴影贴合异形形状
+        filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.15));
       }
     }
 

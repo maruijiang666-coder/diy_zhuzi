@@ -21,7 +21,7 @@ const BeadDetailModal: React.FC<BeadDetailModalProps> = ({
   }
 
   return (
-    <View className='bead-detail-modal' onClick={onClose}>
+    <View className={`bead-detail-modal bead-detail-modal--${bead.shape || 'circle'}`} onClick={onClose}>
       <View className='bead-detail-modal__content' onClick={(e) => e.stopPropagation()}>
         {/* 珠子图片 */}
         <View className='bead-detail-modal__image-wrapper'>

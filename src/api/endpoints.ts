@@ -4,6 +4,7 @@ import { Bead } from '../types/bead'
 import { Category, CartItem } from '../types/common'
 import { Order, Address, OrderStatus } from '../types/order'
 import { WechatPayParams } from '../types/api'
+import { getBeadShape } from '../utils/beadHelper'
 import Taro from '@tarojs/taro'
 
 // ============ 珠子相关接口 ============
@@ -43,6 +44,7 @@ interface ApiBeadData {
   description: string
   created_at: string
   updated_at: string
+  shape?: string // 前端注入的形状属性
 }
 
 export const beadApi = {
@@ -70,18 +72,21 @@ export const beadApi = {
     )
 
     // 转换数据格式
-    const beads: Bead[] = response.results.map((item) => ({
-      id: String(item.id),
-      originalId: String(item.id),
-      name: item.name,
-      category: item.category,
-      imageUrl: item.image_url,
-      price: parseFloat(item.price),
-      weight: parseFloat(item.weight),
-      diameter: parseFloat(item.diameter),
-      stock: item.stock,
-      description: item.description,
-    }))
+    const beads: Bead[] = response.results.map((item) => {
+      return {
+        id: String(item.id),
+        originalId: String(item.id),
+        name: item.name,
+        category: item.category,
+        imageUrl: item.image_url,
+        price: parseFloat(item.price),
+        weight: parseFloat(item.weight),
+        diameter: parseFloat(item.diameter),
+        stock: item.stock,
+        description: item.description,
+        shape: getBeadShape(item.name, item.category),
+      }
+    })
 
     return {
       beads,
@@ -111,6 +116,7 @@ export const beadApi = {
       diameter: parseFloat(item.diameter),
       stock: item.stock,
       description: item.description,
+      shape: getBeadShape(item.name, item.category),
     }
   },
 }
@@ -235,18 +241,21 @@ export const cartApi = {
       const braceletBeads = item.bracelet.bracelet_beads || []
       const beads = braceletBeads
         .sort((a, b) => a.position - b.position)
-        .map((beadItem) => ({
-          id: String(beadItem.bead.id),
-          originalId: String(beadItem.bead.id),
-          name: beadItem.bead.name,
-          category: beadItem.bead.category,
-          imageUrl: beadItem.bead.image_url,
-          price: parseFloat(beadItem.bead.price),
-          weight: parseFloat(beadItem.bead.weight),
-          diameter: parseFloat(beadItem.bead.diameter),
-          stock: beadItem.bead.stock,
-          description: beadItem.bead.description,
-        }))
+        .map((beadItem) => {
+          return {
+            id: String(beadItem.bead.id),
+            originalId: String(beadItem.bead.id),
+            name: beadItem.bead.name,
+            category: beadItem.bead.category,
+            imageUrl: beadItem.bead.image_url,
+            price: parseFloat(beadItem.bead.price),
+            weight: parseFloat(beadItem.bead.weight),
+            diameter: parseFloat(beadItem.bead.diameter),
+            stock: beadItem.bead.stock,
+            description: beadItem.bead.description,
+            shape: getBeadShape(beadItem.bead.name, beadItem.bead.category),
+          }
+        })
 
       // 计算手串属性
       const totalPrice = beads.reduce((sum, bead) => sum + bead.price, 0)
@@ -513,6 +522,7 @@ export const orderApi = {
           .sort((a, b) => (a.position || 0) - (b.position || 0))
           .map((beadItem) => {
             const bead = beadItem.bead || {}
+            
             return {
               id: String(bead.id || ''),
               originalId: String(bead.id || ''),
@@ -524,6 +534,7 @@ export const orderApi = {
               diameter: parseFloat(bead.diameter || '0'),
               stock: bead.stock || 0,
               description: bead.description || '',
+              shape: getBeadShape(bead.name || '', bead.category || ''),
             }
           })
 
@@ -660,20 +671,22 @@ export const orderApi = {
         .filter((beadItem) => beadItem && beadItem.bead)
         .sort((a, b) => (a.position || 0) - (b.position || 0))
         .map((beadItem) => {
-          const bead = beadItem.bead || {}
-          return {
-            id: String(bead.id || ''),
-            originalId: String(bead.id || ''),
-            name: bead.name || '未知珠子',
-            category: bead.category || '',
-            imageUrl: bead.image_url || '',
-            price: parseFloat(bead.price || '0'),
-            weight: parseFloat(bead.weight || '0'),
-            diameter: parseFloat(bead.diameter || '0'),
-            stock: bead.stock || 0,
-            description: bead.description || '',
-          }
-        })
+        const bead = beadItem.bead || {}
+
+        return {
+          id: String(bead.id || ''),
+          originalId: String(bead.id || ''),
+          name: bead.name || '未知珠子',
+          category: bead.category || '',
+          imageUrl: bead.image_url || '',
+          price: parseFloat(bead.price || '0'),
+          weight: parseFloat(bead.weight || '0'),
+          diameter: parseFloat(bead.diameter || '0'),
+          stock: bead.stock || 0,
+          description: bead.description || '',
+          shape: getBeadShape(bead.name || '', bead.category || ''),
+        }
+      })
 
       return {
         id: String(orderItem.id),
@@ -838,7 +851,18 @@ export interface SaveDesignResponse {
 export const designApi = {
   // 保存设计（创建手串）
   saveDesign: async (data: SaveDesignRequest): Promise<SaveDesignResponse> => {
-    return httpClient.post<SaveDesignResponse>(API_ENDPOINTS.BRACELETS, data)
+    const response = await httpClient.post<SaveDesignResponse>(API_ENDPOINTS.BRACELETS, data)
+    
+    // 注入形状属性
+    if (response && response.bracelet_beads) {
+      response.bracelet_beads.forEach(item => {
+        if (item.bead) {
+          item.bead.shape = getBeadShape(item.bead.name, item.bead.category)
+        }
+      })
+    }
+    
+    return response
   },
 
   // 获取所有设计（手串列表）
@@ -855,6 +879,17 @@ export const designApi = {
         return []
       }
       
+      // 注入形状属性
+      response.results.forEach(bracelet => {
+        if (bracelet.bracelet_beads) {
+          bracelet.bracelet_beads.forEach(item => {
+            if (item.bead) {
+              item.bead.shape = getBeadShape(item.bead.name, item.bead.category)
+            }
+          })
+        }
+      })
+      
       return response.results
     } catch (error) {
       console.error('获取设计列表失败:', error)
@@ -865,12 +900,34 @@ export const designApi = {
 
   // 获取单个设计（手串详情）
   getDesignById: async (id: string): Promise<ApiBraceletData> => {
-    return httpClient.get<ApiBraceletData>(API_ENDPOINTS.BRACELET_DETAIL(id))
+    const response = await httpClient.get<ApiBraceletData>(API_ENDPOINTS.BRACELET_DETAIL(id))
+    
+    // 注入形状属性
+    if (response && response.bracelet_beads) {
+      response.bracelet_beads.forEach(item => {
+        if (item.bead) {
+          item.bead.shape = getBeadShape(item.bead.name, item.bead.category)
+        }
+      })
+    }
+    
+    return response
   },
 
   // 更新设计
   updateDesign: async (id: string, data: UpdateDesignRequest): Promise<SaveDesignResponse> => {
-    return httpClient.put<SaveDesignResponse>(API_ENDPOINTS.BRACELET_DETAIL(id), data)
+    const response = await httpClient.put<SaveDesignResponse>(API_ENDPOINTS.BRACELET_DETAIL(id), data)
+    
+    // 注入形状属性
+    if (response && response.bracelet_beads) {
+      response.bracelet_beads.forEach(item => {
+        if (item.bead) {
+          item.bead.shape = getBeadShape(item.bead.name, item.bead.category)
+        }
+      })
+    }
+    
+    return response
   },
 
   // 删除设计

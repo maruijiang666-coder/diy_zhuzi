@@ -18,9 +18,23 @@
   // 珠子
   .preview-bead {
     position: absolute;
-    border-radius: 50%;
-    border: 2rpx solid rgba(139, 127, 216, 0.2);
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
     z-index: 1;
+
+    &--circle {
+      border-radius: 50%;
+      border: 2rpx solid rgba(139, 127, 216, 0.2);
+      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+    }
+
+    &--square {
+      border-radius: 8rpx;
+      border: 2rpx solid rgba(139, 127, 216, 0.2);
+      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+    }
+
+    &--irregular {
+      // 异形珠子不强制圆角和阴影，使用 drop-shadow
+      filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.15));
+    }
   }
 }
