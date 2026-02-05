@@ -23,6 +23,7 @@ export interface OrderItem {
   properties: CartItem['properties']
   price: number // 订单项的价格（可能与购物车时的价格不同）
   addedAt?: number // 可选，订单项不一定有添加时间
+  cartItemId?: string // 关联的购物车项ID
 }
 
 export interface PaymentInfo {

@@ -14,6 +14,23 @@ import Taro from '@tarojs/taro'
  * 封装订单相关的业务逻辑和API调用
  */
 class OrderService {
+  private recentlyPaidOrderIds = new Set<string>()
+
+  /**
+   * 标记订单为本地已支付
+   * 用于解决支付成功后后端状态更新延迟的问题
+   */
+  markOrderAsPaidLocal(orderId: string) {
+    this.recentlyPaidOrderIds.add(orderId)
+  }
+
+  /**
+   * 检查订单是否在本地标记为已支付
+   */
+  isOrderPaidLocal(orderId: string) {
+    return this.recentlyPaidOrderIds.has(orderId)
+  }
+
   /**
    * 创建订单
    * @param cartItemIds 购物车项ID数组
@@ -147,6 +164,9 @@ class OrderService {
           console.log('📱 微信支付参数已保存，可直接调起微信支付！-*-*-**--*-*-')
           console.log('🔧 支付参数:', JSON.stringify(wechatPayParams, null, 2))
 
+          // 保存 this 引用
+          const self = this
+
           // 使用微信原生写法调起微信支付
           wx.requestPayment({
             timeStamp: wechatPayParams.timeStamp,
@@ -171,6 +191,9 @@ class OrderService {
             // },
             success: function (res) {
               console.log('🎉 支付成功:', res)
+              
+              // 立即标记本地状态为已支付
+              self.markOrderAsPaidLocal(orderResult.orderId)
               
               // 支付成功后查询外部支付接口状态
               wx.request({

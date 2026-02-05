@@ -58,6 +58,16 @@ export default function CartPage() {
     loadCartItems()
   })
 
+  // 下拉刷新
+  Taro.usePullDownRefresh(async () => {
+    console.log('=== 触发下拉刷新 ===')
+    try {
+      await loadCartItems()
+    } finally {
+      Taro.stopPullDownRefresh()
+    }
+  })
+
   // 页面加载时获取购物车数据，页面初次加载时使用。
   useEffect(() => {
     console.log('=== 购物车页面 - useEffect 加载数据 ===')

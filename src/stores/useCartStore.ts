@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { CartItem } from '../types/common'
 import { Bracelet, BraceletProperties } from '../types/bracelet'
 import { cartService } from '../services/cartService'
+import { orderService } from '../services/orderService'
 
 interface CartStore {
   // 状态
@@ -108,10 +109,42 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set({ loading: true, error: null })
 
     try {
+      // 1. 获取购物车列表
       const items = await cartService.getCartItems()
 
+      // 2. 获取订单列表 (获取最近100条，包含所有状态)
+      // 通过过滤已支付（或本地标记为已支付）订单关联的购物车项
+      const { orders } = await orderService.getOrders(undefined, 1, 100)
+      
+      // 3. 提取所有已支付订单中的购物车项ID
+      const paidCartItemIds = new Set<string>()
+      orders.forEach(order => {
+        // 检查状态是否为已支付，或者在本地被标记为已支付
+        const isPaid = order.status === 'paid' || 
+                       order.status === 'shipped' || 
+                       order.status === 'completed' ||
+                       orderService.isOrderPaidLocal(order.id)
+                       
+        if (isPaid && order.items) {
+          order.items.forEach(orderItem => {
+            if (orderItem.cartItemId) {
+              paidCartItemIds.add(orderItem.cartItemId)
+            }
+          })
+        }
+      })
+
+      console.log('=== 过滤已支付购物车项 ===')
+      console.log('原始购物车项数量:', items.length)
+      console.log('已支付购物车项ID集合:', Array.from(paidCartItemIds))
+
+      // 4. 过滤掉已支付的购物车项
+      const filteredItems = items.filter(item => !paidCartItemIds.has(item.id))
+      
+      console.log('过滤后购物车项数量:', filteredItems.length)
+
       set({
-        items,
+        items: filteredItems,
         loading: false,
       })
     } catch (error: any) {

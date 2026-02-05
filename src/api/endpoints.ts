@@ -506,13 +506,17 @@ export const orderApi = {
           if (cartItem.properties) {
             const props = cartItem.properties as any
             properties = {
-              beadCount: parseInt(props.beadCount) || 0,
+              beadCount: parseInt(props.beadCount) || braceletBeads.length || 0,
               totalPrice: parseFloat(props.totalPrice) || 0,
               totalWeight: parseFloat(props.totalWeight) || 0,
               totalLength: parseFloat(props.totalLength) || 0,
             }
           } else {
             console.warn(`[orderApi] 缺少属性数据: properties`, cartItem)
+            // 尝试从 braceletBeads 计算属性
+            if (braceletBeads.length > 0) {
+              properties.beadCount = braceletBeads.length
+            }
           }
         }
 
@@ -543,6 +547,7 @@ export const orderApi = {
           bracelet: { beads },
           properties,
           price: parseFloat(orderItem.price || '0'),
+          cartItemId: orderItem.cart_item ? String(orderItem.cart_item.id) : undefined,
         }
       })
 
@@ -656,13 +661,17 @@ export const orderApi = {
         if (cartItem.properties) {
           const props = cartItem.properties as any
           properties = {
-            beadCount: parseInt(props.beadCount) || 0,
+            beadCount: parseInt(props.beadCount) || braceletBeads.length || 0,
             totalPrice: parseFloat(props.totalPrice) || 0,
             totalWeight: parseFloat(props.totalWeight) || 0,
             totalLength: parseFloat(props.totalLength) || 0,
           }
         } else {
           console.warn(`[orderApi] 缺少属性数据: properties`, cartItem)
+          // 尝试从 braceletBeads 计算属性
+          if (braceletBeads.length > 0) {
+            properties.beadCount = braceletBeads.length
+          }
         }
       }
 
@@ -693,6 +702,7 @@ export const orderApi = {
         bracelet: { beads },
         properties,
         price: parseFloat(orderItem.price || '0'),
+        cartItemId: orderItem.cart_item ? String(orderItem.cart_item.id) : undefined,
       }
     })
 
