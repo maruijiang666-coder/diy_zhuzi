@@ -1,0 +1,241 @@
+@import '../../../../styles/variables.scss';
+@import '../../../../styles/mixins.scss';
+
+// 登录区域
+.login-section {
+  position: relative;
+  z-index: 1;
+  padding: $spacing-xl;
+  @include flex-center;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+
+  .login-card {
+    width: 100%;
+    background: #FFFFFF;
+    border-radius: $radius-lg;
+    padding: 60rpx 40rpx;
+    box-shadow: 0 10rpx 40rpx rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .login-header {
+    text-align: center;
+    margin-bottom: 50rpx;
+
+    .login-title {
+      display: block;
+      font-size: 40rpx;
+      font-weight: bold;
+      color: $text-primary;
+      margin-bottom: 12rpx;
+    }
+
+    .login-subtitle {
+      font-size: $font-size-sm;
+      color: $text-tertiary;
+    }
+  }
+
+  .avatar-button {
+    // 重置按钮样式
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 0 50rpx !important;
+    box-shadow: none !important;
+    outline: none !important;
+    width: auto !important;
+    height: auto !important;
+    line-height: normal !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20rpx;
+    
+    &::after {
+      display: none;
+    }
+    
+    .avatar-wrapper {
+      position: relative;
+      width: 160rpx;
+      height: 160rpx;
+      border-radius: 50%;
+      background: #F5F5F5;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+      
+      .avatar-image {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 4rpx solid #FFFFFF;
+      }
+
+      .avatar-edit-icon {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 48rpx;
+        height: 48rpx;
+        background: $primary-color;
+        border-radius: 50%;
+        @include flex-center;
+        border: 4rpx solid #FFFFFF;
+        
+        text {
+          font-size: 24rpx;
+          color: #FFFFFF;
+        }
+      }
+    }
+
+    .avatar-tip {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+    }
+  }
+
+  .input-group {
+    width: 100%;
+    margin-bottom: 40rpx;
+    
+    .input-label {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+      margin-bottom: 16rpx;
+      display: block;
+      padding-left: 10rpx;
+    }
+
+    .nickname-input {
+      width: 100%;
+      height: 96rpx;
+      line-height: 96rpx;
+      background: #F9FAFB;
+      border-radius: $radius-md;
+      font-size: $font-size-base;
+      color: $text-primary;
+      padding: 0 30rpx;
+      box-sizing: border-box;
+      border: 2rpx solid transparent;
+      transition: all $transition-base;
+      text-align: left;
+
+      &:focus {
+        background: #FFFFFF;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 4rpx rgba($primary-color, 0.1);
+      }
+
+      .input-placeholder {
+        color: $text-tertiary;
+      }
+    }
+  }
+
+  .agreement-container {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    gap: 12rpx;
+    margin-bottom: 40rpx;
+    padding: 0 10rpx;
+
+    .checkbox {
+      width: 32rpx;
+      height: 32rpx;
+      border: 2rpx solid $border-color;
+      border-radius: 6rpx;
+      @include flex-center;
+      transition: all $transition-fast;
+      flex-shrink: 0;
+      margin-top: 4rpx;
+
+      &.checked {
+        background-color: $primary-color;
+        border-color: $primary-color;
+      }
+
+      .check-icon {
+        color: white;
+        font-size: 22rpx;
+        font-weight: bold;
+      }
+    }
+
+    .agreement-text {
+      flex: 1;
+      font-size: 24rpx;
+      color: $text-secondary;
+      line-height: 1.5;
+
+      .link {
+        color: $primary-color;
+        display: inline;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .phone-button {
+    @include button-primary;
+    width: 100% !important;
+    height: 96rpx;
+    line-height: 96rpx;
+    border-radius: $radius-round;
+    font-size: 32rpx;
+    font-weight: 600;
+    box-shadow: 0 8rpx 20rpx rgba($primary-color, 0.2);
+    
+    &.disabled {
+      opacity: 0.5;
+      background: #E5E7EB;
+      color: #9CA3AF;
+      box-shadow: none;
+    }
+    
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
+
+// 错误提示 (also used in LoginGuide)
+.error-message {
+  position: fixed;
+  top: 100rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  padding: 20rpx 40rpx;
+  background: rgba(255, 77, 79, 0.9);
+  border-radius: 40rpx;
+  box-shadow: 0 8rpx 20rpx rgba(255, 77, 79, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 80%;
+  animation: slideDown 0.3s ease-out;
+
+  text {
+    font-size: 26rpx;
+    color: #FFFFFF;
+    font-weight: 500;
+    text-align: center;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

@@ -1,0 +1,24 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #F8F6FF 0%, #FAFAFA 100%);
+  padding-bottom: 120rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  // 复用 profile 页面的顶部装饰
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 400rpx;
+    @include gradient-bg;
+    border-radius: 0 0 50% 50% / 0 0 80rpx 80rpx;
+    z-index: 0;
+  }
+}

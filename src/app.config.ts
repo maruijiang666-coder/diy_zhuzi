@@ -1,6 +1,7 @@
 export default defineAppConfig({
   pages: [
     'pages/profile/index', // 未登录时的默认首页
+    'pages/login/index',
     'pages/diy/index',
     'pages/cart/index',
     'pages/designs/index',
