@@ -270,9 +270,7 @@ const BeadSelector = forwardRef<BeadSelectorRef, BeadSelectorProps>(({ onBeadCli
 
   const [selectedMainCategoryId, setSelectedMainCategoryId] = useState<string | undefined>(undefined)
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | undefined>(undefined)
-  const [selectedThirdCategoryId, setSelectedThirdCategoryId] = useState<string | undefined>(undefined)
   const [isSubMenuVisible, setIsSubMenuVisible] = useState(false)
-  const [isThirdMenuVisible, setIsThirdMenuVisible] = useState(false)
   const [searchKeyword, setSearchKeyword] = useState('')
   const [debouncedKeyword, setDebouncedKeyword] = useState('')
   const searchTimeoutRef = useRef<any>(null)
@@ -320,14 +318,6 @@ const BeadSelector = forwardRef<BeadSelectorRef, BeadSelectorProps>(({ onBeadCli
 
         let finalBeads = result.beads
 
-        // 如果选中了三级分类，在前端进行本地过滤
-        if (selectedThirdCategoryId) {
-          finalBeads = finalBeads.filter(bead => 
-            bead.name.includes(selectedThirdCategoryId) || 
-            (bead.description && bead.description.includes(selectedThirdCategoryId))
-          )
-        }
-
         if (debouncedKeyword && debouncedKeyword.trim()) {
           const lowerKeyword = debouncedKeyword.trim().toLowerCase()
           finalBeads = finalBeads.filter(bead => 
@@ -362,7 +352,7 @@ const BeadSelector = forwardRef<BeadSelectorRef, BeadSelectorProps>(({ onBeadCli
     return () => {
       isMounted = false
     }
-  }, [selectedMainCategoryId, selectedSubCategoryId, selectedThirdCategoryId, debouncedKeyword])
+  }, [selectedMainCategoryId, selectedSubCategoryId, debouncedKeyword])
 
   // 加载更多珠子
   const loadMoreBeads = useCallback(async () => {
@@ -380,14 +370,6 @@ const BeadSelector = forwardRef<BeadSelectorRef, BeadSelectorProps>(({ onBeadCli
       )
 
       let finalNewBeads = result.beads
-
-      // 如果选中了三级分类，在前端进行本地过滤
-      if (selectedThirdCategoryId) {
-        finalNewBeads = finalNewBeads.filter(bead => 
-          bead.name.includes(selectedThirdCategoryId) || 
-          (bead.description && bead.description.includes(selectedThirdCategoryId))
-        )
-      }
 
       if (debouncedKeyword && debouncedKeyword.trim()) {
         const lowerKeyword = debouncedKeyword.trim().toLowerCase()
@@ -409,7 +391,7 @@ const BeadSelector = forwardRef<BeadSelectorRef, BeadSelectorProps>(({ onBeadCli
     } finally {
       setLoading(false)
     }
-  }, [loading, hasMore, selectedMainCategoryId, selectedSubCategoryId, selectedThirdCategoryId, debouncedKeyword, page])
+  }, [loading, hasMore, selectedMainCategoryId, selectedSubCategoryId, debouncedKeyword, page])
 
   // 暴露给外部的方法
   useImperativeHandle(ref, () => ({
@@ -430,24 +412,16 @@ const BeadSelector = forwardRef<BeadSelectorRef, BeadSelectorProps>(({ onBeadCli
     
     // 默认进入二级菜单中的第一个类
     let firstSubCategoryId: string | undefined = undefined
-    let firstThirdCategoryId: string | undefined = undefined
     
     if (categoryId) {
       const mainCat = CATEGORY_CONFIG.find(c => c.id === categoryId)
       if (mainCat && mainCat.children && mainCat.children.length > 0) {
         firstSubCategoryId = mainCat.children[0].id
-        
-        // 检查二级分类是否有三级分类
-        if (mainCat.children[0].children && mainCat.children[0].children.length > 0) {
-          firstThirdCategoryId = mainCat.children[0].children[0].id
-        }
       }
     }
     
     setSelectedSubCategoryId(firstSubCategoryId)
-    setSelectedThirdCategoryId(firstThirdCategoryId)
     setIsSubMenuVisible(!!categoryId) // 选中大类时显示二级菜单，选中"全部"时隐藏
-    setIsThirdMenuVisible(!!firstThirdCategoryId)
     setSearchKeyword('')
     setDebouncedKeyword('')
     if (searchTimeoutRef.current) {
@@ -457,35 +431,8 @@ const BeadSelector = forwardRef<BeadSelectorRef, BeadSelectorProps>(({ onBeadCli
 
   // 处理小类切换
   const handleSubCategoryChange = (subCategoryId: string | undefined) => {
-    if (subCategoryId === selectedSubCategoryId && subCategoryId !== undefined) {
-      // 如果点击已选中的二级分类，则切换三级菜单的显示/隐藏
-      setIsThirdMenuVisible(!isThirdMenuVisible)
-      return
-    }
-
     setSelectedSubCategoryId(subCategoryId)
     
-    // 默认进入三级菜单中的第一个类
-    let firstThirdCategoryId: string | undefined = undefined
-    if (subCategoryId && selectedMainCategory && selectedMainCategory.children) {
-      const subCat = selectedMainCategory.children.find(c => c.id === subCategoryId)
-      if (subCat && subCat.children && subCat.children.length > 0) {
-        firstThirdCategoryId = subCat.children[0].id
-      }
-    }
-    
-    setSelectedThirdCategoryId(firstThirdCategoryId)
-    setIsThirdMenuVisible(!!firstThirdCategoryId)
-    setSearchKeyword('')
-    setDebouncedKeyword('')
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-  }
-
-  // 处理三级分类切换
-  const handleThirdCategoryChange = (thirdCategoryId: string | undefined) => {
-    setSelectedThirdCategoryId(thirdCategoryId)
     setSearchKeyword('')
     setDebouncedKeyword('')
     if (searchTimeoutRef.current) {
@@ -531,7 +478,6 @@ const BeadSelector = forwardRef<BeadSelectorRef, BeadSelectorProps>(({ onBeadCli
   const handleRetry = useCallback(() => {
     setSelectedMainCategoryId(undefined)
     setSelectedSubCategoryId(undefined)
-    setSelectedThirdCategoryId(undefined)
     setSearchKeyword('')
     setDebouncedKeyword('')
     if (searchTimeoutRef.current) {
@@ -580,122 +526,111 @@ const BeadSelector = forwardRef<BeadSelectorRef, BeadSelectorProps>(({ onBeadCli
             )}
           </View>
         </View>
+      </View>
 
-        {/* 大类筛选 */}
-        <ScrollView className='bead-selector__categories' scrollX>
-          <View className='bead-selector__category-list'>
+      <View className='bead-selector__body'>
+        {/* 左侧大类筛选 */}
+        <ScrollView className='bead-selector__sidebar' scrollY>
+          <View className='bead-selector__sidebar-list'>
             <View
-              className={`bead-selector__category ${!selectedMainCategoryId ? 'active' : ''}`}
+              className={`bead-selector__sidebar-item ${!selectedMainCategoryId ? 'active' : ''}`}
               onClick={() => handleMainCategoryChange(undefined)}
             >
               全部
             </View>
             {processedCategories.map((category) => (
-              <View
-                key={category.id}
-                className={`bead-selector__category ${
-                  selectedMainCategoryId === category.id ? 'active' : ''
-                }`}
-                onClick={() => handleMainCategoryChange(category.id)}
-              >
-                {category.name}
+              <View key={category.id}>
+                <View
+                  className={`bead-selector__sidebar-item ${
+                    selectedMainCategoryId === category.id ? 'active' : ''
+                  }`}
+                  onClick={() => handleMainCategoryChange(category.id)}
+                >
+                  {category.name}
+                </View>
+                
+                {/* 二级分类 */}
+                {selectedMainCategoryId === category.id && isSubMenuVisible && category.children && (
+                  <View className='bead-selector__sidebar-sub-list'>
+                    {category.children.map((sub) => (
+                      <View key={sub.id}>
+                        <View
+                          className={`bead-selector__sidebar-sub-item ${
+                            selectedSubCategoryId === sub.id ? 'active' : ''
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleSubCategoryChange(sub.id)
+                          }}
+                        >
+                          {sub.name}
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
             ))}
           </View>
         </ScrollView>
 
-        {/* 小类筛选 */}
-        {isSubMenuVisible && selectedMainCategory && selectedMainCategory.children && selectedMainCategory.children.length > 0 && (
-          <ScrollView className='bead-selector__sub-categories' scrollX>
-            <View className='bead-selector__sub-category-list'>
-              {selectedMainCategory.children.map((sub) => (
-                <View
-                  key={sub.id}
-                  className={`bead-selector__sub-category ${
-                    selectedSubCategoryId === sub.id ? 'active' : ''
-                  }`}
-                  onClick={() => handleSubCategoryChange(sub.id)}
-                >
-                  {sub.name}
+        {/* 右侧内容区域 */}
+        <View className='bead-selector__main'>
+          {/* 珠子列表 */}
+          <View className='bead-selector__content'>
+            {loading && beads.length === 0 ? (
+              <>
+                {console.log('BeadSelector: 显示Loading组件')}
+                <Loading />
+              </>
+            ) : error ? (
+              <>
+                {console.log('BeadSelector: 显示错误信息')}
+                <View className='bead-selector__error'>
+                  <View className='bead-selector__error-text'>{error}</View>
+                  <View className='bead-selector__retry-btn' onClick={handleRetry}>
+                    重试
+                  </View>
                 </View>
-              ))}
-            </View>
-          </ScrollView>
-        )}
-
-        {/* 三级分类筛选 */}
-        {isThirdMenuVisible && selectedSubCategory && selectedSubCategory.children && selectedSubCategory.children.length > 0 && (
-          <ScrollView className='bead-selector__third-categories' scrollX>
-            <View className='bead-selector__third-category-list'>
-              {selectedSubCategory.children.map((third) => (
-                <View
-                  key={third.id}
-                  className={`bead-selector__third-category ${
-                    selectedThirdCategoryId === third.id ? 'active' : ''
-                  }`}
-                  onClick={() => handleThirdCategoryChange(third.id)}
-                >
-                  {third.name}
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-        )}
-      </View>
-
-      {/* 珠子列表 */}
-      <View className='bead-selector__content'>
-        {loading && beads.length === 0 ? (
-          <>
-            {console.log('BeadSelector: 显示Loading组件')}
-            <Loading />
-          </>
-        ) : error ? (
-          <>
-            {console.log('BeadSelector: 显示错误信息')}
-            <View className='bead-selector__error'>
-              <View className='bead-selector__error-text'>{error}</View>
-              <View className='bead-selector__retry-btn' onClick={handleRetry}>
-                重试
-              </View>
-            </View>
-          </>
-        ) : beads.length === 0 ? (
-          <>
-            {console.log('BeadSelector: 显示Empty组件')}
-            <Empty text='暂无珠子数据' />
-          </>
-        ) : (
-          <>
-            {console.log('BeadSelector: 显示珠子列表，数量:', beads.length)}
-            <View className='bead-selector__list'>
-              {/* 使用虚拟列表优化渲染性能 */}
-              <View className='bead-selector__grid'>
-                {virtualListData.map((row, rowIndex) => {
-                  console.log(`BeadSelector: 渲染第${rowIndex}行，珠子数:`, row.length)
-                  return (
-                    <View key={`row-${rowIndex}`} className='bead-selector__grid-row'>
-                      {row.map((bead) => {
-                        console.log(`BeadSelector: 渲染珠子 ${bead.id} - ${bead.name}`)
+              </>
+            ) : beads.length === 0 ? (
+              <>
+                {console.log('BeadSelector: 显示Empty组件')}
+                <Empty text='暂无珠子数据' />
+              </>
+            ) : (
+              <>
+                {console.log('BeadSelector: 显示珠子列表，数量:', beads.length)}
+                <View className='bead-selector__list'>
+                  {/* 使用虚拟列表优化渲染性能 */}
+                  <ScrollView scrollY style={{ height: '100%' }} onScrollToLower={handleScrollToLower}>
+                    <View className='bead-selector__grid'>
+                      {virtualListData.map((row, rowIndex) => {
                         return (
-                          <View key={bead.id} className='bead-selector__grid-item'>
-                            <BeadItem bead={bead} onClick={handleBeadClick} lazyLoad />
+                          <View key={`row-${rowIndex}`} className='bead-selector__grid-row'>
+                            {row.map((bead) => {
+                              return (
+                                <View key={bead.id} className='bead-selector__grid-item'>
+                                  <BeadItem bead={bead} onClick={handleBeadClick} lazyLoad />
+                                </View>
+                              )
+                            })}
                           </View>
                         )
                       })}
                     </View>
-                  )
-                })}
-              </View>
-              {loading && beads.length > 0 && (
-                <View className='bead-selector__loading-more'>加载中...</View>
-              )}
-              {!hasMore && beads.length > 0 && (
-                <View className='bead-selector__no-more'>没有更多了</View>
-              )}
-            </View>
-          </>
-        )}
+                    {loading && beads.length > 0 && (
+                      <View className='bead-selector__loading-more'>加载中...</View>
+                    )}
+                    {!hasMore && beads.length > 0 && (
+                      <View className='bead-selector__no-more'>没有更多了</View>
+                    )}
+                  </ScrollView>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
       </View>
     </View>
   )

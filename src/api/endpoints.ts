@@ -811,9 +811,16 @@ export const authApi = {
   },
 
   // 获取用户信息
-  getUserInfo: (): Promise<User> => {
+  getUserInfo: async (): Promise<User> => {
     console.log('调用获取用户信息 API:', API_ENDPOINTS.USER_INFO)
-    return httpClient.get<User>(API_ENDPOINTS.USER_INFO)
+    const response: any = await httpClient.get<User>(API_ENDPOINTS.USER_INFO)
+    
+    // 如果返回包含 data 字段，提取 data
+    if (response && response.code === 0 && response.data) {
+      return response.data
+    }
+    
+    return response
   },
 }
 

@@ -54,109 +54,91 @@
     background: transparent;
   }
 
-  &__categories {
-    background: $bg-primary;
-    white-space: nowrap;
-    border-bottom: 1px solid $border-light;
+  // Body Layout
+  &__body {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
   }
 
-  &__category-list {
-    display: inline-flex;
-    padding: $spacing-sm $spacing-md;
-    gap: $spacing-sm;
-  }
-
-  &__category {
-    display: inline-block;
-    padding: 12rpx 32rpx;
+  // Left Sidebar
+  &__sidebar {
+    width: 170rpx;
+    height: 100%;
     background: $bg-tertiary;
-    border-radius: $radius-round;
+    border-right: 1px solid $border-light;
+  }
+
+  &__sidebar-list {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: $spacing-lg;
+  }
+
+  &__sidebar-item {
+    position: relative;
+    padding: $spacing-md 12rpx;
     font-size: $font-size-sm;
     color: $text-secondary;
-    white-space: nowrap;
-    transition: all $transition-fast;
-    border: 1px solid transparent;
-
-    &.active {
-      background: $primary-gradient;
-      color: #fff;
-      font-weight: $font-weight-medium;
-      box-shadow: $shadow-md;
-    }
-
-    &:active {
-      opacity: 0.8;
-      transform: scale(0.95);
-    }
-  }
-
-  &__sub-categories {
-    background: $bg-primary;
-    white-space: nowrap;
-    // 移除底部边框以减小与三级分类的视觉距离
-    border-bottom: none; 
-  }
-
-  &__sub-category-list {
-    display: inline-flex;
-    padding: $spacing-xs $spacing-md 6rpx $spacing-md;
-    gap: $spacing-xs;
-  }
-
-  &__sub-category {
-    display: inline-block;
-    padding: 8rpx 24rpx;
-    font-size: $font-size-xs;
-    color: $text-tertiary;
-    white-space: nowrap;
-    transition: all $transition-fast;
-    border-radius: $radius-sm;
+    text-align: center;
     background: transparent;
-
-    &.active {
-      color: $primary-color;
-      background: $secondary-light;
-      font-weight: $font-weight-medium;
-    }
-
-    &:active {
-      opacity: 0.8;
-    }
-  }
-
-  &__third-categories {
-    background: $bg-primary;
-    white-space: nowrap;
-    border-bottom: 1px solid $border-light;
-  }
-
-  &__third-category-list {
-    display: inline-flex;
-    padding: 0 $spacing-md $spacing-sm $spacing-md;
-    gap: $spacing-xs;
-  }
-
-  &__third-category {
-    display: inline-block;
-    padding: 6rpx 20rpx;
-    font-size: $font-size-xs;
-    color: $text-tertiary;
-    white-space: nowrap;
     transition: all $transition-fast;
-    border-radius: $radius-sm;
-    background: $bg-tertiary;
-    border: 1px solid $border-light;
+    border-bottom: 1px solid rgba($border-light, 0.5);
 
     &.active {
-      color: $primary-color;
       background: #fff;
-      border-color: $primary-color;
+      color: $primary-color;
+      font-weight: $font-weight-medium;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6rpx;
+        height: 32rpx;
+        background: $primary-color;
+        border-radius: 0 4rpx 4rpx 0;
+      }
+    }
+
+    &:active {
+      background: rgba($bg-tertiary, 0.8);
+    }
+  }
+
+  &__sidebar-sub-list {
+    background: rgba($bg-primary, 0.5);
+  }
+
+  &__sidebar-sub-item {
+    position: relative;
+    padding: $spacing-sm 8rpx $spacing-sm 24rpx;
+    font-size: $font-size-xs;
+    color: $text-secondary;
+    background: transparent;
+    transition: all $transition-fast;
+    
+    &.active {
+      color: $primary-color;
+      background: rgba($primary-color, 0.05);
       font-weight: $font-weight-medium;
     }
 
     &:active {
       opacity: 0.8;
     }
+  }
+
+  // Right Main Content
+  &__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
   }
 
   &__content {
@@ -176,8 +158,8 @@
   &__grid-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: $spacing-md;
-    margin-bottom: $spacing-md;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-sm;
 
     &:last-child {
       margin-bottom: 0;

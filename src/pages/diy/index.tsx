@@ -486,6 +486,12 @@ export default function DiyPage() {
           onBeadDelete={handleBeadDelete}
           onBeadMove={handleBeadMove}
           onSettingClick={() => setShowWristModal(true)}
+          onClear={handleClearDesign}
+          onSave={handleSaveDesign}
+          onAddToCart={handleAddToCart}
+          isSaving={isSavingDesign}
+          isAddingToCart={isAddingToCart}
+          disabled={bracelet.beads.length === 0}
         />
       </View>
 
@@ -495,7 +501,7 @@ export default function DiyPage() {
       </View>
 
       {/* 操作按钮 */}
-      <View className='diy-page__actions'>
+      {/* <View className='diy-page__actions'>
         <Button
           className='diy-page__action-btn diy-page__action-btn--clear'
           onClick={handleClearDesign}
@@ -527,7 +533,7 @@ export default function DiyPage() {
         >
           加入购物车
         </Button>
-      </View>
+      </View> */}
 
       {/* 珠子选择器 - 下方 */}
       <View className='diy-page__selector'>

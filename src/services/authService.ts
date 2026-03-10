@@ -2,6 +2,7 @@ import Taro from '@tarojs/taro'
 import * as endpoints from '../api/endpoints'
 import { getToken } from '../api/client'
 import { setToken, removeToken } from '../utils/storage'
+import { cleanAndValidateAvatarUrl } from '../utils/avatarUtils'
 
 // 类型导入
 import type { WechatLoginRequest, User } from '../api/endpoints'
@@ -196,6 +197,12 @@ class AuthService {
       console.log('开始获取用户信息...')
       const user = await endpoints.authApi.getUserInfo()
       console.log('用户信息获取成功:', user)
+      
+      // 清理头像URL
+      if (user && user.avatar) {
+        user.avatar = cleanAndValidateAvatarUrl(user.avatar)
+      }
+
       return user
     } catch (error: any) {
       console.error('获取用户信息失败:', {

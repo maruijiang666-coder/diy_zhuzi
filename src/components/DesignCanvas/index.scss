@@ -7,12 +7,65 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative; // 为绝对定位的设置按钮提供参照
+  // 为绝对定位的设置按钮和工具箱提供参照
+  position: relative;
+
+  &__top-right-actions {
+    position: absolute;
+    top: 30rpx;
+    right: 30rpx;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx;
+  }
+
+  &__action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 136rpx;
+    height: 68rpx;
+    padding: 0 32rpx;
+    border-radius: 34rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 2rpx;
+    box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.15);
+    border: 2rpx solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    &::after {
+      border: none;
+    }
+
+    &:active {
+      transform: scale(0.92);
+      box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.1);
+    }
+
+    &--save {
+      background: linear-gradient(135deg, #a89fe8 0%, #d4c5f9 100%);
+    }
+
+    &--cart {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+  }
+
+  &__bottom-left-controls {
+    position: absolute;
+    bottom: 24rpx;
+    left: 24rpx;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 16rpx;
+    align-items: flex-start;
+  }
 
   &__setting-btn {
-    position: absolute;
-    top: 24rpx;
-    right: 24rpx;
     display: flex;
     align-items: center;
     gap: 8rpx;
@@ -20,23 +73,84 @@
     background: rgba(255, 255, 255, 0.95);
     border-radius: 32rpx;
     box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-    z-index: 10;
     font-size: 24rpx;
     color: #666;
     border: 1rpx solid rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
-    
+
     &:active {
       transform: scale(0.95);
       background: #f5f5f5;
     }
-    
+
     .setting-icon {
       font-size: 28rpx;
     }
-    
+
     .setting-text {
       font-weight: 500;
+    }
+  }
+
+  &__toolbox {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 32rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+    border: 1rpx solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
+
+    &-trigger {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      padding: 12rpx 20rpx;
+      cursor: pointer;
+
+      .toolbox-icon {
+        font-size: 28rpx;
+      }
+
+      .toolbox-text {
+        font-size: 24rpx;
+        font-weight: 500;
+        color: #666;
+      }
+    }
+
+    &-content {
+      display: flex;
+      max-width: 0;
+      opacity: 0;
+      transition: all 0.3s ease-in-out;
+      white-space: nowrap;
+    }
+
+    &--open &-content {
+      max-width: 500rpx; // 足够大的宽度以容纳按钮
+      opacity: 1;
+      padding-right: 20rpx;
+    }
+
+    &-btn {
+      margin-left: 10rpx;
+      padding: 0 24rpx;
+      height: 52rpx;
+      line-height: 52rpx;
+      font-size: 24rpx;
+      color: #333;
+      background-color: #f0f0f0;
+      border-radius: 26rpx;
+
+      &::after {
+        border: none;
+      }
+
+      &:first-child {
+        margin-left: 0;
+      }
     }
   }
 

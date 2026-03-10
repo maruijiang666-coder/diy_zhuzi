@@ -1,4 +1,4 @@
-import { View, Image, Text } from '@tarojs/components'
+import { View, Image, Text, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import type { Bead } from '../../types/bead'
@@ -8,20 +8,26 @@ import { getOptimizedImageUrlSync, ImageSize, checkWebPSupport } from '../../uti
 import './index.scss'
 
 interface DesignCanvasProps {
-  bracelet: Bracelet
-  selectedBeadIndex: number | null
-  onBeadSelect: (index: number) => void
-  onBeadDelete: (index: number) => void
-  onBeadMove: (fromIndex: number, toIndex: number) => void
-  onSettingClick?: () => void
+  bracelet: Bracelet;
+  selectedBeadIndex: number | null;
+  onBeadSelect: (index: number) => void;
+  onBeadDelete: (index: number) => void;
+  onBeadMove: (fromIndex: number, toIndex: number) => void;
+  onSettingClick?: () => void;
+  onClear?: () => void;
+  onSave?: () => void;
+  onAddToCart?: () => void;
+  isSaving?: boolean;
+  isAddingToCart?: boolean;
+  disabled?: boolean;
 }
 
 interface VisualBeadState {
-  x: number
-  y: number
-  angle: number
-  opacity: number
-  scale: number
+  x: number;
+  y: number;
+  angle: number;
+  opacity: number;
+  scale: number;
 }
 
 const DesignCanvas: React.FC<DesignCanvasProps> = ({
@@ -31,12 +37,19 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   onBeadDelete,
   onBeadMove,
   onSettingClick,
+  onClear,
+  onSave,
+  onAddToCart,
+  isSaving,
+  isAddingToCart,
+  disabled,
 }) => {
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
   const [webpSupported, setWebpSupported] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedBead, setSelectedBead] = useState<Bead | null>(null)
   const [clickedBeadIndex, setClickedBeadIndex] = useState<number>(-1)
+  const [isToolboxOpen, setIsToolboxOpen] = useState(false);
   
   // 交互状态
   const [visualBeads, setVisualBeads] = useState<VisualBeadState[]>([])
@@ -1160,10 +1173,42 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   if (!bracelet.beads || bracelet.beads.length === 0) {
     return (
       <View className='design-canvas design-canvas--empty'>
+        <View className='design-canvas__top-right-actions'>
+          <Button 
+            className='design-canvas__action-btn design-canvas__action-btn--save' 
+            onClick={onSave} 
+            loading={isSaving}
+            disabled={disabled || isSaving}
+          >
+            保存
+          </Button>
+          <Button 
+            className='design-canvas__action-btn design-canvas__action-btn--cart' 
+            onClick={onAddToCart} 
+            loading={isAddingToCart}
+            disabled={disabled || isAddingToCart}
+          >
+            购买
+          </Button>
+        </View>
+
+       <View className='design-canvas__bottom-left-controls'>
         <View className='design-canvas__setting-btn' onClick={onSettingClick}>
           <Text className='setting-icon'>⚙️</Text>
           <Text className='setting-text'>手围设置</Text>
         </View>
+
+        <View className={`design-canvas__toolbox ${isToolboxOpen ? 'design-canvas__toolbox--open' : ''}`}>
+          <View className='design-canvas__toolbox-trigger' onClick={() => setIsToolboxOpen(!isToolboxOpen)}>
+            <Text className='toolbox-icon'>🧰</Text>
+            {!isToolboxOpen && <Text className='toolbox-text'>工具箱</Text>}
+          </View>
+          <View className='design-canvas__toolbox-content'>
+            <Button className='design-canvas__toolbox-btn' onClick={onClear}>清空</Button>
+            <Button className='design-canvas__toolbox-btn' openType='share'>分享</Button>
+          </View>
+        </View>
+      </View>
 
         <View className='design-canvas__empty-content'>
           <View className='design-canvas__empty-icon'>📿</View>
@@ -1177,9 +1222,41 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   return (
     <>
       <View className='design-canvas'>
-        <View className='design-canvas__setting-btn' onClick={onSettingClick}>
-          <Text className='setting-icon'>⚙️</Text>
-          <Text className='setting-text'>手围设置</Text>
+        <View className='design-canvas__top-right-actions'>
+                    <Button 
+            className='design-canvas__action-btn design-canvas__action-btn--save' 
+            onClick={onSave} 
+            loading={isSaving}
+            disabled={disabled || isSaving}
+          >
+            保存
+          </Button>
+          <Button 
+            className='design-canvas__action-btn design-canvas__action-btn--cart' 
+            onClick={onAddToCart} 
+            loading={isAddingToCart}
+            disabled={disabled || isAddingToCart}
+          >
+            购买
+          </Button>
+        </View>
+
+        <View className='design-canvas__bottom-left-controls'>
+          <View className='design-canvas__setting-btn' onClick={onSettingClick}>
+            <Text className='setting-icon'>⚙️</Text>
+            <Text className='setting-text'>手围设置</Text>
+          </View>
+
+          <View className={`design-canvas__toolbox ${isToolboxOpen ? 'design-canvas__toolbox--open' : ''}`}>
+            <View className='design-canvas__toolbox-trigger' onClick={() => setIsToolboxOpen(!isToolboxOpen)}>
+              <Text className='toolbox-icon'>🧰</Text>
+              {!isToolboxOpen && <Text className='toolbox-text'>工具</Text>}
+            </View>
+            <View className='design-canvas__toolbox-content'>
+              <Button className='design-canvas__toolbox-btn' onClick={onClear}>清空</Button>
+              <Button className='design-canvas__toolbox-btn' openType='share'>分享</Button>
+            </View>
+          </View>
         </View>
 
         <View className='design-canvas__container'>
