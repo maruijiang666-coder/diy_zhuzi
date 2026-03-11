@@ -216,10 +216,15 @@ const CATEGORY_CONFIG: Category[] = [
         ]
       },
       { id: "黑爆闪", name: "黑爆闪" },
-      { id: "紫随形", name: "紫随形" },
-      { id: "紫随行", name: "紫随行" },
+    ]
+  },
+  {
+    id: "随形",
+    name: "随形",
+    children: [
       { id: "随形", name: "随形" },
-      { id: "随行", name: "随行" }
+      { id: "紫随形", name: "紫随形" },
+      { id: "饰品", name: "饰品" }
     ]
   },
   {

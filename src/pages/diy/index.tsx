@@ -19,6 +19,7 @@ import './index.scss'
 export default function DiyPage() {
   const router = useRouter()
   const beadSelectorRef = useRef<BeadSelectorRef>(null)
+  const shareImageUrl = 'https://tangledup-ai-staging.oss-cn-shanghai.aliyuncs.com/mini_app/crystal_mini_app/crystallogo/%E9%81%A3%E5%B1%B1%E6%B0%B4%E6%99%B6logo.png'
   
   const {
     bracelet,
@@ -427,7 +428,7 @@ export default function DiyPage() {
         ? `我设计了一个${beadCount}颗珠子的水晶手串，总价¥${totalPrice}！`
         : 'DIY水晶手串设计 - 定制你的专属饰品',
       path: '/pages/diy/index',
-      imageUrl: '/assets/crystal.png',
+      imageUrl: shareImageUrl,
       success: () => {
         Taro.showToast({
           title: '分享成功',
@@ -456,7 +457,7 @@ export default function DiyPage() {
         ? `我设计了一个${beadCount}颗珠子的水晶手串，总价¥${totalPrice}！`
         : 'DIY水晶手串设计 - 定制你的专属饰品',
       query: '',
-      imageUrl: '/assets/crystal.png',
+      imageUrl: shareImageUrl,
       success: () => {
         Taro.showToast({
           title: '分享成功',
@@ -492,6 +493,7 @@ export default function DiyPage() {
           isSaving={isSavingDesign}
           isAddingToCart={isAddingToCart}
           disabled={bracelet.beads.length === 0}
+          backgroundImageUrl='https://tangledup-ai-staging.oss-cn-shanghai.aliyuncs.com/mini_app/crystal_mini_app/crystallogo/%E9%81%A3%E5%B1%B1%E6%B0%B4%E6%99%B6logo.png'
         />
       </View>
 

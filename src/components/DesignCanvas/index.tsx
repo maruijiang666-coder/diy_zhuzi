@@ -20,6 +20,7 @@ interface DesignCanvasProps {
   isSaving?: boolean;
   isAddingToCart?: boolean;
   disabled?: boolean;
+  backgroundImageUrl?: string;
 }
 
 interface VisualBeadState {
@@ -43,6 +44,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   isSaving,
   isAddingToCart,
   disabled,
+  backgroundImageUrl,
 }) => {
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
   const [webpSupported, setWebpSupported] = useState(false)
@@ -50,6 +52,15 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   const [selectedBead, setSelectedBead] = useState<Bead | null>(null)
   const [clickedBeadIndex, setClickedBeadIndex] = useState<number>(-1)
   const [isToolboxOpen, setIsToolboxOpen] = useState(false);
+  const beadsBackgroundStyle = useMemo(() => {
+    if (!backgroundImageUrl) return {}
+    return {
+      backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)), url(${backgroundImageUrl})`,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+      backgroundSize: '40% 40%',
+    }
+  }, [backgroundImageUrl])
   
   // 交互状态
   const [visualBeads, setVisualBeads] = useState<VisualBeadState[]>([])
@@ -1264,7 +1275,8 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
             className='design-canvas__beads design-canvas__beads--circle'
             style={{ 
               width: `${canvasSize}rpx`, 
-              height: `${canvasSize}rpx` 
+              height: `${canvasSize}rpx`,
+              ...beadsBackgroundStyle,
             }}
             // 绑定容器级触摸事件
             onTouchStart={handleContainerTouchStart}
