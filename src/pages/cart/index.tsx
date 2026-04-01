@@ -6,6 +6,7 @@ import { useDiyStore } from '../../stores/useDiyStore'
 import { Loading, Empty } from '../../components/common'
 import BraceletPreview from '../../components/BraceletPreview'
 import { formatPrice, formatWeight, formatLength } from '../../utils/formatter'
+import { authService } from '../../services/authService'
 import { CartItem } from '../../types/common'
 import './index.scss'
 
@@ -27,8 +28,6 @@ export default function CartPage() {
   Taro.useDidShow(() => {
     console.log('=== 购物车页面 - useDidShow ===')
     
-    // 检查登录状态
-    const { authService } = require('../../services/authService')
     const isLoggedIn = authService.isLoggedIn()
     
     if (!isLoggedIn) {
@@ -53,7 +52,6 @@ export default function CartPage() {
       return
     }
     
-    // 已登录，刷新购物车数据
     console.log('=== 购物车页面 - 刷新数据 ===')
     loadCartItems()
   })

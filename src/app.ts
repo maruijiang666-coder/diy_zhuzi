@@ -23,7 +23,7 @@ function App({ children }: PropsWithChildren<any>) {
     if (isLoggedIn && currentRoute === 'pages/profile/index') {
       console.log('用户已登录，跳转到 DIY 页面')
       setTimeout(() => {
-        Taro.switchTab({
+        Taro.navigateTo({
           url: '/pages/diy/index'
         }).catch(function(err) {
           console.error('跳转到 DIY 页面失败:', err)

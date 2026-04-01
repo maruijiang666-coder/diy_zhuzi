@@ -493,7 +493,6 @@ export default function DiyPage() {
           isSaving={isSavingDesign}
           isAddingToCart={isAddingToCart}
           disabled={bracelet.beads.length === 0}
-          backgroundImageUrl='https://tangledup-ai-staging.oss-cn-shanghai.aliyuncs.com/mini_app/crystal_mini_app/crystallogo/%E9%81%A3%E5%B1%B1%E6%B0%B4%E6%99%B6logo.png'
         />
       </View>
 

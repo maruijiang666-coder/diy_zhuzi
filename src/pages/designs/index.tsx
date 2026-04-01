@@ -6,18 +6,17 @@ import { useDiyStore } from '../../stores/useDiyStore'
 import { Loading, Empty } from '../../components/common'
 import BraceletPreview from '../../components/BraceletPreview'
 import { formatPrice } from '../../utils/formatter'
+import { authService } from '../../services/authService'
 import type { SavedDesign } from '../../types/design'
 import './index.scss'
 
 export default function DesignsPage() {
   const { designs, loading, loadDesigns, deleteDesign } = useDesignStore()
-  const { clearBracelet, addBead } = useDiyStore()
+  const { clearBracelet, addBead, setWristSize } = useDiyStore()
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // 页面显示时检查登录状态并刷新设计列表
   Taro.useDidShow(() => {
-    // 检查登录状态
-    const { authService } = require('../../services/authService')
     const isLoggedIn = authService.isLoggedIn()
     
     if (!isLoggedIn) {
@@ -42,7 +41,6 @@ export default function DesignsPage() {
       return
     }
     
-    // 已登录，刷新设计列表
     loadDesigns()
   })
 
@@ -54,21 +52,40 @@ export default function DesignsPage() {
   // 加载设计到DIY页面
   const handleLoadDesign = async (design: SavedDesign) => {
     try {
+      console.log('=== 加载设计 ===')
+      console.log('设计珠子数量:', design.bracelet.beads.length)
+      
+      // 获取当前状态
+      const currentState = useDiyStore.getState()
+      
+      // 确保手腕尺寸已设置，否则设置默认值
+      if (currentState.wristSize === null) {
+        console.log('未设置手腕尺寸，设置默认值 16cm')
+        setWristSize(16)
+      }
+      
       // 清空当前设计
       clearBracelet()
 
       // 加载设计的珠子
+      let addedCount = 0
       design.bracelet.beads.forEach((bead) => {
+        const canAdd = useDiyStore.getState().canAddBead(bead)
+        console.log(`添加珠子 ${addedCount + 1}: canAdd=${canAdd}, diameter=${bead.diameter}`)
         addBead(bead)
+        addedCount = useDiyStore.getState().bracelet.beads.length
       })
+      
+      console.log('最终添加的珠子数量:', useDiyStore.getState().bracelet.beads.length)
 
       // 跳转到DIY页面
-      await Taro.switchTab({
+      await Taro.navigateTo({
         url: '/pages/diy/index',
       })
     } catch (error: any) {
+      console.error('加载设计出错:', error)
       Taro.showToast({
-        title: '加载设计失败',
+        title: '加载设计失败: ' + (error.message || '未知错误'),
         icon: 'none',
         duration: 2000,
       })

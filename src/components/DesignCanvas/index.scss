@@ -332,4 +332,18 @@
     font-size: 24rpx;
     color: #999;
   }
+  
+  &__corner-logo {
+    position: absolute;
+    bottom: 24rpx;
+    right: 24rpx;
+    z-index: 10;
+    pointer-events: none;
+    
+    &-image {
+      width: 120rpx;
+      height: 120rpx;
+      opacity: 0.6;
+    }
+  }
 }

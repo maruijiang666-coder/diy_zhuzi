@@ -52,15 +52,6 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   const [selectedBead, setSelectedBead] = useState<Bead | null>(null)
   const [clickedBeadIndex, setClickedBeadIndex] = useState<number>(-1)
   const [isToolboxOpen, setIsToolboxOpen] = useState(false);
-  const beadsBackgroundStyle = useMemo(() => {
-    if (!backgroundImageUrl) return {}
-    return {
-      backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)), url(${backgroundImageUrl})`,
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      backgroundSize: '40% 40%',
-    }
-  }, [backgroundImageUrl])
   
   // 交互状态
   const [visualBeads, setVisualBeads] = useState<VisualBeadState[]>([])
@@ -1220,6 +1211,15 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
           </View>
         </View>
       </View>
+      
+      <View className='design-canvas__corner-logo'>
+         <Image
+           style={{ width: '120rpx', height: '120rpx' }}
+           className='design-canvas__corner-logo-image'
+           src='https://tangledup-ai-staging.oss-cn-shanghai.aliyuncs.com/mini_app/crystal_mini_app/crystallogo/%E9%81%A3%E5%B1%B1%E6%B0%B4%E6%99%B6logo.png'
+           mode='aspectFit'
+         />
+       </View>
 
         <View className='design-canvas__empty-content'>
           <View className='design-canvas__empty-icon'>📿</View>
@@ -1269,6 +1269,15 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
             </View>
           </View>
         </View>
+        
+        <View className='design-canvas__corner-logo'>
+           <Image
+             style={{ width: '160rpx', height: '160rpx' }}
+             className='design-canvas__corner-logo-image'
+             src='https://tangledup-ai-staging.oss-cn-shanghai.aliyuncs.com/mini_app/crystal_mini_app/crystallogo/%E9%81%A3%E5%B1%B1%E6%B0%B4%E6%99%B6logo.png'
+             mode='aspectFit'
+           />
+         </View>
 
         <View className='design-canvas__container'>
           <View 
@@ -1276,7 +1285,6 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
             style={{ 
               width: `${canvasSize}rpx`, 
               height: `${canvasSize}rpx`,
-              ...beadsBackgroundStyle,
             }}
             // 绑定容器级触摸事件
             onTouchStart={handleContainerTouchStart}

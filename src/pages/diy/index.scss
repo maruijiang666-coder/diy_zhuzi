@@ -7,7 +7,7 @@
   min-height: 100vh;
   background: linear-gradient(180deg, #F8F6FF 0%, #FAFAFA 100%);
 
-  // 设计画布区域 - 扩大尺寸作为核心功能
+  // 设计画布区域 - 缩小尺寸以腾出空间给珠子选择器
   &__canvas {
     flex-shrink: 0;
     background: $bg-primary;
@@ -15,8 +15,8 @@
     border-radius: $radius-lg;
     box-shadow: $shadow-card;
     overflow: hidden;
-    // 扩大画布
-    height: 500rpx;
+    // 增加画布高度
+    height: 600rpx;
     min-height: 400rpx;
   }
 

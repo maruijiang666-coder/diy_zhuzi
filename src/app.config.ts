@@ -1,5 +1,6 @@
 export default defineAppConfig({
   pages: [
+    'pages/home/index',
     'pages/profile/index', // 未登录时的默认首页
     'pages/login/index',
     'pages/diy/index',
@@ -26,10 +27,10 @@ export default defineAppConfig({
     borderStyle: 'white',
     list: [
       {
-        pagePath: 'pages/diy/index',
-        text: 'DIY设计',
-        iconPath: 'assets/icons/diy.png',
-        selectedIconPath: 'assets/icons/diy-active.png'
+        pagePath: 'pages/home/index',
+        text: '首页',
+        iconPath: 'assets/icons/home.png',
+        selectedIconPath: 'assets/icons/home-active.png'
       },
       {
         pagePath: 'pages/cart/index',
