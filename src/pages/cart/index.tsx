@@ -31,24 +31,7 @@ export default function CartPage() {
     const isLoggedIn = authService.isLoggedIn()
     
     if (!isLoggedIn) {
-      console.log('购物车页面需要登录')
-      Taro.showModal({
-        title: '需要登录',
-        content: '访问此页面需要先登录，是否前往登录？',
-        confirmText: '去登录',
-        cancelText: '取消',
-        success: (res) => {
-          if (res.confirm) {
-            Taro.switchTab({
-              url: '/pages/profile/index'
-            })
-          } else {
-            Taro.switchTab({
-              url: '/pages/profile/index'
-            })
-          }
-        }
-      })
+      console.log('用户未登录，购物车为空')
       return
     }
     
