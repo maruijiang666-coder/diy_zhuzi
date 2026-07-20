@@ -1,216 +1,115 @@
-@import "../../styles/variables.scss";
-
+// src/components/BeadSelector/index.scss
 .bead-selector {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: $bg-tertiary;
+  background: #FAEBD7;
 
-  &__header {
-    position: sticky;
-    top: 0;
-    z-index: $z-index-dropdown;
-    background: $bg-primary;
-    box-shadow: $shadow-sm;
+  &__categories {
+    white-space: nowrap;
+    padding: 8px 12px;
+    background: #FFF8DC;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
-  &__search {
-    padding: $spacing-sm $spacing-md;
-    background: $bg-primary;
-    border-bottom: 1px solid $border-light;
-  }
+  &__tab {
+    display: inline-block;
+    padding: 6px 16px;
+    margin-right: 8px;
+    border-radius: 16px;
+    font-size: 13px;
+    color: #666;
+    background: rgba(255, 255, 255, 0.6);
 
-  &__search-container {
-    display: flex;
-    align-items: center;
-    background: $bg-tertiary;
-    border-radius: $radius-round;
-    padding: 0 $spacing-md;
-    height: 64rpx;
-    border: 1px solid transparent;
-    transition: all $transition-fast;
-
-    &:focus-within {
-      background: $bg-primary;
-      border-color: $primary-light;
-      box-shadow: $shadow-sm;
+    &--active {
+      background: #8B4513;
+      color: #fff;
     }
   }
 
-  &__search-icon {
-    margin-right: $spacing-xs;
-  }
-
-  &__search-clear {
-    margin-left: $spacing-xs;
-    padding: $spacing-xs;
-  }
-
-  &__search-input {
-    flex: 1;
-    height: 100%;
-    font-size: $font-size-base;
-    color: $text-primary;
-    background: transparent;
-  }
-
-  // Body Layout
   &__body {
-    flex: 1;
     display: flex;
-    flex-direction: row;
+    flex: 1;
     overflow: hidden;
   }
 
-  // Left Sidebar
-  &__sidebar {
-    width: 170rpx;
-    height: 100%;
-    background: $bg-tertiary;
-    border-right: 1px solid $border-light;
+  &__subtypes {
+    width: 65px;
+    flex-shrink: 0;
+    background: #F0E6D3;
   }
 
-  &__sidebar-list {
-    display: flex;
-    flex-direction: column;
-    padding-bottom: $spacing-lg;
-  }
-
-  &__sidebar-item {
-    position: relative;
-    padding: $spacing-md 12rpx;
-    font-size: $font-size-sm;
-    color: $text-secondary;
+  &__subtype {
+    padding: 12px 8px;
+    font-size: 12px;
+    color: #666;
     text-align: center;
-    background: transparent;
-    transition: all $transition-fast;
-    border-bottom: 1px solid rgba($border-light, 0.5);
+    border-left: 3px solid transparent;
 
-    &.active {
-      background: #fff;
-      color: $primary-color;
-      font-weight: $font-weight-medium;
-      
-      &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 6rpx;
-        height: 32rpx;
-        background: $primary-color;
-        border-radius: 0 4rpx 4rpx 0;
-      }
-    }
-
-    &:active {
-      background: rgba($bg-tertiary, 0.8);
+    &--active {
+      color: #8B4513;
+      font-weight: 600;
+      border-left-color: #8B4513;
+      background: #FAEBD7;
     }
   }
 
-  &__sidebar-sub-list {
-    background: rgba($bg-primary, 0.5);
-  }
-
-  &__sidebar-sub-item {
-    position: relative;
-    padding: $spacing-sm 8rpx $spacing-sm 24rpx;
-    font-size: $font-size-xs;
-    color: $text-secondary;
-    background: transparent;
-    transition: all $transition-fast;
-    
-    &.active {
-      color: $primary-color;
-      background: rgba($primary-color, 0.05);
-      font-weight: $font-weight-medium;
-    }
-
-    &:active {
-      opacity: 0.8;
-    }
-  }
-
-  // Right Main Content
-  &__main {
+  &__beads {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: #fff;
-  }
-
-  &__content {
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-  }
-
-  &__list {
-    height: 100%;
+    padding: 8px;
   }
 
   &__grid {
-    padding: $spacing-md;
-  }
-
-  &__grid-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: $spacing-sm;
-    margin-bottom: $spacing-sm;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__grid-item {
-    width: 100%;
-    border-radius: $radius-md;
-    overflow: hidden;
-    transition: $transition-fast;
-
-    &:active {
-      transform: scale(0.98);
-    }
-  }
-
-  &__loading-more,
-  &__no-more {
-    text-align: center;
-    padding: $spacing-xl;
-    font-size: $font-size-sm;
-    color: $text-tertiary;
-  }
-
-  &__error {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__loading,
+  &__empty,
+  &__loading-more {
+    padding: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+  }
+}
+
+.bead-card {
+  flex: 0 0 calc(33.33% - 4px);
+  padding: 8px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  &__preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-bottom: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 8px rgba(255, 255, 255, 0.6);
+    overflow: hidden;
+  }
+
+  &__image {
+    width: 100%;
     height: 100%;
-    padding: $spacing-xxl;
   }
 
-  &__error-text {
-    font-size: $font-size-base;
-    color: $text-secondary;
-    margin-bottom: $spacing-xl;
+  &__name {
+    font-size: 11px;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
   }
 
-  &__retry-btn {
-    padding: $spacing-sm $spacing-xxl;
-    background: $primary-gradient;
-    color: #fff;
-    border-radius: $radius-round;
-    font-size: $font-size-base;
-    box-shadow: $shadow-md;
-
-    &:active {
-      opacity: 0.8;
-      transform: scale(0.95);
-    }
+  &__size {
+    font-size: 10px;
+    color: #999;
   }
 }
