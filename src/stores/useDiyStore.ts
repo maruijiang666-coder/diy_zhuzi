@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { Bead } from '../types/bead'
 import { Bracelet, BraceletProperties } from '../types/bracelet'
 import { calculateProperties } from '../utils/calculator'
-import { MAX_BEADS } from '../constants/limits'
 
 interface DiyStore {
   // 状态
