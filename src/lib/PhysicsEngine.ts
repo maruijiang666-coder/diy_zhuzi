@@ -5,7 +5,7 @@ export class PhysicsEngine {
   world: any = null
   plateBodies: any[] = []
   beadBodies: any[] = []
-  private Matter: any = null
+  Matter: any = null
 
   init(Matter: any): void {
     this.Matter = Matter
