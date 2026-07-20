@@ -126,7 +126,7 @@
       max-width: 0;
       max-height: 0;
       opacity: 0;
-      transition: all 0.3s ease-in-out;
+      transition: max-width 0.3s ease-in-out, max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
       overflow: hidden;
     }
 
@@ -150,45 +150,45 @@
         border: none;
       }
     }
-  }
 
-  .toolbox-data {
-    margin-bottom: 12rpx;
-    padding-bottom: 12rpx;
-    border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+    .toolbox-data {
+      margin-bottom: 12rpx;
+      padding-bottom: 12rpx;
+      border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
 
-    &__row {
-      display: flex;
-      gap: 16rpx;
-      white-space: nowrap;
-    }
+      &__row {
+        display: flex;
+        gap: 16rpx;
+        white-space: nowrap;
+      }
 
-    &__item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2rpx;
-    }
+      &__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rpx;
+      }
 
-    &__label {
-      font-size: 18rpx;
-      color: #999;
-    }
+      &__label {
+        font-size: 18rpx;
+        color: #999;
+      }
 
-    &__value {
-      font-size: 22rpx;
-      font-weight: 600;
-      color: #333;
+      &__value {
+        font-size: 22rpx;
+        font-weight: 600;
+        color: #333;
 
-      &--price {
-        color: #ff6b6b;
+        &--price {
+          color: #ff6b6b;
+        }
       }
     }
-  }
 
-  .toolbox-actions {
-    display: flex;
-    gap: 12rpx;
+    .toolbox-actions {
+      display: flex;
+      gap: 12rpx;
+    }
   }
 
   &--empty {
