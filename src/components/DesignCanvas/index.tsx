@@ -1184,7 +1184,41 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
       }
   }, [])
 
-
+  // 工具箱内容（空状态和非空状态共享）
+  const renderToolboxContent = () => (
+    <>
+      {properties && (
+        <View className='toolbox-data'>
+          <View className='toolbox-data__row'>
+            <View className='toolbox-data__item'>
+              <Text className='toolbox-data__label'>数量</Text>
+              <Text className='toolbox-data__value'>{properties.beadCount}</Text>
+            </View>
+            <View className='toolbox-data__item'>
+              <Text className='toolbox-data__label'>价格</Text>
+              <Text className='toolbox-data__value toolbox-data__value--price'>{formatPrice(properties.totalPrice)}</Text>
+            </View>
+            <View className='toolbox-data__item'>
+              <Text className='toolbox-data__label'>重量</Text>
+              <Text className='toolbox-data__value'>{formatWeight(properties.totalWeight)}</Text>
+            </View>
+            <View className='toolbox-data__item'>
+              <Text className='toolbox-data__label'>长度</Text>
+              <Text className='toolbox-data__value'>{formatLength(properties.totalLength)}</Text>
+            </View>
+            <View className='toolbox-data__item'>
+              <Text className='toolbox-data__label'>最大周长</Text>
+              <Text className='toolbox-data__value'>{maxCircumference}</Text>
+            </View>
+          </View>
+        </View>
+      )}
+      <View className='toolbox-actions'>
+        <Button className='design-canvas__toolbox-btn' onClick={onClear}>清空</Button>
+        <Button className='design-canvas__toolbox-btn' openType='share'>分享</Button>
+      </View>
+    </>
+  )
 
   // 如果手串为空，显示引导提示
   if (!bracelet.beads || bracelet.beads.length === 0) {
@@ -1221,36 +1255,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
             {!isToolboxOpen && <Text className='toolbox-text'>工具箱</Text>}
           </View>
           <View className='design-canvas__toolbox-content'>
-            {properties && (
-              <View className='toolbox-data'>
-                <View className='toolbox-data__row'>
-                  <View className='toolbox-data__item'>
-                    <Text className='toolbox-data__label'>数量</Text>
-                    <Text className='toolbox-data__value'>{properties.beadCount}</Text>
-                  </View>
-                  <View className='toolbox-data__item'>
-                    <Text className='toolbox-data__label'>价格</Text>
-                    <Text className='toolbox-data__value toolbox-data__value--price'>{formatPrice(properties.totalPrice)}</Text>
-                  </View>
-                  <View className='toolbox-data__item'>
-                    <Text className='toolbox-data__label'>重量</Text>
-                    <Text className='toolbox-data__value'>{formatWeight(properties.totalWeight)}</Text>
-                  </View>
-                  <View className='toolbox-data__item'>
-                    <Text className='toolbox-data__label'>长度</Text>
-                    <Text className='toolbox-data__value'>{formatLength(properties.totalLength)}</Text>
-                  </View>
-                  <View className='toolbox-data__item'>
-                    <Text className='toolbox-data__label'>最大周长</Text>
-                    <Text className='toolbox-data__value'>{maxCircumference}</Text>
-                  </View>
-                </View>
-              </View>
-            )}
-            <View className='toolbox-actions'>
-              <Button className='design-canvas__toolbox-btn' onClick={onClear}>清空</Button>
-              <Button className='design-canvas__toolbox-btn' openType='share'>分享</Button>
-            </View>
+            {renderToolboxContent()}
           </View>
         </View>
       </View>
@@ -1307,36 +1312,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
               {!isToolboxOpen && <Text className='toolbox-text'>工具</Text>}
             </View>
             <View className='design-canvas__toolbox-content'>
-              {properties && (
-                <View className='toolbox-data'>
-                  <View className='toolbox-data__row'>
-                    <View className='toolbox-data__item'>
-                      <Text className='toolbox-data__label'>数量</Text>
-                      <Text className='toolbox-data__value'>{properties.beadCount}</Text>
-                    </View>
-                    <View className='toolbox-data__item'>
-                      <Text className='toolbox-data__label'>价格</Text>
-                      <Text className='toolbox-data__value toolbox-data__value--price'>{formatPrice(properties.totalPrice)}</Text>
-                    </View>
-                    <View className='toolbox-data__item'>
-                      <Text className='toolbox-data__label'>重量</Text>
-                      <Text className='toolbox-data__value'>{formatWeight(properties.totalWeight)}</Text>
-                    </View>
-                    <View className='toolbox-data__item'>
-                      <Text className='toolbox-data__label'>长度</Text>
-                      <Text className='toolbox-data__value'>{formatLength(properties.totalLength)}</Text>
-                    </View>
-                    <View className='toolbox-data__item'>
-                      <Text className='toolbox-data__label'>最大周长</Text>
-                      <Text className='toolbox-data__value'>{maxCircumference}</Text>
-                    </View>
-                  </View>
-                </View>
-              )}
-              <View className='toolbox-actions'>
-                <Button className='design-canvas__toolbox-btn' onClick={onClear}>清空</Button>
-                <Button className='design-canvas__toolbox-btn' openType='share'>分享</Button>
-              </View>
+              {renderToolboxContent()}
             </View>
           </View>
         </View>
