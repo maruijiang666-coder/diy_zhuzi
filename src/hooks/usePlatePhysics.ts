@@ -4,7 +4,7 @@ import Taro from '@tarojs/taro'
 import { GameState, GAME_STATE, SHOOT_DIRECTION, GameStateType, PlateBead } from '../lib/GameState'
 import { PhysicsEngine } from '../lib/PhysicsEngine'
 import { Renderer } from '../lib/Renderer'
-import { BEAD_SCALE } from '../utils/beadAdapter'
+
 
 const MIN_STRING_COUNT = 10
 
@@ -101,9 +101,9 @@ export function usePlatePhysics() {
     const loop = () => {
       update()
       render()
-      animationIdRef.current = canvasRef.current?.requestAnimationFrame(loop) ?? null
+      animationIdRef.current = canvasRef.current ? canvasRef.current.requestAnimationFrame(loop) : null
     }
-    animationIdRef.current = canvasRef.current?.requestAnimationFrame(loop) ?? null
+    animationIdRef.current = canvasRef.current ? canvasRef.current.requestAnimationFrame(loop) : null
   }, [])
 
   const update = useCallback(() => {
@@ -157,7 +157,7 @@ export function usePlatePhysics() {
 
         const dragState = dragStateRef.current
         let draggedBeadPos = null
-        if (dragState.isDragging && dragState.mode === 'bracelet' && dragState.currentX !== undefined) {
+        if (dragState.isDragging && dragState.mode === 'bracelet' && dragState.currentX !== undefined && dragState.currentY !== undefined) {
           draggedBeadPos = { index: dragState.beadIndex, x: dragState.currentX, y: dragState.currentY }
         }
 
@@ -411,7 +411,7 @@ export function usePlatePhysics() {
     gs.setState(GAME_STATE.SHOOTING)
 
     physics.clearBeads()
-    const beadRadius = gs.plateBeads[0]?.radius || 15
+    const beadRadius = (gs.plateBeads[0] && gs.plateBeads[0].radius) || 15
     const count = gs.plateBeads.length
     const scatterSpeed = 8
     const startRadius = beadRadius * 2
@@ -469,7 +469,7 @@ export function usePlatePhysics() {
     const { cx, cy, radius } = plateParamsRef.current
     const dragState = dragStateRef.current
 
-    if (dragState.mode === 'bracelet' && dragState.currentX !== undefined) {
+    if (dragState.mode === 'bracelet' && dragState.currentX !== undefined && dragState.currentY !== undefined) {
       const distFromCenter = Math.sqrt((dragState.currentX - cx) ** 2 + (dragState.currentY - cy) ** 2)
       if (distFromCenter > radius * 1.1) {
         const deleteIndex = dragState.beadIndex
