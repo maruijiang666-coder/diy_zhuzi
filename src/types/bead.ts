@@ -13,3 +13,13 @@ export interface Bead {
   description?: string
   shape?: BeadShape // 形状，默认为 circle
 }
+
+export interface PhysicsBead {
+  id: string
+  name: string
+  color: string
+  radius: number    // diameter / 2 * BEAD_SCALE (canvas pixels)
+  price: number
+  image?: string
+  category: string
+}
