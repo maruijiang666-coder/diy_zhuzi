@@ -6,7 +6,6 @@ import { useCartStore } from '../../stores/useCartStore'
 import { useDesignStore } from '../../stores/useDesignStore'
 import BeadSelector, { BeadSelectorRef } from '../../components/BeadSelector'
 import DesignCanvas from '../../components/DesignCanvas'
-import PropertyPanel from '../../components/PropertyPanel'
 import NameInputModal from '../../components/NameInputModal'
 import WristSizeModal from '../../components/WristSizeModal'
 import { validateBracelet } from '../../utils/validator'
@@ -493,12 +492,10 @@ export default function DiyPage() {
           isSaving={isSavingDesign}
           isAddingToCart={isAddingToCart}
           disabled={bracelet.beads.length === 0}
+          properties={properties}
+          wristSize={wristSize}
+          wearingStyle={wearingStyle}
         />
-      </View>
-
-      {/* 属性面板 - 中间 */}
-      <View className='diy-page__properties'>
-        <PropertyPanel properties={properties} />
       </View>
 
       {/* 操作按钮 */}

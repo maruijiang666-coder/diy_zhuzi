@@ -20,15 +20,6 @@
     min-height: 400rpx;
   }
 
-  // 属性面板区域 - 紧凑的一行
-  &__properties {
-    flex-shrink: 0;
-    background: $bg-primary;
-    margin: $spacing-sm $spacing-md 0;
-    border-radius: $radius-sm;
-    box-shadow: $shadow-sm;
-  }
-
   // 操作按钮区域 - 三个按钮
   &__actions {
     flex-shrink: 0;
