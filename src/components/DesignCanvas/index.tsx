@@ -2,9 +2,10 @@ import { View, Image, Text, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import type { Bead } from '../../types/bead'
-import type { Bracelet } from '../../types/bracelet'
+import type { Bracelet, BraceletProperties } from '../../types/bracelet'
 import BeadDetailModal from '../BeadDetailModal'
 import { getOptimizedImageUrlSync, ImageSize, checkWebPSupport } from '../../utils/image'
+import { formatPrice, formatWeight, formatLength } from '../../utils/formatter'
 import './index.scss'
 
 interface DesignCanvasProps {
@@ -21,6 +22,9 @@ interface DesignCanvasProps {
   isAddingToCart?: boolean;
   disabled?: boolean;
   backgroundImageUrl?: string;
+  properties?: BraceletProperties;
+  wristSize?: number | null;
+  wearingStyle?: 'single' | 'double';
 }
 
 interface VisualBeadState {
@@ -45,6 +49,9 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
   isAddingToCart,
   disabled,
   backgroundImageUrl,
+  properties,
+  wristSize,
+  wearingStyle,
 }) => {
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
   const [webpSupported, setWebpSupported] = useState(false)
@@ -109,6 +116,14 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
       return 2
     }
   }, [])
+
+  const maxCircumference = useMemo(() => {
+    if (wristSize === null || wristSize === undefined) return '未设置'
+    const increment = 1.6 + (wristSize - 14) * 0.1
+    const baseCircumference = wristSize + increment
+    const max = wearingStyle === 'double' ? baseCircumference * 2 : baseCircumference
+    return `${max.toFixed(1)}cm`
+  }, [wristSize, wearingStyle])
 
   // 计算珠子渲染尺寸 (rpx)
   const getBeadSize = useCallback((bead: Bead) => {
@@ -1206,12 +1221,40 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
             {!isToolboxOpen && <Text className='toolbox-text'>工具箱</Text>}
           </View>
           <View className='design-canvas__toolbox-content'>
-            <Button className='design-canvas__toolbox-btn' onClick={onClear}>清空</Button>
-            <Button className='design-canvas__toolbox-btn' openType='share'>分享</Button>
+            {properties && (
+              <View className='toolbox-data'>
+                <View className='toolbox-data__row'>
+                  <View className='toolbox-data__item'>
+                    <Text className='toolbox-data__label'>数量</Text>
+                    <Text className='toolbox-data__value'>{properties.beadCount}</Text>
+                  </View>
+                  <View className='toolbox-data__item'>
+                    <Text className='toolbox-data__label'>价格</Text>
+                    <Text className='toolbox-data__value toolbox-data__value--price'>{formatPrice(properties.totalPrice)}</Text>
+                  </View>
+                  <View className='toolbox-data__item'>
+                    <Text className='toolbox-data__label'>重量</Text>
+                    <Text className='toolbox-data__value'>{formatWeight(properties.totalWeight)}</Text>
+                  </View>
+                  <View className='toolbox-data__item'>
+                    <Text className='toolbox-data__label'>长度</Text>
+                    <Text className='toolbox-data__value'>{formatLength(properties.totalLength)}</Text>
+                  </View>
+                  <View className='toolbox-data__item'>
+                    <Text className='toolbox-data__label'>最大周长</Text>
+                    <Text className='toolbox-data__value'>{maxCircumference}</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+            <View className='toolbox-actions'>
+              <Button className='design-canvas__toolbox-btn' onClick={onClear}>清空</Button>
+              <Button className='design-canvas__toolbox-btn' openType='share'>分享</Button>
+            </View>
           </View>
         </View>
       </View>
-      
+
       <View className='design-canvas__corner-logo'>
          <Image
            style={{ width: '120rpx', height: '120rpx' }}
@@ -1264,8 +1307,36 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
               {!isToolboxOpen && <Text className='toolbox-text'>工具</Text>}
             </View>
             <View className='design-canvas__toolbox-content'>
-              <Button className='design-canvas__toolbox-btn' onClick={onClear}>清空</Button>
-              <Button className='design-canvas__toolbox-btn' openType='share'>分享</Button>
+              {properties && (
+                <View className='toolbox-data'>
+                  <View className='toolbox-data__row'>
+                    <View className='toolbox-data__item'>
+                      <Text className='toolbox-data__label'>数量</Text>
+                      <Text className='toolbox-data__value'>{properties.beadCount}</Text>
+                    </View>
+                    <View className='toolbox-data__item'>
+                      <Text className='toolbox-data__label'>价格</Text>
+                      <Text className='toolbox-data__value toolbox-data__value--price'>{formatPrice(properties.totalPrice)}</Text>
+                    </View>
+                    <View className='toolbox-data__item'>
+                      <Text className='toolbox-data__label'>重量</Text>
+                      <Text className='toolbox-data__value'>{formatWeight(properties.totalWeight)}</Text>
+                    </View>
+                    <View className='toolbox-data__item'>
+                      <Text className='toolbox-data__label'>长度</Text>
+                      <Text className='toolbox-data__value'>{formatLength(properties.totalLength)}</Text>
+                    </View>
+                    <View className='toolbox-data__item'>
+                      <Text className='toolbox-data__label'>最大周长</Text>
+                      <Text className='toolbox-data__value'>{maxCircumference}</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+              <View className='toolbox-actions'>
+                <Button className='design-canvas__toolbox-btn' onClick={onClear}>清空</Button>
+                <Button className='design-canvas__toolbox-btn' openType='share'>分享</Button>
+              </View>
             </View>
           </View>
         </View>
