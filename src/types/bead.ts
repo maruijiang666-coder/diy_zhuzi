@@ -5,6 +5,7 @@ export interface Bead {
   originalId?: string // 原始 ID，用于向接口发送数据
   name: string
   category: string
+  subType?: string // 二级分类（可选）
   imageUrl: string
   price: number // 单价（元）
   weight: number // 重量（克）
