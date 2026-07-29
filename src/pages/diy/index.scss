@@ -25,11 +25,11 @@
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 10px 30px;
+  padding: 12px 36px;
   background-color: #A0522D;
   color: #F5DEB3;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 16px;
   opacity: 0.5;
   pointer-events: none;
   border: none;
@@ -73,9 +73,9 @@
 
 // 通用按钮样式
 .diy-page__btn {
-  min-width: 72px;
-  padding: 8px 16px;
-  font-size: 13px;
+  min-width: 80px;
+  padding: 10px 18px;
+  font-size: 15px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.9);
   color: #333;
@@ -116,10 +116,10 @@
 
 .diy-page__tab {
   display: inline-block;
-  padding: 5px 14px;
-  margin-right: 8px;
-  border-radius: 15px;
-  font-size: 13px;
+  padding: 8px 18px;
+  margin-right: 10px;
+  border-radius: 18px;
+  font-size: 16px;
   color: #8B7355;
   background-color: #FFF8DC;
 
@@ -140,8 +140,8 @@
 
 // 左侧子类列表
 .diy-page__subtypes {
-  width: 65px;
-  min-width: 65px;
+  width: 80px;
+  min-width: 80px;
   height: 100%;
   background-color: #F0E6D3;
   border-right: 1px solid #DEB887;
@@ -149,9 +149,9 @@
 }
 
 .diy-page__subtype {
-  padding: 10px 4px;
+  padding: 12px 6px;
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
   color: #8B7355;
   border-bottom: 1px solid #E8DCC8;
 
@@ -206,8 +206,8 @@
 }
 
 .bead-card__name {
-  padding: 4px 8px 0;
-  font-size: 12px;
+  padding: 6px 8px 0;
+  font-size: 14px;
   font-weight: 500;
   color: #333;
   text-align: center;
@@ -217,7 +217,7 @@
 }
 
 .bead-card__size {
-  font-size: 10px;
+  font-size: 12px;
   color: #999;
   text-align: center;
   padding: 2px 0;
