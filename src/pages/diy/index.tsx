@@ -34,10 +34,10 @@ export default function DiyPage() {
 
   // 状态
   const [categories] = useState<Category[]>(getCategories)
-  const [currentCategory, setCurrentCategory] = useState(categories[0]?.id || '')
-  const [subTypes, setSubTypes] = useState<SubType[]>(() => getSubTypes(categories[0]?.id || ''))
-  const [currentSubType, setCurrentSubType] = useState(subTypes[0]?.id || '')
-  const [currentBeads, setCurrentBeads] = useState<any[]>(() => getBeadsBySubType(categories[0]?.id || '', subTypes[0]?.id || ''))
+  const [currentCategory, setCurrentCategory] = useState(categories[0] && categories[0].id || '')
+  const [subTypes, setSubTypes] = useState<SubType[]>(() => getSubTypes(categories[0] && categories[0].id || ''))
+  const [currentSubType, setCurrentSubType] = useState(subTypes[0] && subTypes[0].id || '')
+  const [currentBeads, setCurrentBeads] = useState<any[]>(() => getBeadsBySubType(categories[0] && categories[0].id || '', subTypes[0] && subTypes[0].id || ''))
   const [beadCount, setBeadCount] = useState(0)
   const [canString, setCanString] = useState(false)
   const [isBracelet, setIsBracelet] = useState(false)
@@ -148,9 +148,9 @@ export default function DiyPage() {
 
     return () => {
       if (animationIdRef.current) {
-        canvasRef.current?.cancelAnimationFrame(animationIdRef.current)
+        canvasRef.current && canvasRef.current.cancelAnimationFrame(animationIdRef.current)
       }
-      physicsRef.current?.destroy()
+      physicsRef.current && physicsRef.current.destroy()
     }
   }, [])
 
@@ -159,8 +159,8 @@ export default function DiyPage() {
     const gs = gameStateRef.current
 
     if (gs.getState() === GAME_STATE.SHOOTING) {
-      physicsRef.current?.update(16.67)
-      if (physicsRef.current?.areBeadsSettled()) {
+      physicsRef.current && physicsRef.current.update(16.67)
+      if (physicsRef.current && physicsRef.current.areBeadsSettled()) {
         gs.setState(GAME_STATE.SETTLED)
         updateUI()
       }
@@ -342,7 +342,7 @@ export default function DiyPage() {
       const angle = baseAngle + (Math.random() - 0.5) * (Math.PI * 4 / 180)
 
       const speed = 22
-      physicsRef.current?.shootBead(
+      physicsRef.current && physicsRef.current.shootBead(
         plateCxRef.current,
         plateCyRef.current + plateRadiusRef.current - 20,
         angle,
@@ -539,7 +539,7 @@ export default function DiyPage() {
     gs.setState(GAME_STATE.SHOOTING)
 
     physicsRef.current!.clearBeads()
-    const beadRadius = (gs.plateBeads[0]?.radius || 5) * BEAD_SCALE
+    const beadRadius = (gs.plateBeads[0] && gs.plateBeads[0].radius || 5) * BEAD_SCALE
     const count = gs.plateBeads.length
 
     const scatterSpeed = 8
