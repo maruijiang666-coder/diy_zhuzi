@@ -109,17 +109,17 @@
 // 主分类标签
 .diy-page__categories {
   white-space: nowrap;
-  padding: 12px 15px;
+  padding: 16px 15px;
   background-color: #F5DEB3;
   border-bottom: 2px solid #DEB887;
 }
 
 .diy-page__tab {
   display: inline-block;
-  padding: 10px 24px;
+  padding: 14px 30px;
   margin-right: 12px;
   border-radius: 22px;
-  font-size: 20px;
+  font-size: 26px;
   color: #8B7355;
   background-color: #FFF8DC;
 
@@ -140,8 +140,8 @@
 
 // 左侧子类列表
 .diy-page__subtypes {
-  width: 100px;
-  min-width: 100px;
+  width: 200px;
+  min-width: 200px;
   height: 100%;
   background-color: #F0E6D3;
   border-right: 2px solid #DEB887;
@@ -149,9 +149,9 @@
 }
 
 .diy-page__subtype {
-  padding: 16px 8px;
+  padding: 24px 16px;
   text-align: center;
-  font-size: 18px;
+  font-size: 28px;
   color: #8B7355;
   border-bottom: 1px solid #E8DCC8;
 
@@ -159,7 +159,7 @@
     background-color: #FAEBD7;
     color: #8B4513;
     font-weight: bold;
-    border-left: 4px solid #8B4513;
+    border-left: 6px solid #8B4513;
   }
 }
 
@@ -176,9 +176,10 @@
   flex-wrap: wrap;
   gap: 12px;
   justify-content: flex-start;
+  padding: 8px;
 }
 
-// 珠子卡片
+// 珠子卡片 - 重新设计，突出图片
 .bead-card {
   width: calc((100% - 24px) / 3);
   display: flex;
@@ -187,73 +188,153 @@
   border-radius: 14px;
   overflow: hidden;
   background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
 }
 
-.bead-card__preview {
+// 珠子图片展示区域 - 主视觉焦点
+.bead-card__image-area {
+  position: relative;
   width: 100%;
+  padding-top: 80%; // 缩小图片区域比例
+  background: linear-gradient(180deg, #f8f6f3 0%, #efe8de 100%);
+  overflow: hidden;
+}
+
+.bead-card__image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// 珠子视觉效果（无图片时的展示）
+.bead-card__bead-visual {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px 0 16px;
-  background-color: #fafafa;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f5f5f5 50%, #e8e8e8 100%);
 }
 
-.bead-card__color {
-  width: 56px;
-  height: 56px;
+.bead-card__bead-circle {
+  width: 60%;
+  height: 60%;
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 0 8px rgba(255,255,255,0.6);
+  position: relative;
+  box-shadow:
+    0 6px 20px rgba(0,0,0,0.18),
+    inset 0 -3px 6px rgba(0,0,0,0.1),
+    inset 0 3px 6px rgba(255,255,255,0.25);
+  overflow: hidden;
+}
+
+// 珠子光泽效果
+.bead-card__bead-shine {
+  position: absolute;
+  top: 12%;
+  left: 18%;
+  width: 30%;
+  height: 30%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(255, 255, 255, 0.35) 45%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  transform: rotate(-30deg);
+}
+
+// 尺寸标签
+.bead-card__size-tag {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 3px 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 18px;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+}
+
+// 珠子信息区域
+.bead-card__info {
+  padding: 10px 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .bead-card__name {
-  padding: 10px 12px 0;
-  font-size: 20px;
-  font-weight: 500;
-  color: #333;
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c2c2c;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 8px;
+  width: 100%;
+  letter-spacing: 1px;
 }
 
-.bead-card__size {
-  font-size: 18px;
-  color: #999;
-  text-align: center;
-  padding: 4px 0;
-}
-
-// 珠子尺寸调整按钮
+// 尺寸调整按钮区域
 .bead-card__actions {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   width: 100%;
 }
 
 .bead-card__action {
-  flex: 1;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  font-weight: bold;
-  line-height: 1;
-  background-color: #f5f5f5;
-  color: #666;
+  background: linear-gradient(135deg, #8B7FD8 0%, #7B6FC8 100%);
+  color: #fff;
   border: none;
+  border-radius: 50%;
   padding: 0;
+  margin: 0;
+  box-shadow: 0 2px 6px rgba(139, 127, 216, 0.35);
+  flex-shrink: 0;
 
   &::after {
     border: none;
   }
 
-  &--left {
-    border-radius: 0 0 0 12px;
-    border-right: 1px solid #e0e0e0;
+  &:active {
+    transform: scale(0.93);
+    box-shadow: 0 1px 3px rgba(139, 127, 216, 0.3);
   }
+}
 
-  &--right {
-    border-radius: 0 0 12px 0;
-  }
+.bead-card__action-text {
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.bead-card__current-size {
+  font-size: 20px;
+  color: #666;
+  font-weight: 500;
+  min-width: 50px;
+  text-align: center;
 }

@@ -7,6 +7,7 @@ export interface BeadData {
   id: string
   name: string
   color: string
+  image?: string  // 珠子图片URL
   sizes: number[]
   prices: number[]
   sizeIndex?: number

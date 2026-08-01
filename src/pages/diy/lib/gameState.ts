@@ -28,6 +28,11 @@ export interface PlateBead {
   category: string
   subType: string
   image?: string
+  imageUrl?: string
+  diameter?: number
+  price?: number
+  weight?: number
+  stock?: number
 }
 
 export class GameState {
@@ -45,7 +50,7 @@ export class GameState {
     this.state = newState
   }
 
-  addBeadToPlate(bead: PlateBead): void {
+  addBeadToPlate(bead: PlateBead | any): void {
     this.plateBeads.push(bead)
     this.shootCount++
     this.shootDirection = this.shootCount % 2 === 0

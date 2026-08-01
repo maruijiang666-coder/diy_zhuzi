@@ -11,6 +11,7 @@ import Taro from '@tarojs/taro'
 
 export interface GetBeadsParams {
   category?: string
+  sub_type?: string
   keyword?: string
   page?: number
   pageSize?: number
@@ -52,15 +53,19 @@ export const beadApi = {
   getBeads: async (params?: GetBeadsParams): Promise<GetBeadsResponse> => {
     // 转换参数格式以匹配后端 API
     const apiParams: Record<string, any> = {}
-    
+
     if (params && params.page) {
       apiParams.page = params.page
     }
-    
+
     if (params && params.category) {
       apiParams.category = params.category
     }
-    
+
+    if (params && params.sub_type) {
+      apiParams.sub_type = params.sub_type
+    }
+
     if (params && params.keyword) {
       apiParams.search = params.keyword // 后端可能使用 search 参数
     }
@@ -96,9 +101,10 @@ export const beadApi = {
     }
   },
 
-  // 获取珠子分类
-  getCategories: (): Promise<Category[]> => {
-    return httpClient.getWithoutAuth<Category[]>(API_ENDPOINTS.BEAD_CATEGORIES)
+  // 获取珠子分类（包含子分类）
+  getCategories: async (): Promise<Category[]> => {
+    const response = await httpClient.getWithoutAuth<{ categories: Category[] }>(API_ENDPOINTS.BEAD_CATEGORIES)
+    return response.categories || []
   },
 
   // 获取珠子详情

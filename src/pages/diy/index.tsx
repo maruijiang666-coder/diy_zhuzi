@@ -1,5 +1,5 @@
 // src/pages/diy/index.tsx
-import { View, Canvas, Button, ScrollView, Text } from '@tarojs/components'
+import { View, Canvas, Button, ScrollView, Text, Image } from '@tarojs/components'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useDiyStore } from '../../stores/useDiyStore'
@@ -12,12 +12,20 @@ import { GameState, GAME_STATE } from './lib/gameState'
 import type { PlateBead } from './lib/gameState'
 import { PhysicsEngine } from './lib/physics'
 import { Renderer } from './lib/renderer'
-import { getCategories, getSubTypes, getBeadsBySubType } from './mock/beads'
-import type { Category, SubType, BeadData } from './mock/beads'
+import { beadService } from '../../services/beadService'
+import type { Bead } from '../../types/bead'
 import './index.scss'
 
 // 珠子尺寸缩放：mm → canvas像素
 const BEAD_SCALE = 3
+
+// 分类数据接口
+interface CategoryData {
+  id: string
+  name: string
+  children?: CategoryData[]
+  subTypes?: Array<{ id: string; name: string }>
+}
 
 export default function DiyPage() {
   const shareImageUrl = 'https://tangledup-ai-staging.oss-cn-shanghai.aliyuncs.com/mini_app/crystal_mini_app/crystallogo/%E9%81%A3%E5%B1%B1%E6%B0%B4%E6%99%B6logo.png'
@@ -33,11 +41,12 @@ export default function DiyPage() {
   const { saveDesign } = useDesignStore()
 
   // 状态
-  const [categories] = useState<Category[]>(getCategories)
-  const [currentCategory, setCurrentCategory] = useState(categories[0] && categories[0].id || '')
-  const [subTypes, setSubTypes] = useState<SubType[]>(() => getSubTypes(categories[0] && categories[0].id || ''))
-  const [currentSubType, setCurrentSubType] = useState(subTypes[0] && subTypes[0].id || '')
-  const [currentBeads, setCurrentBeads] = useState<any[]>(() => getBeadsBySubType(categories[0] && categories[0].id || '', subTypes[0] && subTypes[0].id || ''))
+  const [categories, setCategories] = useState<CategoryData[]>([])
+  const [currentCategory, setCurrentCategory] = useState<string>('')
+  const [subTypes, setSubTypes] = useState<CategoryData[]>([])
+  const [currentSubType, setCurrentSubType] = useState<string>('')
+  const [currentBeads, setCurrentBeads] = useState<Bead[]>([])
+  const [loading, setLoading] = useState(false)
   const [beadCount, setBeadCount] = useState(0)
   const [canString, setCanString] = useState(false)
   const [isBracelet, setIsBracelet] = useState(false)
@@ -73,6 +82,39 @@ export default function DiyPage() {
   const addBeadAnimationRef = useRef<any>(null)
   const assembleAnimationRef = useRef<any>(null)
 
+  // 加载分类数据
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoading(true)
+        const categoriesData = await beadService.getCategories()
+        setCategories(categoriesData)
+
+        if (categoriesData.length > 0) {
+          const firstCategory = categoriesData[0]
+          setCurrentCategory(firstCategory.id)
+
+          // 获取第一个分类的子分类
+          if (firstCategory.subTypes && firstCategory.subTypes.length > 0) {
+            setSubTypes(firstCategory.subTypes)
+            setCurrentSubType(firstCategory.subTypes[0].id)
+
+            // 获取第一个子分类的珠子
+            const beadsResult = await beadService.getBeads(firstCategory.id, firstCategory.subTypes[0].id)
+            setCurrentBeads(beadsResult.beads)
+          }
+        }
+      } catch (error) {
+        console.error('加载分类数据失败:', error)
+        Taro.showToast({ title: '加载数据失败', icon: 'none' })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCategories()
+  }, [])
+
   // 页面显示时检查手围
   Taro.useDidShow(() => {
     if (wristSize === null) {
@@ -102,6 +144,8 @@ export default function DiyPage() {
 
   // 初始化 Canvas
   useEffect(() => {
+    const plateImageUrl = 'https://tangledup-ai-staging.oss-cn-shanghai.aliyuncs.com/mini_app/crystal_mini_app/diy_shou_chuang/panzi.png'
+
     const initCanvas = () => {
       const query = Taro.createSelectorQuery()
       query.select('#plateCanvas')
@@ -132,7 +176,35 @@ export default function DiyPage() {
           physicsRef.current = physics
 
           // 初始化渲染器
-          rendererRef.current = new Renderer(ctx, res[0].width, res[0].height, canvas)
+          const renderer = new Renderer(ctx, res[0].width, res[0].height, canvas)
+          rendererRef.current = renderer
+
+          // 加载盘子背景图片
+          const loadPlateImage = (imageUrl: string) => {
+            const image = canvas.createImage()
+            image.onload = () => {
+              renderer.setPlateImage(image)
+              console.log('盘子背景图片加载成功:', imageUrl)
+            }
+            image.onerror = (err) => {
+              console.error('盘子背景图片加载失败:', imageUrl, err)
+            }
+            image.src = imageUrl
+          }
+
+          // 优先尝试加载网络图片
+          Taro.getImageInfo({
+            src: plateImageUrl,
+            success: (imageInfo) => {
+              console.log('Taro.getImageInfo加载图片成功:', imageInfo)
+              loadPlateImage(imageInfo.path)
+            },
+            fail: (err) => {
+              console.error('Taro.getImageInfo加载图片失败:', err)
+              // 如果Taro加载失败，尝试直接使用canvas.createImage
+              loadPlateImage(plateImageUrl)
+            }
+          })
 
           // 开始渲染循环
           const loop = () => {
@@ -190,7 +262,8 @@ export default function DiyPage() {
 
     positions.forEach((pos, index) => {
       if (plateBeads[index]) {
-        renderer.drawBead(pos.x, pos.y, plateBeads[index].radius * BEAD_SCALE, plateBeads[index].color, pos.angle)
+        const beadRadius = plateBeads[index].diameter ? (plateBeads[index].diameter / 2) * BEAD_SCALE : (plateBeads[index].radius || 5) * BEAD_SCALE
+        renderer.drawBead(pos.x, pos.y, beadRadius, plateBeads[index].color, pos.angle, plateBeads[index].imageUrl)
       }
     })
 
@@ -203,11 +276,14 @@ export default function DiyPage() {
             const anim = assembleAnimationRef.current
             for (let i = 0; i < braceletBeads.length; i++) {
               const pos = animPositions[i]
-              renderer.drawBead(pos.x, pos.y, anim.beadRadius, braceletBeads[i].color, pos.rollAngle)
+              renderer.drawBead(pos.x, pos.y, anim.beadRadius, braceletBeads[i].color, pos.rollAngle, braceletBeads[i].imageUrl)
             }
           }
           return
         }
+
+        // 使用与触摸检测相同的逻辑计算珠子位置
+        const beadPositions = calculateBraceletBeadPositions(braceletBeads)
 
         let draggedBeadPos = null
         const ds = dragStateRef.current
@@ -215,9 +291,8 @@ export default function DiyPage() {
           draggedBeadPos = { index: ds.beadIndex, x: ds.currentX, y: ds.currentY }
         }
 
-        const rotatedAngles = braceletAnglesRef.current.map(a => a + braceletRotationRef.current)
-        const scaledBeadRadius = (braceletBeads[0].radius || 5) * BEAD_SCALE
-        renderer.drawBraceletWithAngles(braceletBeads, plateCxRef.current, plateCyRef.current, rotatedAngles, draggedBeadPos, scaledBeadRadius)
+        // 使用计算出的位置来绘制手串
+        renderer.drawBraceletWithPositions(braceletBeads, beadPositions, draggedBeadPos)
       }
     }
   }, [])
@@ -321,7 +396,7 @@ export default function DiyPage() {
   }, [])
 
   // 珠子点击 - 弹射
-  const handleBeadTap = useCallback((bead: any) => {
+  const handleBeadTap = useCallback(async (bead: Bead) => {
     if (assembleAnimationRef.current) return
 
     const gs = gameStateRef.current
@@ -335,6 +410,11 @@ export default function DiyPage() {
         gs.getState() === GAME_STATE.SETTLED ||
         gs.getState() === GAME_STATE.SHOOTING) {
 
+      // 预加载珠子图片
+      if (bead.imageUrl && rendererRef.current) {
+        await rendererRef.current.loadBeadImage(bead.imageUrl)
+      }
+
       const direction = gs.shootDirection
       const baseAngle = direction === 'left'
         ? Math.PI * (250 / 180)
@@ -342,12 +422,13 @@ export default function DiyPage() {
       const angle = baseAngle + (Math.random() - 0.5) * (Math.PI * 4 / 180)
 
       const speed = 22
+      const beadRadius = (bead.diameter / 2) * BEAD_SCALE
       physicsRef.current && physicsRef.current.shootBead(
         plateCxRef.current,
         plateCyRef.current + plateRadiusRef.current - 20,
         angle,
         speed,
-        bead.radius * BEAD_SCALE
+        beadRadius
       )
 
       gs.addBeadToPlate(bead)
@@ -357,9 +438,14 @@ export default function DiyPage() {
   }, [updateUI])
 
   // 手串模式 - 动画添加珠子
-  const animateAddBeadToBracelet = useCallback((bead: any) => {
+  const animateAddBeadToBracelet = useCallback(async (bead: Bead) => {
     if (addBeadAnimationRef.current) {
       finishAddBeadAnimation()
+    }
+
+    // 预加载珠子图片
+    if (bead.imageUrl && rendererRef.current) {
+      await rendererRef.current.loadBeadImage(bead.imageUrl)
     }
 
     const gs = gameStateRef.current
@@ -383,7 +469,14 @@ export default function DiyPage() {
       }
     }
 
-    const beadRadius = count > 0 ? ((braceletBeads[0].radius || 5) * BEAD_SCALE) : (5 * BEAD_SCALE)
+    // 计算珠子半径，优先使用diameter属性
+    const getBeadRadius = (b: any) => {
+      if (b.diameter) return (b.diameter / 2) * BEAD_SCALE
+      if (b.radius) return b.radius * BEAD_SCALE
+      return 5 * BEAD_SCALE
+    }
+
+    const beadRadius = count > 0 ? getBeadRadius(braceletBeads[0]) : (5 * BEAD_SCALE)
 
     let placeholderIndex = count
     let referenceIndex = 0
@@ -485,7 +578,12 @@ export default function DiyPage() {
 
     const beads = gs.getBraceletBeads()
     const count = beads.length
-    const beadRadius = (beads[0].radius || 5) * BEAD_SCALE
+    const getBeadRadius = (b: any) => {
+      if (b.diameter) return (b.diameter / 2) * BEAD_SCALE
+      if (b.radius) return b.radius * BEAD_SCALE
+      return 5 * BEAD_SCALE
+    }
+    const beadRadius = getBeadRadius(beads[0])
     const tightRadius = count > 1 ? beadRadius / Math.sin(Math.PI / count) : 0
 
     const targetAngles = []
@@ -539,7 +637,12 @@ export default function DiyPage() {
     gs.setState(GAME_STATE.SHOOTING)
 
     physicsRef.current!.clearBeads()
-    const beadRadius = (gs.plateBeads[0] && gs.plateBeads[0].radius || 5) * BEAD_SCALE
+    const getBeadRadius = (b: any) => {
+      if (b.diameter) return (b.diameter / 2) * BEAD_SCALE
+      if (b.radius) return b.radius * BEAD_SCALE
+      return 5 * BEAD_SCALE
+    }
+    const beadRadius = gs.plateBeads.length > 0 ? getBeadRadius(gs.plateBeads[0]) : (5 * BEAD_SCALE)
     const count = gs.plateBeads.length
 
     const scatterSpeed = 8
@@ -613,8 +716,14 @@ export default function DiyPage() {
       const pos = positions[i]
       if (!plateBeads[i]) continue
 
+      const getBeadRadius = (b: any) => {
+        if (b.diameter) return (b.diameter / 2) * BEAD_SCALE
+        if (b.radius) return b.radius * BEAD_SCALE
+        return 5 * BEAD_SCALE
+      }
+
       const distance = Math.sqrt((x - pos.x) ** 2 + (y - pos.y) ** 2)
-      if (distance < plateBeads[i].radius * BEAD_SCALE) {
+      if (distance < getBeadRadius(plateBeads[i])) {
         dragStateRef.current.isDragging = true
         dragStateRef.current.beadIndex = i
         dragStateRef.current.lastX = x
@@ -668,6 +777,56 @@ export default function DiyPage() {
     dragStateRef.current.lastY = y
   }, [updateUI])
 
+  // 计算手串珠子位置的辅助函数
+  const calculateBraceletBeadPositions = useCallback((beads: any[]) => {
+    const count = beads.length
+    if (count === 0) return []
+
+    const getBeadRadius = (b: any) => {
+      if (b.diameter) return (b.diameter / 2) * BEAD_SCALE
+      if (b.radius) return b.radius * BEAD_SCALE
+      return 5 * BEAD_SCALE
+    }
+
+    const positions: Array<{ x: number; y: number; radius: number }> = []
+    const rotation = braceletRotationRef.current
+
+    if (count === 1) {
+      // 只有一个珠子，放在中心
+      positions.push({ x: plateCxRef.current, y: plateCyRef.current, radius: getBeadRadius(beads[0]) })
+    } else {
+      // 计算手串的总周长（所有珠子直径之和）
+      const totalBeadDiameter = beads.reduce((sum, bead) => sum + getBeadRadius(bead) * 2, 0)
+
+      // 计算手串的半径（基于周长）
+      const braceletRadius = totalBeadDiameter / (2 * Math.PI)
+
+      // 计算每个珠子的位置，考虑旋转角度
+      let currentAngle = -Math.PI / 2 + rotation // 从顶部开始，加上旋转角度
+
+      beads.forEach((bead, index) => {
+        const beadRadius = getBeadRadius(bead)
+
+        // 计算珠子中心的位置
+        const x = plateCxRef.current + Math.cos(currentAngle) * braceletRadius
+        const y = plateCyRef.current + Math.sin(currentAngle) * braceletRadius
+        positions.push({ x, y, radius: beadRadius })
+
+        // 计算下一个珠子的角度偏移（基于当前珠子和下一个珠子的半径）
+        const nextIndex = (index + 1) % count
+        const nextRadius = getBeadRadius(beads[nextIndex])
+        const angleOffset = (beadRadius + nextRadius) / braceletRadius
+
+        // 如果是最后一个珠子，不需要更新角度
+        if (index < count - 1) {
+          currentAngle += angleOffset
+        }
+      })
+    }
+
+    return positions
+  }, [])
+
   // 手串模式 - 触摸开始
   const handleBraceletTouchStart = useCallback((x: number, y: number) => {
     const gs = gameStateRef.current
@@ -675,22 +834,13 @@ export default function DiyPage() {
     const count = braceletBeads.length
     if (count === 0) return
 
-    const beadRadius = (braceletBeads[0].radius || 5) * BEAD_SCALE
-    const tightRadius = count > 1 ? beadRadius / Math.sin(Math.PI / count) : 0
-
-    if (!braceletAnglesRef.current || braceletAnglesRef.current.length !== count) {
-      braceletAnglesRef.current = []
-      for (let i = 0; i < count; i++) {
-        braceletAnglesRef.current.push((i / count) * Math.PI * 2 - Math.PI / 2)
-      }
-    }
+    // 使用与渲染相同的逻辑计算珠子位置
+    const beadPositions = calculateBraceletBeadPositions(braceletBeads)
 
     for (let index = 0; index < count; index++) {
-      const beadX = plateCxRef.current + Math.cos(braceletAnglesRef.current[index]) * tightRadius
-      const beadY = plateCyRef.current + Math.sin(braceletAnglesRef.current[index]) * tightRadius
-
-      const distance = Math.sqrt((x - beadX) ** 2 + (y - beadY) ** 2)
-      if (distance < beadRadius * 1.2) {
+      const pos = beadPositions[index]
+      const distance = Math.sqrt((x - pos.x) ** 2 + (y - pos.y) ** 2)
+      if (distance < pos.radius * 1.2) {
         dragStateRef.current.isDragging = true
         dragStateRef.current.beadIndex = index
         dragStateRef.current.slotIndex = index
@@ -702,7 +852,7 @@ export default function DiyPage() {
     dragStateRef.current.isDragging = true
     dragStateRef.current.mode = 'rotate'
     dragStateRef.current.lastAngle = Math.atan2(y - plateCyRef.current, x - plateCxRef.current)
-  }, [])
+  }, [calculateBraceletBeadPositions])
 
   // 手串旋转 - 触摸移动
   const handleBraceletRotateMove = useCallback((x: number, y: number) => {
@@ -727,46 +877,40 @@ export default function DiyPage() {
     dragStateRef.current.currentX = x
     dragStateRef.current.currentY = y
 
-    const currentAngle = Math.atan2(y - plateCyRef.current, x - plateCxRef.current)
-    const slotAngle = (Math.PI * 2) / count
+    // 使用与渲染相同的逻辑计算珠子位置
+    const beadPositions = calculateBraceletBeadPositions(braceletBeads)
 
-    let normalizedAngle = currentAngle + Math.PI / 2
-    if (normalizedAngle < 0) normalizedAngle += Math.PI * 2
-    if (normalizedAngle >= Math.PI * 2) normalizedAngle -= Math.PI * 2
-
-    const targetSlot = Math.round(normalizedAngle / slotAngle) % count
-    const currentSlot = dragStateRef.current.slotIndex
-
-    if (targetSlot !== currentSlot) {
-      let diff = targetSlot - currentSlot
-      if (diff > count / 2) diff -= count
-      if (diff < -count / 2) diff += count
-
-      if (diff > 0) {
-        for (let i = currentSlot; i < targetSlot; i++) {
-          const temp = braceletBeads[i]
-          braceletBeads[i] = braceletBeads[i + 1]
-          braceletBeads[i + 1] = temp
-        }
-      } else if (diff < 0) {
-        for (let i = currentSlot; i > targetSlot; i--) {
-          const temp = braceletBeads[i]
-          braceletBeads[i] = braceletBeads[i - 1]
-          braceletBeads[i - 1] = temp
-        }
-      }
-
-      dragStateRef.current.slotIndex = targetSlot
-      dragStateRef.current.beadIndex = targetSlot
-    }
-
-    braceletAnglesRef.current[dragStateRef.current.beadIndex] = currentAngle
+    // 找到最近的珠子位置（排除当前拖动的珠子）
+    let closestIndex = -1
+    let closestDistance = Infinity
 
     for (let i = 0; i < count; i++) {
       if (i === dragStateRef.current.beadIndex) continue
-      braceletAnglesRef.current[i] = (i * slotAngle) - Math.PI / 2
+      const pos = beadPositions[i]
+      const distance = Math.sqrt((x - pos.x) ** 2 + (y - pos.y) ** 2)
+      if (distance < closestDistance) {
+        closestDistance = distance
+        closestIndex = i
+      }
     }
-  }, [])
+
+    // 如果找到了最近的珠子，并且距离足够近，则交换位置
+    if (closestIndex >= 0 && closestDistance < beadPositions[closestIndex].radius * 2) {
+      const currentSlot = dragStateRef.current.slotIndex
+      const targetSlot = closestIndex
+
+      if (targetSlot !== currentSlot) {
+        // 交换珠子位置
+        const temp = braceletBeads[currentSlot]
+        braceletBeads[currentSlot] = braceletBeads[targetSlot]
+        braceletBeads[targetSlot] = temp
+
+        // 更新拖动状态
+        dragStateRef.current.slotIndex = targetSlot
+        dragStateRef.current.beadIndex = targetSlot
+      }
+    }
+  }, [calculateBraceletBeadPositions])
 
   // 触摸结束
   const handleTouchEnd = useCallback(() => {
@@ -797,22 +941,8 @@ export default function DiyPage() {
       }
     }
 
-    if (braceletAnglesRef.current && ds.mode === 'bracelet' && ds.currentX !== undefined) {
-      const count = braceletAnglesRef.current.length
-      const slotAngle = (Math.PI * 2) / count
-      for (let i = 0; i < count; i++) {
-        braceletAnglesRef.current[i] = (i * slotAngle) - Math.PI / 2
-      }
-    }
-
-    if (ds.mode === 'rotate' && braceletRotationRef.current !== 0) {
-      if (braceletAnglesRef.current) {
-        for (let i = 0; i < braceletAnglesRef.current.length; i++) {
-          braceletAnglesRef.current[i] += braceletRotationRef.current
-        }
-      }
-      braceletRotationRef.current = 0
-    }
+    // 注意：不再重置 braceletRotationRef.current，因为我们现在使用 calculateBraceletBeadPositions 来计算珠子位置
+    // braceletRotationRef.current 会保持旋转状态
 
     dragStateRef.current.isDragging = false
     dragStateRef.current.beadIndex = -1
@@ -856,42 +986,51 @@ export default function DiyPage() {
   }, [updateUI])
 
   // 切换主分类
-  const handleCategoryTap = useCallback((categoryId: string) => {
-    setCurrentCategory(categoryId)
-    const newSubTypes = getSubTypes(categoryId)
-    setSubTypes(newSubTypes)
-    const firstSubType = newSubTypes.length > 0 ? newSubTypes[0].id : ''
-    setCurrentSubType(firstSubType)
-    setCurrentBeads(getBeadsBySubType(categoryId, firstSubType))
-  }, [])
+  const handleCategoryTap = useCallback(async (categoryId: string) => {
+    try {
+      setCurrentCategory(categoryId)
+      setLoading(true)
+
+      // 找到当前分类的子分类
+      const category = categories.find(c => c.id === categoryId)
+      if (category && category.subTypes) {
+        setSubTypes(category.subTypes)
+        const firstSubType = category.subTypes.length > 0 ? category.subTypes[0].id : ''
+        setCurrentSubType(firstSubType)
+
+        // 获取第一个子分类的珠子
+        if (firstSubType) {
+          const beadsResult = await beadService.getBeads(categoryId, firstSubType)
+          setCurrentBeads(beadsResult.beads)
+        } else {
+          // 如果没有子分类，获取该分类下的所有珠子
+          const beadsResult = await beadService.getBeads(categoryId)
+          setCurrentBeads(beadsResult.beads)
+        }
+      }
+    } catch (error) {
+      console.error('切换分类失败:', error)
+      Taro.showToast({ title: '加载数据失败', icon: 'none' })
+    } finally {
+      setLoading(false)
+    }
+  }, [categories])
 
   // 切换子类
-  const handleSubTypeTap = useCallback((subTypeId: string) => {
-    setCurrentSubType(subTypeId)
-    setCurrentBeads(getBeadsBySubType(currentCategory, subTypeId))
+  const handleSubTypeTap = useCallback(async (subTypeId: string) => {
+    try {
+      setCurrentSubType(subTypeId)
+      setLoading(true)
+
+      const beadsResult = await beadService.getBeads(currentCategory, subTypeId)
+      setCurrentBeads(beadsResult.beads)
+    } catch (error) {
+      console.error('切换子分类失败:', error)
+      Taro.showToast({ title: '加载数据失败', icon: 'none' })
+    } finally {
+      setLoading(false)
+    }
   }, [currentCategory])
-
-  // 增大珠子尺寸
-  const handleSizeUp = useCallback((beadId: string) => {
-    setCurrentBeads(prev => prev.map(b => {
-      if (b.id === beadId && b.sizeIndex < b.sizes.length - 1) {
-        const newIndex = b.sizeIndex + 1
-        return { ...b, sizeIndex: newIndex, radius: b.sizes[newIndex] / 2 }
-      }
-      return b
-    }))
-  }, [])
-
-  // 减小珠子尺寸
-  const handleSizeDown = useCallback((beadId: string) => {
-    setCurrentBeads(prev => prev.map(b => {
-      if (b.id === beadId && b.sizeIndex > 0) {
-        const newIndex = b.sizeIndex - 1
-        return { ...b, sizeIndex: newIndex, radius: b.sizes[newIndex] / 2 }
-      }
-      return b
-    }))
-  }, [])
 
   // 手围设置确认
   const handleWristSizeConfirm = useCallback((size: number, style: 'single' | 'double') => {
@@ -932,11 +1071,11 @@ export default function DiyPage() {
           id: b.id,
           name: b.name,
           category: b.category || '',
-          imageUrl: b.image || '',
-          price: 0,
-          weight: 0,
-          diameter: b.radius * 2 / BEAD_SCALE,
-          stock: 999,
+          imageUrl: b.imageUrl || b.image || '',
+          price: b.price || 0,
+          weight: b.weight || 0,
+          diameter: b.diameter || (b.radius ? b.radius * 2 / BEAD_SCALE : 10),
+          stock: b.stock || 999,
         })),
         name: designName,
         updatedAt: Date.now(),
@@ -980,11 +1119,11 @@ export default function DiyPage() {
           id: b.id,
           name: b.name,
           category: b.category || '',
-          imageUrl: b.image || '',
-          price: 0,
-          weight: 0,
-          diameter: b.radius * 2 / BEAD_SCALE,
-          stock: 999,
+          imageUrl: b.imageUrl || b.image || '',
+          price: b.price || 0,
+          weight: b.weight || 0,
+          diameter: b.diameter || (b.radius ? b.radius * 2 / BEAD_SCALE : 10),
+          stock: b.stock || 999,
         })),
         name: braceletName,
         updatedAt: Date.now(),
@@ -1116,24 +1255,38 @@ export default function DiyPage() {
                   className="bead-card"
                   onClick={() => handleBeadTap(bead)}
                 >
-                  <View className="bead-card__preview">
-                    <View className="bead-card__color" style={{ backgroundColor: bead.color }} />
+                  {/* 珠子图片展示区域 - 视觉焦点 */}
+                  <View className="bead-card__image-area">
+                    {bead.imageUrl ? (
+                      <Image
+                        className="bead-card__image"
+                        src={bead.imageUrl}
+                        mode="aspectFill"
+                        lazyLoad
+                      />
+                    ) : (
+                      <View className="bead-card__bead-visual">
+                        <View
+                          className="bead-card__bead-circle"
+                          style={{ backgroundColor: '#F0F8FF' }}
+                        >
+                          {/* 光泽效果 */}
+                          <View className="bead-card__bead-shine" />
+                        </View>
+                      </View>
+                    )}
+                    {/* 尺寸标签 */}
+                    <View className="bead-card__size-tag">
+                      {bead.diameter}mm
+                    </View>
                   </View>
-                  <Text className="bead-card__name">{bead.name}</Text>
-                  <Text className="bead-card__size">{bead.radius * 2}mm</Text>
-                  <View className="bead-card__actions">
-                    <Button
-                      className="bead-card__action bead-card__action--left"
-                      onClick={(e) => { e.stopPropagation(); handleSizeDown(bead.id) }}
-                    >
-                      -
-                    </Button>
-                    <Button
-                      className="bead-card__action bead-card__action--right"
-                      onClick={(e) => { e.stopPropagation(); handleSizeUp(bead.id) }}
-                    >
-                      +
-                    </Button>
+
+                  {/* 珠子信息 */}
+                  <View className="bead-card__info">
+                    <Text className="bead-card__name">{bead.name}</Text>
+                    <View className="bead-card__actions">
+                      <Text className="bead-card__current-size">{bead.diameter}mm</Text>
+                    </View>
                   </View>
                 </View>
               ))}

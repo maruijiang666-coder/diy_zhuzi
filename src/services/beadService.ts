@@ -6,8 +6,6 @@ import { mockBeadService } from './mockBeadService'
 // 是否使用Mock数据（开发测试阶段可切换，true=使用Mock数据，false=使用真实API）
 // 注意：使用真实 API 前，需要在微信开发者工具中关闭域名校验
 // 操作：详情 -> 本地设置 -> 勾选"不校验合法域名"
-// 是否使用Mock数据（开发测试阶段可切换，true=使用Mock数据，false=使用真实API）
-// 注意：使用真实 API 前，需要在微信开发者工具中关闭域名校验
 const USE_MOCK = false
 
 /**
@@ -19,19 +17,20 @@ class BeadService {
    * 获取珠子列表
    * 支持分类筛选和搜索
    * @param category 分类ID（可选）
+   * @param subType 子分类ID（可选）
    * @param keyword 搜索关键词（可选）
    * @param page 页码，默认1
    * @param pageSize 每页数量，默认20
    */
   async getBeads(
     category?: string,
+    subType?: string,
     keyword?: string,
     page: number = 1,
     pageSize: number = 20
   ): Promise<{ beads: Bead[]; total: number; page: number; pageSize: number }> {
     // 使用Mock数据
     if (USE_MOCK) {
-      // BeadSelector组件使用的时候，会传递数据过来，把传递的数据类别，关键词，页数，每页数量交给mockBeadServiece
       return await mockBeadService.getBeads(category, keyword, page, pageSize)
     }
 
@@ -45,6 +44,10 @@ class BeadService {
       params.category = category
     }
 
+    if (subType) {
+      params.sub_type = subType
+    }
+
     if (keyword && keyword.trim()) {
       params.keyword = keyword.trim()
     }
@@ -53,7 +56,7 @@ class BeadService {
   }
 
   /**
-   * 获取珠子分类列表
+   * 获取珠子分类列表（包含子分类）
    */
   async getCategories(): Promise<Category[]> {
     // 使用Mock数据
@@ -93,7 +96,7 @@ class BeadService {
     page: number = 1,
     pageSize: number = 20
   ): Promise<{ beads: Bead[]; total: number }> {
-    const result = await this.getBeads(undefined, keyword, page, pageSize)
+    const result = await this.getBeads(undefined, undefined, keyword, page, pageSize)
     return {
       beads: result.beads,
       total: result.total,
@@ -104,15 +107,17 @@ class BeadService {
    * 按分类获取珠子
    * 便捷方法，专门用于分类筛选
    * @param category 分类ID
+   * @param subType 子分类ID（可选）
    * @param page 页码
    * @param pageSize 每页数量
    */
   async getBeadsByCategory(
     category: string,
+    subType?: string,
     page: number = 1,
     pageSize: number = 20
   ): Promise<{ beads: Bead[]; total: number }> {
-    const result = await this.getBeads(category, undefined, page, pageSize)
+    const result = await this.getBeads(category, subType, undefined, page, pageSize)
     return {
       beads: result.beads,
       total: result.total,

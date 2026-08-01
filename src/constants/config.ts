@@ -11,8 +11,11 @@ const ENV = process.env.TARO_ENV || 'weapp'
 //   production: 'https://crystal.quant-speed.com/api',
 // }[process.env.NODE_ENV || 'development'] || 'https://therianclouds.mynatapp.cc/api'
 
-// 真实服务器
-export const API_BASE_URL = 'https://crystal.quant-speed.com/api'
+// 本地Docker服务器（开发调试用）
+export const API_BASE_URL = 'http://localhost:8011/api'
+
+// 真实服务器（生产环境）
+// export const API_BASE_URL = 'https://crystal.quant-speed.com/api'
 
 // CDN配置
 export const CDN_BASE_URL = {

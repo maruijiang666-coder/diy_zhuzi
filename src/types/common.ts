@@ -5,6 +5,7 @@ export interface Category {
   name: string
   icon?: string
   children?: Category[]
+  subTypes?: Array<{ id: string; name: string }>
 }
 
 export interface CartItem {
