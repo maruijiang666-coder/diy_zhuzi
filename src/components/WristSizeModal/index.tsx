@@ -11,12 +11,12 @@ interface WristSizeModalProps {
   onClose?: () => void
 }
 
-export default function WristSizeModal({ 
-  visible, 
-  initialSize, 
-  initialStyle = 'single', 
+export default function WristSizeModal({
+  visible,
+  initialSize,
+  initialStyle = 'single',
   onConfirm,
-  onClose 
+  onClose
 }: WristSizeModalProps) {
   const [size, setSize] = useState<string>('16')
   const [style, setStyle] = useState<'single' | 'double'>('single')
@@ -45,11 +45,11 @@ export default function WristSizeModal({
     }
     onConfirm(numSize, style)
   }
-  
+
   const currentSize = parseFloat(size) || 0
   const increment = 1.6 + (currentSize - 14) * 0.1
   const baseCircumference = currentSize + increment
-  
+
   const maxCircumference = style === 'double' ? baseCircumference * 2 : baseCircumference
 
   return (
@@ -79,7 +79,7 @@ export default function WristSizeModal({
         <View className='wrist-modal-section'>
           <Text className='section-label'>选择戴法</Text>
           <View className='style-options'>
-            <View 
+            <View
               className={`style-option ${style === 'single' ? 'active' : ''}`}
               onClick={() => setStyle('single')}
             >
@@ -93,7 +93,7 @@ export default function WristSizeModal({
                 <Text className='option-desc'>适合日常佩戴</Text>
               </View>
             </View>
-            <View 
+            <View
               className={`style-option ${style === 'double' ? 'active' : ''}`}
               onClick={() => setStyle('double')}
             >
@@ -115,7 +115,7 @@ export default function WristSizeModal({
              <Text className='info-icon'>ⓘ</Text>
              <Text className='info-text'>最大周长: {maxCircumference.toFixed(1)}cm</Text>
           </View>
-          
+
           <Button className='confirm-btn' onClick={handleConfirm}>
             完成设置
           </Button>

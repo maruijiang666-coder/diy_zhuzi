@@ -54,7 +54,7 @@ export default function DiyPage() {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isSavingDesign, setIsSavingDesign] = useState(false)
   const [showNameModal, setShowNameModal] = useState(false)
-  const [showWristModal, setShowWristModal] = useState(false)
+  const [showWristModal, setShowWristModal] = useState(wristSize === null)
 
   // 引用
   const canvasRef = useRef<any>(null)
@@ -142,8 +142,11 @@ export default function DiyPage() {
     setIsBracelet(isBraceletState)
   }, [])
 
-  // 初始化 Canvas
+  // 初始化 Canvas - 等待手围弹窗关闭后再初始化
   useEffect(() => {
+    // 如果手围未设置，不初始化 Canvas，等待弹窗关闭后由 wristSize 变化触发
+    if (wristSize === null) return
+
     const plateImageUrl = 'https://tangledup-ai-staging.oss-cn-shanghai.aliyuncs.com/mini_app/crystal_mini_app/diy_shou_chuang/panzi.png'
 
     const initCanvas = () => {
@@ -224,7 +227,7 @@ export default function DiyPage() {
       }
       physicsRef.current && physicsRef.current.destroy()
     }
-  }, [])
+  }, [wristSize])
 
   // 更新物理状态
   const update = useCallback(() => {
@@ -1176,45 +1179,47 @@ export default function DiyPage() {
 
   return (
     <View className="diy-page">
-      {/* 盘子区域 - 上方 60% */}
-      <View className="diy-page__canvas">
-        <Canvas
-          type="2d"
-          id="plateCanvas"
-          canvasId="plateCanvas"
-          className="diy-page__canvas-inner"
-          ref={canvasRef}
-          onTouchStart={handleCanvasTouch}
-          onTouchMove={handleCanvasTouch}
-          onTouchEnd={handleCanvasTouch}
-        />
+      {/* 盘子区域 - 上方 60% (弹窗显示时完全隐藏，避免Canvas原生组件遮挡弹窗) */}
+      {!showWristModal && (
+        <View className="diy-page__canvas">
+          <Canvas
+            type="2d"
+            id="plateCanvas"
+            canvasId="plateCanvas"
+            className="diy-page__canvas-inner"
+            ref={canvasRef}
+            onTouchStart={handleCanvasTouch}
+            onTouchMove={handleCanvasTouch}
+            onTouchEnd={handleCanvasTouch}
+          />
 
-        {/* 左下角 - 手围设置 + 工具箱 */}
-        <View className="diy-page__bottom-left">
-          <Button className="diy-page__btn" onClick={() => setShowWristModal(true)}>手围设置</Button>
-          <Button className="diy-page__btn" onClick={() => {}}>工具箱</Button>
+          {/* 左下角 - 手围设置 + 工具箱 */}
+          <View className="diy-page__bottom-left">
+            <Button className="diy-page__btn" onClick={() => setShowWristModal(true)}>手围设置</Button>
+            <Button className="diy-page__btn" onClick={() => {}}>工具箱</Button>
+          </View>
+
+          {/* 右上角 - 保存 + 购买 */}
+          <View className="diy-page__top-right">
+            <Button className="diy-page__btn" onClick={handleSaveDesign} disabled={beadCount === 0}>保存</Button>
+            <Button className="diy-page__btn diy-page__btn--primary" onClick={handleAddToCart} disabled={beadCount === 0}>购买</Button>
+          </View>
+
+          {/* 底部 - 串手串/打散 */}
+          {isBracelet ? (
+            <Button className="diy-page__btn-string diy-page__btn-string--active diy-page__btn-string--disband" onClick={handleDisband}>
+              打散
+            </Button>
+          ) : (
+            <Button
+              className={`diy-page__btn-string ${canString ? 'diy-page__btn-string--active' : ''}`}
+              onClick={handleStringBracelet}
+            >
+              串手串 ({beadCount}/10)
+            </Button>
+          )}
         </View>
-
-        {/* 右上角 - 保存 + 购买 */}
-        <View className="diy-page__top-right">
-          <Button className="diy-page__btn" onClick={handleSaveDesign} disabled={beadCount === 0}>保存</Button>
-          <Button className="diy-page__btn diy-page__btn--primary" onClick={handleAddToCart} disabled={beadCount === 0}>购买</Button>
-        </View>
-
-        {/* 底部 - 串手串/打散 */}
-        {isBracelet ? (
-          <Button className="diy-page__btn-string diy-page__btn-string--active diy-page__btn-string--disband" onClick={handleDisband}>
-            打散
-          </Button>
-        ) : (
-          <Button
-            className={`diy-page__btn-string ${canString ? 'diy-page__btn-string--active' : ''}`}
-            onClick={handleStringBracelet}
-          >
-            串手串 ({beadCount}/10)
-          </Button>
-        )}
-      </View>
+      )}
 
       {/* 选择区域 - 下方 40% */}
       <View className="diy-page__selector">
@@ -1261,7 +1266,7 @@ export default function DiyPage() {
                       <Image
                         className="bead-card__image"
                         src={bead.imageUrl}
-                        mode="aspectFill"
+                        mode="aspectFit"
                         lazyLoad
                       />
                     ) : (
