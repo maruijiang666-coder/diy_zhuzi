@@ -29,6 +29,10 @@ export class Renderer {
   /**
    * 加载珠子图片
    */
+  hasBeadImage(imageUrl: string): boolean {
+    return this.beadImageCache.has(imageUrl)
+  }
+
   loadBeadImage(imageUrl: string): Promise<HTMLImageElement | null> {
     return new Promise((resolve) => {
       if (!imageUrl) {
@@ -67,7 +71,7 @@ export class Renderer {
       ctx.save()
 
       // 计算图片绘制位置和大小，保持图片居中
-      const imageSize = radius * 2.2 // 图片大小比盘子稍大
+      const imageSize = radius * 2.6 // 图片大小比盘子稍大
       const x = cx - imageSize / 2
       const y = cy - imageSize / 2
 
@@ -93,13 +97,15 @@ export class Renderer {
 
     try {
       ctx.save()
+
+      // 廉价投影：不使用 shadowBlur（画布阴影开销很大），改为绘制一个偏移的深色圆
+      ctx.beginPath()
+      ctx.arc(x + 1.5, y + 1.5, radius, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'
+      ctx.fill()
+
       ctx.translate(x, y)
       ctx.rotate(angle)
-
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
-      ctx.shadowBlur = 4
-      ctx.shadowOffsetX = 2
-      ctx.shadowOffsetY = 2
 
       // 如果有图片，绘制图片
       if (imageUrl && this.beadImageCache.has(imageUrl)) {

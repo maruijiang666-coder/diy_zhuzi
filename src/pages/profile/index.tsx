@@ -89,7 +89,7 @@ export default function ProfilePage() {
             // 调用真实的退出登录接口
             console.log('开始调用退出登录接口...')
             const response = await Taro.request({
-              url: 'https://crystal.quant-speed.com/api/auth/wx/logout/',
+              url: 'http://localhost:8011/api/auth/wx/logout/',
               method: 'POST',
               header: {
                 'Content-Type': 'application/json',

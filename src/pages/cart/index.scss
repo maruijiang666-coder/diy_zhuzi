@@ -23,9 +23,45 @@
 
   .cart-list {
     flex: 1;
-    padding: $spacing-lg;
+    padding: 0 $spacing-lg $spacing-lg;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  // 全选栏
+  .cart-select-all {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-md $spacing-lg;
+    background: $bg-primary;
+
+    .cart-select-all-check {
+      width: 44rpx;
+      height: 44rpx;
+      border-radius: 50%;
+      border: 2rpx solid $border-color;
+      @include flex-center;
+      transition: all $transition-base;
+
+      &--active {
+        background: $primary-color;
+        border-color: $primary-color;
+        color: #fff;
+      }
+    }
+
+    .cart-select-all-text {
+      font-size: $font-size-base;
+      color: $text-primary;
+      font-weight: $font-weight-medium;
+    }
+
+    .cart-select-all-count {
+      margin-left: auto;
+      font-size: $font-size-sm;
+      color: $text-secondary;
+    }
   }
 
   .cart-item {
@@ -40,10 +76,40 @@
       box-shadow: $shadow-sm;
     }
 
+    // 勾选框 + 内容 横向排布
+    .cart-item-main {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+      margin-bottom: $spacing-md;
+    }
+
+    // 单个勾选框
+    .cart-item-check {
+      width: 44rpx;
+      height: 44rpx;
+      border-radius: 50%;
+      border: 2rpx solid $border-color;
+      flex-shrink: 0;
+      @include flex-center;
+      transition: all $transition-base;
+
+      &--active {
+        background: $primary-color;
+        border-color: $primary-color;
+        color: #fff;
+      }
+
+      &-mark {
+        font-size: $font-size-sm;
+        line-height: 1;
+      }
+    }
+
     .cart-item-content {
+      flex: 1;
       display: flex;
       gap: $spacing-lg;
-      margin-bottom: $spacing-md;
     }
 
     .cart-item-preview {

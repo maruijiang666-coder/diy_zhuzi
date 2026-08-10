@@ -10,8 +10,14 @@
 .diy-page__canvas {
   flex: 0 0 55%;
   position: relative;
-  background: linear-gradient(180deg, #DEB887 0%, #D2B48C 100%);
-  border-bottom: 2px solid #8B7355;
+  background: linear-gradient(180deg, #F6F1EA 0%, #EDE5DA 100%);
+  border-bottom: 2px solid #D8C9B8;
+}
+
+// 手围弹窗打开时隐藏画布：原生 Canvas 组件不响应 visibility/z-index（会悬浮在弹窗之上），
+// 需用 display:none 真正隐藏；画布节点不卸载，关闭弹窗后通过重绘恢复内容
+.diy-page__canvas--hidden {
+  display: none;
 }
 
 .diy-page__canvas-inner {
@@ -60,6 +66,34 @@
   z-index: 10;
 }
 
+// 顶部统计条 - 当前珠子数 + 总费用
+.diy-page__stats {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 6px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+  max-width: 60%;
+
+  .diy-page__stats-item {
+    font-size: 20px;
+    color: #666;
+  }
+
+  .diy-page__stats-price {
+    color: #8B7FD8;
+    font-weight: 600;
+  }
+}
+
 // 右上角按钮组
 .diy-page__top-right {
   position: absolute;
@@ -69,6 +103,13 @@
   flex-direction: column;
   gap: 12px;
   z-index: 10;
+
+  // 保存/购买按钮：比左下角按钮更大更醒目
+  .diy-page__btn {
+    min-width: 140px;
+    padding: 18px 34px;
+    font-size: 24px;
+  }
 }
 
 // 通用按钮样式
@@ -100,7 +141,7 @@
 // 选择区域 - 下方 45%
 .diy-page__selector {
   flex: 0 0 45%;
-  background-color: #FAEBD7;
+  background-color: #FAFAFA;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -110,8 +151,8 @@
 .diy-page__categories {
   white-space: nowrap;
   padding: 16px 15px;
-  background-color: #F5DEB3;
-  border-bottom: 2px solid #DEB887;
+  background-color: #F5F3EF;
+  border-bottom: 2px solid #EBE5DD;
 }
 
 .diy-page__tab {
@@ -121,7 +162,7 @@
   border-radius: 22px;
   font-size: 26px;
   color: #8B7355;
-  background-color: #FFF8DC;
+  background-color: #FFFFFF;
 
   &--active {
     background-color: #8B4513;
@@ -143,8 +184,8 @@
   width: 200px;
   min-width: 200px;
   height: 100%;
-  background-color: #F0E6D3;
-  border-right: 2px solid #DEB887;
+  background-color: #F7F4F0;
+  border-right: 2px solid #EBE5DD;
   overflow-y: auto;
 }
 
@@ -153,10 +194,10 @@
   text-align: center;
   font-size: 28px;
   color: #8B7355;
-  border-bottom: 1px solid #E8DCC8;
+  border-bottom: 1px solid #F0EBE4;
 
   &--active {
-    background-color: #FAEBD7;
+    background-color: #FFFFFF;
     color: #8B4513;
     font-weight: bold;
     border-left: 6px solid #8B4513;

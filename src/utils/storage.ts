@@ -5,6 +5,7 @@ import Taro from '@tarojs/taro'
  */
 export const STORAGE_KEYS = {
   TOKEN: 'auth_token',
+  USER_OPENID: 'user_openid',
   USER_INFO: 'user_info',
   DIY_DRAFT: 'diy_draft',
   CART_CACHE: 'cart_cache',
@@ -112,6 +113,22 @@ export async function getToken(): Promise<string | null> {
  */
 export async function removeToken(): Promise<void> {
   return removeStorage(STORAGE_KEYS.TOKEN)
+}
+
+/**
+ * 设置用户真实微信 openid（外部支付需要，注意与 login_token 区分）
+ * @param openid 用户的真实微信 openid
+ */
+export async function setUserOpenid(openid: string): Promise<void> {
+  return setStorage(STORAGE_KEYS.USER_OPENID, openid)
+}
+
+/**
+ * 获取用户真实微信 openid
+ * @returns 用户的真实微信 openid，未保存时返回 null
+ */
+export async function getUserOpenid(): Promise<string | null> {
+  return getStorage<string>(STORAGE_KEYS.USER_OPENID)
 }
 
 /**

@@ -1,5 +1,6 @@
 import {
   orderApi,
+  authApi,
   CreateOrderRequest,
   GetOrdersParams,
   ExternalPaymentCreateRequest,
@@ -87,8 +88,19 @@ class OrderService {
       console.log('订单ID:', orderResult.orderId)
       console.log('订单总价:', totalPrice)
 
-      // 获取用户openid
-      const openid = Taro.getStorageSync('auth_token')
+      // 获取用户真实微信 openid（外部支付需要，登录时已从 user.openid 保存到 user_openid；
+      // 不能把 login_token(auth_token/Import_code) 当 openid 传给支付服务，会被判"无效的openid"）
+      let openid = Taro.getStorageSync('user_openid')
+      if (!openid) {
+        // 兜底：旧会话未存 openid 时，从 /auth/users/me/ 拉取并缓存
+        try {
+          const me = await authApi.getUserInfo()
+          openid = me && (me as any).openid
+          if (openid) Taro.setStorageSync('user_openid', openid)
+        } catch (e) {
+          console.warn('获取用户信息失败，无法取得 openid:', e)
+        }
+      }
       if (!openid) {
         console.warn('未找到用户openid，跳过外部支付订单创建')
         throw new Error('用户未登录')
@@ -119,7 +131,7 @@ class OrderService {
       }, null, 2))
       console.log('📦 请求体:', JSON.stringify(externalPaymentRequest, null, 2))
       console.log('🔍 请求参数说明:')
-      console.log('  ├─ openid: 用户认证token，长度:', externalPaymentRequest.openid.length)
+      console.log('  ├─ openid: 用户真实微信openid，长度:', externalPaymentRequest.openid.length)
       console.log('  ├─ amount: 订单总价，值为:', externalPaymentRequest.amount)
       console.log('  ├─ description: 商品描述，值为:', externalPaymentRequest.description)
       console.log('  └─ orderId: 6位唯一订单ID，值为:', externalPaymentRequest.orderId)
@@ -220,7 +232,7 @@ class OrderService {
                   // 支付成功后先更新数据库订单状态
                   console.log('🔄 正在更新订单状态...')
                   wx.request({
-                    url: `https://crystal.quant-speed.com/api/diy/orders/${orderResult.orderId}/`,
+                    url: `http://localhost:8011/api/diy/orders/${orderResult.orderId}/`,
                     method: 'PATCH',
                     header: {
                       'accept': 'application/json',
@@ -269,7 +281,7 @@ class OrderService {
                   // 查询失败时也更新订单状态
                   console.log('🔄 正在更新订单状态...')
                   wx.request({
-                    url: `https://crystal.quant-speed.com/api/diy/orders/${orderResult.orderId}/`,
+                    url: `http://localhost:8011/api/diy/orders/${orderResult.orderId}/`,
                     method: 'PATCH',
                     header: {
                       'accept': 'application/json',

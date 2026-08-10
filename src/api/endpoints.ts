@@ -200,8 +200,10 @@ export const cartApi = {
   },
 
   // 添加到购物车（POST /cart/items/）
-  addToCart: (data: AddToCartRequest): Promise<AddToCartResponse> => {
-    return httpClient.post<AddToCartResponse>(API_ENDPOINTS.CART_ITEMS, data)
+  addToCart: async (data: AddToCartRequest): Promise<AddToCartResponse> => {
+    const response = await httpClient.post<AddToCartResponse>(API_ENDPOINTS.CART_ITEMS, data)
+    // 后端返回 { code:0, message, data:{ itemId, cartItem } } 包了一层，解包出业务数据
+    return (response && (response as any).data) ? (response as any).data : response
   },
 
   // 获取购物车列表

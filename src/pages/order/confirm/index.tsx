@@ -1,6 +1,6 @@
 import { View, Text, Button, Input, ScrollView, Picker } from '@tarojs/components'
-import { useEffect, useState } from 'react'
-import Taro from '@tarojs/taro'
+import { useEffect, useState, useMemo } from 'react'
+import Taro, { useRouter } from '@tarojs/taro'
 import { useCartStore } from '../../../stores/useCartStore'
 import { useOrderStore } from '../../../stores/useOrderStore'
 import { Loading } from '../../../components/common'
@@ -9,8 +9,29 @@ import { Address } from '../../../types/order'
 import './index.scss'
 
 export default function OrderConfirmPage() {
-  const { items, loadCartItems, getTotalPrice } = useCartStore()
+  const { items, loadCartItems } = useCartStore()
   const { createOrder, loading, error } = useOrderStore()
+
+  const router = useRouter()
+
+  // 从 URL 读取选中的购物车项 ID（购物车勾选结算时传入；未传则结算全部）
+  const selectedIds = useMemo(() => {
+    const ids = router.params.ids
+    if (!ids) return null
+    return new Set(ids.split(',').filter(Boolean))
+  }, [router.params.ids])
+
+  // 有效的购物车项（防御：store 可能混入 undefined 残缺数据）
+  const validItems = items.filter((item) => item && item.id && item.bracelet && item.properties)
+  // 只结算选中的购物车项
+  const checkoutItems = selectedIds
+    ? validItems.filter((item) => selectedIds.has(item.id))
+    : validItems
+  const selectedTotal = checkoutItems.reduce((sum, item) => {
+    const props = item.properties
+    const price = props ? props.totalPrice : 0
+    return sum + (parseFloat(String(price)) || 0)
+  }, 0)
 
   const [address, setAddress] = useState<Address>({
     name: '',
@@ -128,10 +149,10 @@ export default function OrderConfirmPage() {
 
   // 处理提交订单
   const handleSubmitOrder = async () => {
-    // 验证购物车不为空
-    if (items.length === 0) {
+    // 验证选中的购物车不为空
+    if (checkoutItems.length === 0) {
       Taro.showToast({
-        title: '购物车为空',
+        title: '请选择要结算的商品',
         icon: 'none',
         duration: 2000,
       })
@@ -151,12 +172,12 @@ export default function OrderConfirmPage() {
     setIsSubmitting(true)
 
     try {
-      // 创建订单
-      const cartItemIds = items.map((item) => item.id)
+      // 创建订单（仅结算选中的购物车项）
+      const cartItemIds = checkoutItems.map((item) => item.id)
       console.log('=== 订单确认页 - 开始创建订单 ===')
       console.log('购物车项ID:', cartItemIds)
-      
-      const totalPrice = getTotalPrice()
+
+      const totalPrice = selectedTotal
       console.log('订单总价:', totalPrice)
       
       // 检查Token
@@ -273,7 +294,7 @@ export default function OrderConfirmPage() {
             <Text>订单详情</Text>
           </View>
           <View className='order-items'>
-            {items.map((item) => (
+            {checkoutItems.map((item) => (
               <View key={item.id} className='order-item'>
                 <View className='item-info'>
                   <Text className='item-label'>手串设计</Text>
@@ -306,12 +327,12 @@ export default function OrderConfirmPage() {
         <View className='section price-section'>
           <View className='price-row'>
             <Text className='price-label'>商品总价</Text>
-            <Text className='price-value'>{formatPrice(getTotalPrice())}</Text>
+            <Text className='price-value'>{formatPrice(selectedTotal)}</Text>
           </View>
           <View className='price-row total'>
             <Text className='price-label'>应付金额</Text>
             <Text className='price-value total-price'>
-              {formatPrice(getTotalPrice())}
+              {formatPrice(selectedTotal)}
             </Text>
           </View>
         </View>
@@ -328,14 +349,14 @@ export default function OrderConfirmPage() {
       <View className='page-footer'>
         <View className='footer-info'>
           <Text className='footer-label'>合计：</Text>
-          <Text className='footer-price'>{formatPrice(getTotalPrice())}</Text>
+          <Text className='footer-price'>{formatPrice(selectedTotal)}</Text>
         </View>
         <Button
           className='submit-btn'
           type='primary'
           onClick={handleSubmitOrder}
           loading={isSubmitting}
-          disabled={isSubmitting || items.length === 0}
+          disabled={isSubmitting || checkoutItems.length === 0}
         >
           提交订单
         </Button>

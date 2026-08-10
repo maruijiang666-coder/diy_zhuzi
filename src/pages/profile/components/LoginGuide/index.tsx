@@ -1,5 +1,5 @@
 import { View, Text, Image, Button, Input } from '@tarojs/components'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Taro from '@tarojs/taro'
 import { useUserStore } from '../../../../stores/useUserStore'
 import { setStorage, setToken, getToken, STORAGE_KEYS } from '../../../../utils/storage'
@@ -21,7 +21,12 @@ export default function LoginGuide({ initialAvatar = '', initialNickname = '', i
   const [phone, setPhone] = useState<string>(initialPhone)
   const [isAgreed, setIsAgreed] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
-  
+  // 登录中标记：防止并发/重复登录请求，避免微信 code 被重复使用导致「code只能使用一次」
+  const isLoggingInRef = useRef(false)
+  // 诊断：连续两次 wx.login() 是否返回了同一个 code（DevTools 游客模式常见问题）
+  const lastLoginCodeRef = useRef('')
+  const usedSameCodeRef = useRef(false)
+
   const { uploadAvatar } = useAvatarUpload()
 
   // 尝试从缓存加载用户信息（针对独立页面使用的情况）
@@ -126,7 +131,7 @@ export default function LoginGuide({ initialAvatar = '', initialNickname = '', i
         Taro.showLoading({ title: '获取手机号中...' })
         
         const response = await Taro.request({
-          url: `https://crystal.quant-speed.com/api/auth/wx/get_phone_number/`,
+          url: `http://localhost:8011/api/auth/wx/get_phone_number/`,
           method: 'POST',
           header: {
             'Content-Type': 'application/json',
@@ -187,79 +192,106 @@ export default function LoginGuide({ initialAvatar = '', initialNickname = '', i
 
   // 处理微信登录
   const handleWechatLogin = async (phoneNumberOverride?: string) => {
+    // 防止并发登录：上一个登录请求未结束前忽略新的点击（避免同一 code 被发送两次）
+    if (isLoggingInRef.current) {
+      console.warn('登录进行中，忽略重复点击')
+      return
+    }
+    isLoggingInRef.current = true
+
     try {
       clearError()
       setError('')
-      
+
+      // 重置本次登录的诊断标记
+      usedSameCodeRef.current = false
+      lastLoginCodeRef.current = ''
+
       Taro.showLoading({ title: '登录中...', mask: true })
-      
-      // 先获取微信登录凭证
-      const loginResult = await Taro.login()
-      console.log('wx.login()的code:', loginResult)
-      
-      // 准备登录数据（使用已获取的用户信息，不再调用getUserProfile）
-      // 验证头像URL格式
-      console.log('开始验证头像URL，原始值:', avatar)
-      
-      const finalAvatar = cleanAndValidateAvatarUrl(avatar)
-      console.log('验证后的最终头像URL:', finalAvatar)
-      
-      const loginData = {
-        code: loginResult.code, // 使用临时登录凭证code
-        app_type: 'diy',
-        nickname: nickname || '微信用户', // 使用已获取的昵称
-        avatar: finalAvatar, // 使用验证后的头像
-        gender: 0, // 默认未知
-        phone_number: phoneNumberOverride || phone || '13800138000', // 使用已获取的手机号，如果没有则使用默认手机号
-        country: 'china', // 默认值
-        province: 'yunnan', // 默认值
-        city: 'kunming', // 默认值
-        language: 'zh_CN' // 默认中文
-      }
-      
-      // 验证必填字段
-      if (!loginData.code) {
-        throw new Error('获取微信登录凭证失败')
-      }
-      if (!loginData.app_type) {
-        throw new Error('应用类型不能为空')
-      }
-      
-      console.log('准备发送到服务器的登录数据:', loginData)
-      
-      // 发送到真实服务器进行登录
-      console.log('开始调用后端登录接口...')
-      const response = await Taro.request({
-        url: 'https://crystal.quant-speed.com/api/auth/wx/login/',
-        method: 'POST',
-        header: {
-          'Content-Type': 'application/json',
-          'X-CSRFTOKEN': 'QjAtpufAC7oTUhnKbQaG8GWwvZ91U2xptiRnJk19S6UXeNW1X6wnmAe6RgYJDf1M',
-          'Accept': 'application/json'
-        },
-        data: loginData,
-        timeout: 10000 // 10秒超时
-      })
-      // 保存Token到Import_code（用于API客户端）
-      Taro.setStorageSync('Import_code', response.data.data.login_token)
-      // 同时保存到标准Token存储（用于一致性）
-      await setToken(response.data.data.login_token)
-      console.log('服务器登录响应:', response.data)
-      
-      // 检查响应状态
-      if (response.statusCode !== 200) {
-        throw new Error(`服务器返回错误状态码: ${response.statusCode}`)
-      }
-      
-      const responseData = response.data
-      
-      // 检查后端返回的业务状态码
-      if (responseData.code === 0) {
-        // 登录成功，保存token和用户信息
-        const data = responseData.data
-        
-        let token, user_info
-        
+
+      // 单次登录尝试：获取新 code → 发送 → 解析 token
+      const attemptLogin = async () => {
+        const loginResult = await Taro.login()
+        console.log('wx.login()的code:', loginResult.code)
+        if (!loginResult.code) {
+          throw new Error('获取微信登录凭证失败')
+        }
+        // 诊断：检测连续两次 wx.login() 是否返回同一个 code
+        if (lastLoginCodeRef.current && loginResult.code === lastLoginCodeRef.current) {
+          usedSameCodeRef.current = true
+          console.warn('⚠️ wx.login() 连续返回同一个 code，可能是开发者工具游客模式导致:', loginResult.code)
+        }
+        lastLoginCodeRef.current = loginResult.code
+
+        // 验证头像URL格式
+        const finalAvatar = cleanAndValidateAvatarUrl(avatar)
+
+        const loginData = {
+          code: loginResult.code, // 使用临时登录凭证code
+          app_type: 'diy',
+          nickname: nickname || '微信用户',
+          avatar: finalAvatar,
+          gender: 0,
+          phone_number: phoneNumberOverride || phone || '13800138000',
+          country: 'china',
+          province: 'yunnan',
+          city: 'kunming',
+          language: 'zh_CN',
+        }
+
+        if (!loginData.app_type) {
+          throw new Error('应用类型不能为空')
+        }
+
+        console.log('准备发送到服务器的登录数据:', loginData)
+
+        const response = await Taro.request({
+          url: 'http://localhost:8011/api/auth/wx/login/',
+          method: 'POST',
+          header: {
+            'Content-Type': 'application/json',
+            'X-CSRFTOKEN': 'QjAtpufAC7oTUhnKbQaG8GWwvZ91U2xptiRnJk19S6UXeNW1X6wnmAe6RgYJDf1M',
+            'Accept': 'application/json',
+          },
+          data: loginData,
+          timeout: 10000, // 10秒超时
+        })
+
+        // ★ 先检查 HTTP 状态码，再读响应体（避免 400 时读取 null 崩溃）
+        if (response.statusCode !== 200) {
+          const body: any = response.data
+          const msg = (body && (body.message || body.error)) || `服务器返回错误状态码: ${response.statusCode}`
+          const err: any = new Error(msg)
+          err.statusCode = response.statusCode
+          err.code = body && body.code !== undefined ? String(body.code) : String(response.statusCode)
+          throw err
+        }
+
+        // ★ 业务状态码处理
+        const responseData: any = response.data
+        if (!responseData || responseData.code !== 0) {
+          const bizCode = responseData && responseData.code
+          let errorMsg = (responseData && responseData.message) || '登录失败'
+          if (bizCode === 400 && responseData && responseData.data && typeof responseData.data === 'object') {
+            const fieldErrors: string[] = []
+            for (const [field, errors] of Object.entries(responseData.data)) {
+              if (Array.isArray(errors)) {
+                fieldErrors.push(`${field}: ${errors.join(', ')}`)
+              }
+            }
+            if (fieldErrors.length > 0) {
+              errorMsg += ` (${fieldErrors.join('; ')})`
+            }
+          }
+          const err: any = new Error(errorMsg)
+          err.code = String(bizCode)
+          throw err
+        }
+
+        // 解析 token 和用户信息（兼容多种返回格式）
+        const data = responseData.data || {}
+        let token: string | undefined
+        let user_info: any
         if (data.login_token) {
           token = data.login_token
           user_info = data.user
@@ -269,124 +301,110 @@ export default function LoginGuide({ initialAvatar = '', initialNickname = '', i
         } else if (data.token) {
           token = data.token
           user_info = data.user_info
-        } else {
-          if (data.user && data.user.openid) {
-            token = data.user.openid
-            user_info = data.user
-          } else {
-            throw new Error('登录失败：无法从后端响应中获取有效的 token')
-          }
+        } else if (data.user && data.user.openid) {
+          token = data.user.openid
+          user_info = data.user
         }
-        
-        // 保存token到本地存储
-        await setToken(token)
-        
-        // 更新用户信息到缓存
-        try {
-          if (avatar) await setStorage(STORAGE_KEYS.USER_AVATAR, avatar)
-          if (nickname) await setStorage(STORAGE_KEYS.USER_NICKNAME, nickname)
-          if (phone) await setStorage(STORAGE_KEYS.USER_PHONE, phone)
-        } catch (error) {
-          console.error('同步用户信息到缓存失败:', error)
+        if (!token) {
+          throw new Error('登录失败：无法从后端响应中获取有效的 token')
         }
-        
-        Taro.hideLoading()
-        
-        Taro.showToast({
-          title: '登录成功',
-          icon: 'success',
-          duration: 2000,
-        })
-        
-        // 登录成功后使用返回的用户信息更新状态
-        if (user_info) {
-          // 验证返回的头像URL
-          const finalUserAvatar = cleanAndValidateAvatarUrl(user_info.avatar)
-          
-          // 使用返回的用户信息更新当前状态
-          setNickname(user_info.nickname || nickname || '微信用户')
-          setAvatar(finalUserAvatar || 'https://img.icons8.com/clouds/200/user.png')
-          
-          // 保存到缓存
-          try {
-            if (user_info.nickname) await setStorage(STORAGE_KEYS.USER_NICKNAME, user_info.nickname)
-            if (finalUserAvatar) await setStorage(STORAGE_KEYS.USER_AVATAR, finalUserAvatar)
-          } catch (error) {
-            console.error('更新用户信息到缓存失败:', error)
-          }
-        }
-        
-        // 延迟刷新用户信息，确保token生效
-        setTimeout(async () => {
-          try {
-            const isValid = await authService.validateToken()
-            
-            if (!isValid) {
-              Taro.showToast({
-                title: '登录状态异常，请重新登录',
-                icon: 'none',
-                duration: 3000
-              })
-              await setToken('')
-              return
-            }
-            
-            await loadUserInfo()
-            
-            Taro.showToast({
-              title: '登录成功',
-              icon: 'success',
-              duration: 2000
-            })
-            
-            // 登录成功后返回上一页
-            setTimeout(() => {
-              const pages = Taro.getCurrentPages()
-              if (pages.length > 1) {
-                Taro.navigateBack()
-              } else {
-                Taro.switchTab({ url: '/pages/profile/index' })
-              }
-            }, 1500)
-            
-          } catch (err: any) {
-            console.error('延迟加载用户信息失败:', err)
-            if (err.code === '401' || err.type === 'NETWORK_ERROR') {
-              Taro.showToast({
-                title: '登录状态异常，请重新登录',
-                icon: 'none',
-                duration: 3000
-              })
-              await setToken('')
-            }
-          }
-        }, 1500)
-      } else if (responseData.code === 400) {
-        let errorMsg = responseData.message || '请求参数错误'
-        if (responseData.data && typeof responseData.data === 'object') {
-          const fieldErrors: string[] = []
-          for (const [field, errors] of Object.entries(responseData.data)) {
-            if (Array.isArray(errors)) {
-              fieldErrors.push(`${field}: ${errors.join(', ')}`)
-            }
-          }
-          if (fieldErrors.length > 0) {
-            errorMsg += ` (${fieldErrors.join('; ')})`
-          }
-        }
-        throw new Error(errorMsg)
-      } else if (responseData.code === 401) {
-        throw new Error(responseData.message || '登录凭证无效')
-      } else if (responseData.code === 500) {
-        throw new Error(responseData.message || '服务器内部错误')
-      } else {
-        throw new Error(responseData.message || `登录失败 (错误码: ${responseData.code})`)
+
+        return { token, user_info }
       }
-      
+
+      // 登录：若 code 无效（code 只能用一次等），重新获取 code 自动重试一次
+      let result: { token: string; user_info: any } | null = null
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          result = await attemptLogin()
+          break
+        } catch (e: any) {
+          const isCodeError = attempt === 0 && e.code === '400' && /code|登录凭证|凭证/i.test(String(e.message || ''))
+          if (!isCodeError) throw e
+          console.warn('登录 code 无效，重新获取 code 重试一次:', e.message)
+        }
+      }
+      if (!result) return
+
+      // ---- 登录成功，保存 token 和用户信息 ----
+      const { token, user_info } = result
+
+      // 保存 Token 到 Import_code（用于API客户端）和标准 Token 存储
+      Taro.setStorageSync('Import_code', token)
+      await setToken(token)
+      console.log('服务器登录响应 token 已保存')
+
+      // 保存用户真实微信 openid（外部支付需用它，不能把 login_token 当 openid 传）
+      const realOpenid = user_info && user_info.openid
+      if (realOpenid) {
+        await setStorage(STORAGE_KEYS.USER_OPENID, realOpenid)
+        console.log('服务器登录响应真实 openid 已保存')
+      } else {
+        console.warn('登录响应中未找到 user.openid，外部支付可能失败')
+      }
+
+      // 更新用户信息到缓存
+      try {
+        if (avatar) await setStorage(STORAGE_KEYS.USER_AVATAR, avatar)
+        if (nickname) await setStorage(STORAGE_KEYS.USER_NICKNAME, nickname)
+        if (phone) await setStorage(STORAGE_KEYS.USER_PHONE, phone)
+      } catch (error) {
+        console.error('同步用户信息到缓存失败:', error)
+      }
+
+      Taro.hideLoading()
+      Taro.showToast({ title: '登录成功', icon: 'success', duration: 2000 })
+
+      // 登录成功后使用返回的用户信息更新状态
+      if (user_info) {
+        const finalUserAvatar = cleanAndValidateAvatarUrl(user_info.avatar)
+        setNickname(user_info.nickname || nickname || '微信用户')
+        setAvatar(finalUserAvatar || 'https://img.icons8.com/clouds/200/user.png')
+        try {
+          if (user_info.nickname) await setStorage(STORAGE_KEYS.USER_NICKNAME, user_info.nickname)
+          if (finalUserAvatar) await setStorage(STORAGE_KEYS.USER_AVATAR, finalUserAvatar)
+        } catch (error) {
+          console.error('更新用户信息到缓存失败:', error)
+        }
+      }
+
+      // 延迟刷新用户信息，确保token生效
+      setTimeout(async () => {
+        try {
+          const isValid = await authService.validateToken()
+
+          if (!isValid) {
+            Taro.showToast({ title: '登录状态异常，请重新登录', icon: 'none', duration: 3000 })
+            await setToken('')
+            return
+          }
+
+          await loadUserInfo()
+
+          Taro.showToast({ title: '登录成功', icon: 'success', duration: 2000 })
+
+          // 登录成功后返回上一页
+          setTimeout(() => {
+            const pages = Taro.getCurrentPages()
+            if (pages.length > 1) {
+              Taro.navigateBack()
+            } else {
+              Taro.switchTab({ url: '/pages/profile/index' })
+            }
+          }, 1500)
+        } catch (err: any) {
+          console.error('延迟加载用户信息失败:', err)
+          if (err.code === '401' || err.type === 'NETWORK_ERROR') {
+            Taro.showToast({ title: '登录状态异常，请重新登录', icon: 'none', duration: 3000 })
+            await setToken('')
+          }
+        }
+      }, 1500)
+
     } catch (error: any) {
       Taro.hideLoading()
       console.error('登录失败:', error)
-      
+
       let errorMessage = error.message || '登录失败'
       if (error.code === '502') {
         errorMessage = '服务器暂时无法访问，请稍后再试'
@@ -395,14 +413,17 @@ export default function LoginGuide({ initialAvatar = '', initialNickname = '', i
       } else if (error.code === '404') {
         errorMessage = '登录接口不存在'
       }
-      
+
+      // 若连续两次 wx.login() 返回同一个 code，说明是开发者工具/游客模式的问题，给出明确提示
+      if (usedSameCodeRef.current) {
+        errorMessage = `${errorMessage}（连续两次获取到相同的登录凭证 code，疑似开发者工具游客模式问题：请在开发者工具右上角切换为已登录的微信账号，或用真机预览/真机调试登录）`
+      }
+
       setError(errorMessage)
-      
-      Taro.showToast({
-        title: errorMessage,
-        icon: 'none',
-        duration: 3000,
-      })
+      Taro.showToast({ title: errorMessage, icon: 'none', duration: 3000 })
+    } finally {
+      // 无论成功失败都释放登录锁
+      isLoggingInRef.current = false
     }
   }
 

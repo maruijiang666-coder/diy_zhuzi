@@ -4,11 +4,13 @@
  * @param decimals 小数位数，默认2位
  * @returns 格式化后的价格字符串，如 "¥99.00"
  */
-export function formatPrice(price: number | undefined, decimals: number = 2): string {
-  if (price === undefined || price === null || isNaN(price)) {
+export function formatPrice(price: number | string | undefined, decimals: number = 2): string {
+  // 兼容字符串数值（后端 properties 返回的是字符串），统一转数字再处理
+  const num = price === undefined || price === null ? NaN : Number(price)
+  if (isNaN(num)) {
     return '¥0.00'
   }
-  return `¥${price.toFixed(decimals)}`
+  return `¥${num.toFixed(decimals)}`
 }
 
 /**
@@ -17,11 +19,12 @@ export function formatPrice(price: number | undefined, decimals: number = 2): st
  * @param decimals 小数位数，默认2位
  * @returns 格式化后的重量字符串，如 "50.00g"
  */
-export function formatWeight(weight: number | undefined, decimals: number = 2): string {
-  if (weight === undefined || weight === null || isNaN(weight)) {
+export function formatWeight(weight: number | string | undefined, decimals: number = 2): string {
+  const num = weight === undefined || weight === null ? NaN : Number(weight)
+  if (isNaN(num)) {
     return '0.00g'
   }
-  return `${weight.toFixed(decimals)}g`
+  return `${num.toFixed(decimals)}g`
 }
 
 /**
@@ -30,9 +33,10 @@ export function formatWeight(weight: number | undefined, decimals: number = 2): 
  * @param decimals 小数位数，默认2位
  * @returns 格式化后的长度字符串，如 "18.50cm"
  */
-export function formatLength(length: number | undefined, decimals: number = 2): string {
-  if (length === undefined || length === null || isNaN(length)) {
+export function formatLength(length: number | string | undefined, decimals: number = 2): string {
+  const num = length === undefined || length === null ? NaN : Number(length)
+  if (isNaN(num)) {
     return '0.00cm'
   }
-  return `${length.toFixed(decimals)}cm`
+  return `${num.toFixed(decimals)}cm`
 }

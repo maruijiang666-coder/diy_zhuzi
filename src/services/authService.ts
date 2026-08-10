@@ -306,13 +306,10 @@ class AuthService {
 
       console.log('开始验证登录态...')
       // console.log("______-----____---___"+token)
-      
-     // 先获取微信登录凭证
-      const loginResult = await Taro.login()
-      console.log('验证登录的code:', Taro.getStorageSync('Import_code'))
 
+      // 验证登录态只需提交 login_token，无需再调用 wx.login() 获取 code（code 单次有效，白白获取只会浪费并可能干扰登录状态）
       const response = await Taro.request({
-        url: 'https://crystal.quant-speed.com/api/auth/wx/validate/',
+        url: 'http://localhost:8011/api/auth/wx/validate/',
         method: 'POST',
         data: {
           login_token: Taro.getStorageSync('Import_code'),  // 使用 login_token 字段名
@@ -351,7 +348,7 @@ class AuthService {
 
       // 调用后端刷新接口
       const response = await Taro.request({
-        url: 'https://crystal.quant-speed.com/api/auth/wx/refresh/',
+        url: 'http://localhost:8011/api/auth/wx/refresh/',
         method: 'POST',
         data: {
           login_token: token,  // 使用 login_token 字段名

@@ -6,7 +6,7 @@ import { useDiyStore } from '../../../stores/useDiyStore'
 import { Loading } from '../../../components/common'
 import { formatPrice, formatWeight, formatLength } from '../../../utils/formatter'
 import { OrderStatus } from '../../../types/order'
-import { orderApi } from '../../../api/endpoints'
+import { orderApi, authApi } from '../../../api/endpoints'
 import './index.scss'
 
 // 订单状态显示文本
@@ -108,8 +108,18 @@ export default function OrderDetailPage() {
     setIsProcessing(true)
 
     try {
-      // 获取用户openid
-      const openid = Taro.getStorageSync('auth_token')
+      // 获取用户真实微信 openid（登录时从 user.openid 保存到 user_openid，不能把 login_token 当 openid 传）
+      let openid = Taro.getStorageSync('user_openid')
+      if (!openid) {
+        // 兜底：旧会话未存 openid 时，从 /auth/users/me/ 拉取并缓存
+        try {
+          const me = await authApi.getUserInfo()
+          openid = me && (me as any).openid
+          if (openid) Taro.setStorageSync('user_openid', openid)
+        } catch (e) {
+          console.warn('获取用户信息失败，无法取得 openid:', e)
+        }
+      }
       if (!openid) {
         Taro.showToast({
           title: '用户未登录',
@@ -223,7 +233,7 @@ export default function OrderDetailPage() {
 
     // 更新数据库订单状态
     wx.request({
-      url: `https://crystal.quant-speed.com/api/diy/orders/${orderId}/`,
+      url: `http://localhost:8011/api/diy/orders/${orderId}/`,
       method: 'PATCH',
       header: {
         'accept': 'application/json',
